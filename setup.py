@@ -9,6 +9,9 @@ VERSION = '0.1.0'
 
 
 def get_install_requirements():
+    """Automatically pull requirements from Pipfile.
+    Adapted from: <https://medium.com/homeaway-tech-blog/simplifying-python-builds-74e76802444f>
+    """
     try:
         # read my pipfile
         with open ('Pipfile', 'r') as fh:
