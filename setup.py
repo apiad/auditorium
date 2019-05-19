@@ -32,7 +32,7 @@ def get_install_requirements():
 setup(
     # TODO: Change your library name and additional information down here
     name='python-starter-pack',
-    py_modules=['python_starter_pack'],
+    packages=['python_starter_pack'],
     url='https://github.com/apiad/python-starter-pack',
     download_url='https://github.com/apiad/python-starter-pack/tarball/{}'.format(VERSION),
     license='MIT',
