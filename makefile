@@ -1,13 +1,13 @@
 .PHONY: build clean install test
 
 build:
-	pip install pipenv
 	pipenv run python setup.py sdist bdist_wheel
 
 clean:
 	git clean -fxd
 
 install:
+	pip install pipenv
 	pipenv install --dev --skip-lock
 
 test:
