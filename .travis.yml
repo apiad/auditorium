@@ -20,10 +20,17 @@ after_success:
   pipenv run codecov
 
 deploy:
-  provider: pypi
-  user: $TEST_PYPI_USER
-  password: $TEST_PYPI_PASSWORD
-  server: https://test.pypi.org/legacy/
-  distributions: "sdist bdist_wheel"
-  on:
-    branch: staging
+  - provider: pypi
+    user: $PYPI_USER
+    password: $PYPI_PASSWORD
+    distributions: "sdist bdist_wheel"
+    on:
+      branch: master
+
+  - provider: pypi
+    user: $TEST_PYPI_USER
+    password: $TEST_PYPI_PASSWORD
+    distributions: "sdist bdist_wheel"
+    server: https://test.pypi.org/legacy/
+    on:
+      branch: staging
