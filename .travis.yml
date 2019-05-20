@@ -5,19 +5,9 @@ cache: pip
 python:
   - 3.6
 
-branches:
-  except:
-    - /^[0-9]+\.[0-9]+\.[0-9]+/
-
-install:
-  - pip install pipenv
-  - pipenv install --dev --skip-lock
-
-script:
-  pipenv run pytest --cov=python_starter_pack --cov-report=xml -v
-
-after_success:
-  pipenv run codecov
+install: make
+script: make test
+after_success: pipenv run codecov
 
 deploy:
   - provider: pypi
