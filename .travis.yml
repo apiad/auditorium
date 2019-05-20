@@ -15,7 +15,7 @@ deploy:
     password: $PYPI_PASSWORD
     distributions: "sdist bdist_wheel"
     on:
-      branch: master
+      tags: true
 
   - provider: pypi
     user: $TEST_PYPI_USER
