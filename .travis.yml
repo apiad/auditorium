@@ -5,19 +5,9 @@ cache: pip
 python:
   - 3.6
 
-branches:
-  except:
-    - /^[0-9]+\.[0-9]+\.[0-9]+/
-
-install:
-  - pip install pipenv
-  - pipenv install --dev --skip-lock
-
-script:
-  pipenv run pytest --cov=python_starter_pack --cov-report=xml -v
-
-after_success:
-  pipenv run codecov
+install: make install
+script: make test
+after_success: make cov
 
 deploy:
   - provider: pypi
@@ -26,7 +16,7 @@ deploy:
     distributions: "sdist bdist_wheel"
     on:
       branch: master
-      tag: true
+      tags: true
 
   - provider: pypi
     user: $TEST_PYPI_USER
@@ -34,5 +24,5 @@ deploy:
     distributions: "sdist bdist_wheel"
     server: https://test.pypi.org/legacy/
     on:
-      branch: staging
-      tag: true
+      branch: develop
+      tags: true
