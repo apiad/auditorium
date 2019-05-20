@@ -26,6 +26,7 @@ deploy:
     distributions: "sdist bdist_wheel"
     on:
       branch: master
+      tag: true
 
   - provider: pypi
     user: $TEST_PYPI_USER
@@ -34,3 +35,4 @@ deploy:
     server: https://test.pypi.org/legacy/
     on:
       branch: staging
+      tag: true
