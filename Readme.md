@@ -1,22 +1,13 @@
 # Python Starter Pack
 
-<table>
-    <tr>
-        <td>License</td>
-        <td><img src='https://img.shields.io/pypi/l/python-starter-pack.svg'></td>
-        <td>Version</td>
-        <td><img src='https://img.shields.io/pypi/v/python-starter-pack.svg'></td>
-    </tr>
-    <tr>
-        <td>Travis CI</td>
-        <td><img src='https://travis-ci.org/apiad/python-starter-pack.svg?branch=staging'></td>
-        <td>Coverage</td>
-        <td><img src='https://codecov.io/gh/apiad/python-starter-pack/branch/staging/graph/badge.svg'></td>
-    </tr>
-    <tr>
-        <td>Supported versions</td>
-        <td><img src='https://img.shields.io/pypi/pyversions/python-starter-pack.svg'></td>
-        <td>Downloads</td>
-        <td><img src='https://img.shields.io/pypi/dm/python-starter-pack.svg'></td>
-    </tr>
-</table>
+<img alt="PyPI - License" src="https://img.shields.io/pypi/l/python-starter-pack.svg">
+<img alt="PyPI" src="https://img.shields.io/pypi/v/python-starter-pack.svg">
+<img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/python-starter-pack/master.svg">
+<img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/python-starter-pack.svg">
+<img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/python-starter-pack.svg">
+<img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/python-starter-pack.svg">
+
+> Quickly setup a Python 3 library complete with Travis-CI, Code Coverage and automatic deploy to PyPi in 5 minutes.
+
+## What's this about?
+
