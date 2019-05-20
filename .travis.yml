@@ -34,5 +34,5 @@ deploy:
     distributions: "sdist bdist_wheel"
     server: https://test.pypi.org/legacy/
     on:
-      branch: staging
+      branch: develop
       tag: true
