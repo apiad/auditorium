@@ -60,7 +60,7 @@ setup(
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
-        'Topic :: Software Development :: Libraries :: Python Modules',
         'Programming Language :: Python :: 3.6',
+        'Topic :: Software Development :: Libraries :: Python Modules',
     ]
 )
