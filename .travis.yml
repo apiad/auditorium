@@ -7,7 +7,7 @@ python:
 
 install: make
 script: make test
-after_success: pipenv run codecov
+after_success: make cov
 
 deploy:
   - provider: pypi

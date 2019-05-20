@@ -1,6 +1,7 @@
 .PHONY: build clean install test
 
 build:
+	pip install pipenv
 	pipenv run python setup.py sdist bdist_wheel
 
 clean:
@@ -11,3 +12,6 @@ install:
 
 test:
 	pipenv run pytest --doctest-modules --cov=python_starter_pack --cov-report=xml -v
+
+cov:
+	pipenv run codecov
