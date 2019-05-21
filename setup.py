@@ -5,7 +5,7 @@ from setuptools import setup
 
 
 # TODO: Update version whenever changes
-VERSION = '0.1.5'
+VERSION = '0.1.6a'
 
 
 def get_install_requirements():
