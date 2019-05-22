@@ -158,7 +158,9 @@ However, for safety reasons, we **do not** deploy on PyPI on every commit to `ma
 - Once everything is green, you will be able to **merge** to `master`.
 - Finally, **create a release** on Github, with a proper version number (please, the same as in `setup.py`) and then, and only then, will Travis deploy to PyPi.
 
-Enjoy!
+When everything is working, make sure to change the remaining `<img>` tags in this `Readme.md` to match your repository's name.
+
+**Enjoy!**
 
 ## Collaboration
 
