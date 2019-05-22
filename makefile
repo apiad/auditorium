@@ -11,7 +11,7 @@ install:
 	pipenv install --dev --skip-lock
 
 test:
-	pipenv run pytest --doctest-modules --cov=python_starter_pack --cov-report=xml -v
+	pipenv run pylint python_starter_pack && pytest --doctest-modules --cov=python_starter_pack --cov-report=xml -v
 
 cov:
 	pipenv run codecov
