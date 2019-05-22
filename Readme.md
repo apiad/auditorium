@@ -117,7 +117,7 @@ Change the `apiad/python-starter-pack` part to match your Github user/repository
 
 ### Step 6: Automatic deploy on PyPi
 
-The next and final step is to setup automatic deployment on the Python Package Index. We will start with deploying to the test channel before moving on deploying to the real channel.
+The next step is to setup automatic deployment on the Python Package Index. We will start with deploying to the test channel before moving on deploying to the real channel.
 
 First, to keep things tidy up, let me explain the how the workflow will be. We will create a `develop` branch:
 
@@ -126,8 +126,64 @@ $ git branch -C develop
 $ git checkout develop
 ```
 
-Now, on this branch, we will test that deployment to PyPi works. Head over to [PyPi (Test)](https://test.pypi.org) and register there. Remember your **username** and **password**.
+Now, on this branch, we will test that deployment to PyPi works. Head over to [test.pypi.org](https://test.pypi.org) and register there. Remember your **username** and **password**.
 
-Now
+Now it's time to setup up your package configuration. Open the file `setup.py` and modify the necessary lines. They all say `TODO` on top. You should define there your project's name and modules, copyright info, entry-points (if any) and other metadata (known as classifiers).
+
+Once that is ready, **make sure to change** the `VERSION` variable on top. This `VERSION` variable is what PyPi will use to determine the current version, and if you push twice with the same version you'll get an error because you cannot override something published to PyPi.
+
+Now head over to [Travis-CI](https://travis-ci.org) and navigate to your project's settings. There you will need to set two **environment variables**: `TEST_PYPI_USER` and `TEST_PYPI_PASSWORD` with the values of your username and password for [test.pypi.org](https://test.pypi.org).
+
+Once that is done, you can now push to Github from the `develop` branch and your project will be automatically published on [test.pypi.org](https://test.pypi.org). You can check it there.
+
+By now you should have a workflow cycle that looks something like this:
+- Work on the `develop` branch (or a `feature-*` and them merge to `develop`).
+- Commit as much as you like.
+- Run `make test` often to make sure everything works.
+- When you are confident the next feature is working, go over to `setup.py` and bump the `VERSION` variable to your new version.
+- Push the `develop` branch to Github.
+- Check [Travis-CI](https://travis-ci.org) and [test.pypi.org](https://test.pypi.org) to make sure everything is Ok.
+
+### Step 7: Deploy on PyPi for real
+
+Now you are going to setup deployment on the **real** PyPi index. Head over to [pypi.org](https://test.pypi.org) and register there.
+
+Now go over to Travis-CI settings for your project and set the **environment variables** `PYPI_USERNAME` and `PYPI_PASSWORD`. Once this is ready, Travis will be able to push to PyPi when you commit and push to `master`.
+
+However, for safety reasons, we **do not** deploy on PyPI on every commit to `master`, but **only on tags**. Hence, the workflow is the following:
+
+- Develop on the `develop` branch and commit, bump version, push, rinse, repeat.
+- Once you are confident everything is Ok on `develop`, navigate to [Github](https://github.com), and in your project's page, create a **pull request** from `develop` to `master`.
+- When the pull request has been created, you will notice that automatically Travis and Codecov start working and basically block your commit until all tests pass.
+- Once everything is green, you will be able to **merge** to `master`.
+- Finally, **create a release** on Github, with a proper version number (please, the same as in `setup.py`) and then, and only then, will Travis deploy to PyPi.
+
+Enjoy!
+
+## Collaboration
+
+License is MIT, so you know the drill.
+
+> MIT License
+>
+> Copyright (c) 2019 Alejandro Piad
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
 
 
