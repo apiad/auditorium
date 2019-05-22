@@ -1,6 +1,6 @@
 # Python Starter Pack
 
-<img alt="PyPI - License" src="https://img.shields.io/pypi/l/python-starter-pack.svg"> <img alt="PyPI" src="https://img.shields.io/pypi/v/python-starter-pack.svg"> <img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/python-starter-pack/master.svg"> <img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/python-starter-pack.svg"> <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/python-starter-pack.svg">
+<img alt="PyPI - License" src="https://img.shields.io/pypi/l/python-starter-pack.svg"> <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/python-starter-pack.svg"> <img alt="PyPI" src="https://img.shields.io/pypi/v/python-starter-pack.svg"> <img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/python-starter-pack/master.svg"> <img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/python-starter-pack.svg">
 
 > Quickly setup a Python 3 library complete with continuous integration, code coverage and automatic deployment to PyPi in 5 minutes.
 
@@ -96,6 +96,38 @@ If you forked your project then your git remote is set. Otherwise, you will need
 $ git push origin master
 ```
 
-### Step 5: Setup Travis-CI
+### Step 5: Setup continuous integration
 
 Now that your project is on Github, the next step is to setup continuous integration with [Travis-CI](https://travis-ci.org). If you don't still have an account on Travis-CI, register there and [activate your repository](https://travis-ci.org/account/repositories).
+
+Travis-CI will ask you to link with your Github account, and install the `travis` app in your Github profile. Once that is done, every push will automatically trigger Travis-CI to run the tests online.
+
+Plus, Travis-CI will automatically push coverage reports to [Codecov](https://codecov.io). Make sure to register there as well, and you will see coverage statistics automatically (there is no need to "activate" a repository there, it happens automatically when Travis pushes coverage stats).
+
+This all just works because of the file `.travis.yml` which you are free to open and modify according to your preferences (e.g., change the preferred Python version).
+
+Once Travis-CI and Codecov are setup, make sure to modify the top of this `Readme.md` file and update these links:
+
+```html
+<img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/python-starter-pack/master.svg">
+<img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/python-starter-pack.svg">
+```
+
+Change the `apiad/python-starter-pack` part to match your Github user/repository and you will immediately get these nice badges on your Readme file.
+
+### Step 6: Automatic deploy on PyPi
+
+The next and final step is to setup automatic deployment on the Python Package Index. We will start with deploying to the test channel before moving on deploying to the real channel.
+
+First, to keep things tidy up, let me explain the how the workflow will be. We will create a `develop` branch:
+
+```bash
+$ git branch -C develop
+$ git checkout develop
+```
+
+Now, on this branch, we will test that deployment to PyPi works. Head over to [PyPi (Test)](https://test.pypi.org) and register there. Remember your **username** and **password**.
+
+Now
+
+
