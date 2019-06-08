@@ -119,7 +119,7 @@ Change the `apiad/python-starter-pack` part to match your Github user/repository
 
 The next step is to setup automatic deployment on the Python Package Index. We will start with deploying to the test channel before moving on deploying to the real channel.
 
-First, to keep things tidy up, let me explain the how the workflow will be. We will create a `develop` branch:
+First, to keep things tidy up, let me explain how the workflow will be. We will create a `develop` branch:
 
 ```bash
 $ git branch -C develop
@@ -137,7 +137,8 @@ Now head over to [Travis-CI](https://travis-ci.org) and navigate to your project
 Once that is done, you can now push to Github from the `develop` branch and your project will be automatically published on [test.pypi.org](https://test.pypi.org). You can check it there.
 
 By now you should have a workflow cycle that looks something like this:
-- Work on the `develop` branch (or a `feature-*` and them merge to `develop`).
+
+- Work on the `develop` branch (or a `feature-*` and then merge to `develop`).
 - Commit as much as you like.
 - Run `make test` often to make sure everything works.
 - When you are confident the next feature is working, go over to `setup.py` and bump the `VERSION` variable to your new version.
@@ -148,7 +149,7 @@ By now you should have a workflow cycle that looks something like this:
 
 Now you are going to setup deployment on the **real** PyPi index. Head over to [pypi.org](https://test.pypi.org) and register there.
 
-Now go over to Travis-CI settings for your project and set the **environment variables** `PYPI_USERNAME` and `PYPI_PASSWORD`. Once this is ready, Travis will be able to push to PyPi when you commit and push to `master`.
+Now go over to Travis-CI settings for your project and set the **environment variables** `PYPI_USERNAME` and `PYPI_PASSWORD`. Once this is ready, Travis-CI will be able to push to PyPi when you commit and push to `master`.
 
 However, for safety reasons, we **do not** deploy on PyPI on every commit to `master`, but **only on tags**. Hence, the workflow is the following:
 
@@ -156,7 +157,7 @@ However, for safety reasons, we **do not** deploy on PyPI on every commit to `ma
 - Once you are confident everything is Ok on `develop`, navigate to [Github](https://github.com), and in your project's page, create a **pull request** from `develop` to `master`.
 - When the pull request has been created, you will notice that automatically Travis and Codecov start working and basically block your commit until all tests pass.
 - Once everything is green, you will be able to **merge** to `master`.
-- Finally, **create a release** on Github, with a proper version number (please, the same as in `setup.py`) and then, and only then, will Travis deploy to PyPi.
+- Finally, **create a release** on Github, with a proper version number (please, the same as in `setup.py`) and then, and only then, will Travis-CI deploy to PyPi.
 
 When everything is working, make sure to change the remaining `<img>` tags in this `Readme.md` to match your repository's name.
 
