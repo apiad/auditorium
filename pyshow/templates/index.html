@@ -59,5 +59,24 @@
 				border: 1px solid gray;
 			}
 		</style>
+
+		<script>
+			document.querySelectorAll("input").forEach(function (el) {
+				el.onchange = function(ev) {
+					var newValue = el.value;
+					var slide = el.attributes['data-slide'].value;
+					var item_id = el.id;
+					var url = "update/" + slide + "/" + item_id + "/" + newValue;
+
+					fetch(url).then(resp => resp.json()).then(
+						json => {
+							for (item_id in json) {
+								document.querySelector("#" + item_id).innerHTML = json[item_id];
+							}
+						}
+					);
+				}
+			});
+		</script>
 	</body>
 </html>

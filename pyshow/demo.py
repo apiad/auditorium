@@ -9,6 +9,7 @@ show = Show(__name__)
 def slide0():
     show.markdown("## Initial slide")
     text = show.text_input("World")
+    print("got here", text)
     show.markdown(f"### Hello {text}!")
 
 
