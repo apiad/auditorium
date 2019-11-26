@@ -25,11 +25,9 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				{% for slide, md in slides.items() %}
-				<section id="{{ slide }}" data-markdown>
-					<textarea data-template>
-						{{ md }}
-					</textarea>
+				{% for slide in show.slides %}
+				<section id="{{ slide }}">
+					{{ show.do_markup(slide) | safe }}
 				</section>
 				{% endfor %}
 			</div>
@@ -47,7 +45,9 @@
 					{ src: 'static/plugin/markdown/markdown.js' },
 					{ src: 'static/plugin/notes/notes.js', async: true },
 					{ src: 'static/plugin/highlight/highlight.js', async: true }
-				]
+				],
+
+				hash: true,
 			});
 		</script>
 	</body>
