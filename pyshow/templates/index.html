@@ -62,7 +62,7 @@
 
 		<script>
 			document.querySelectorAll("input").forEach(function (el) {
-				el.onchange = function(ev) {
+				el.onkeyup = function(ev) {
 					var newValue = el.value;
 					var slide = el.attributes['data-slide'].value;
 					var item_id = el.id;
