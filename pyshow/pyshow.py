@@ -19,6 +19,10 @@ class Show(Flask):
     def markdown(self, content):
         self.current_content.append(markdown(fix_indent(content)))
 
+    def text_input(self, default=""):
+        self.current_content.append(f'<input type="text" class="text" value="{default}"></input>')
+        return default
+
     def do_markup(self, slide):
         self.current_content.clear()
         self.slides[slide]()

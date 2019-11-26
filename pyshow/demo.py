@@ -8,11 +8,8 @@ show = Show(__name__)
 @show.slide
 def slide0():
     show.markdown("## Initial slide")
-    show.markdown("""
-    * item 1
-    * item 2
-    * item 3
-    """)
+    text = show.text_input("World")
+    show.markdown(f"### Hello {text}!")
 
 
 @show.slide
