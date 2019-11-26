@@ -30,6 +30,7 @@ class Show(Flask):
 
     def slide(self, func):
         self.slides[func.__name__] = func
+        return func
 
     ## Binding methods
 
@@ -49,8 +50,24 @@ class Show(Flask):
             self._global_values[item_id] = default
             return default
         else:
-            print("item_id", item_id)
             return self._global_values[item_id]
+
+    def anchor(self, slide, text):
+        item_id, id_markup = self._get_unique_id("anchor")
+
+        if self._mode == ShowMode.Markup:
+            self.current_content.append(f'<a {id_markup} href=#/{slide.__name__}>{text}</a>')
+        else:
+            self.current_update[item_id] = text
+
+    def code(self, text):
+        item_id, id_markup = self._get_unique_id("code")
+        content = fix_indent(text, tab_size=4)
+
+        if self._mode == ShowMode.Markup:
+            self.current_content.append(f'<div {id_markup}>{markdown(content)}</div>')
+        # else:
+        #     self.current_update[item_id] = markdown(content)
 
     ## Internal API
 
@@ -82,7 +99,6 @@ class Show(Flask):
 
     def _update(self, slide, item_id, value):
         self._global_values[item_id] = value
-        print(self._global_values)
         self.do_code(slide)
         return jsonify(self.current_update)
 
@@ -93,12 +109,12 @@ class Show(Flask):
         return send_from_directory("static", filename)
 
 
-def fix_indent(content):
+def fix_indent(content, tab_size=0):
     lines = content.split("\n")
     min_indent = 1e50
 
     for l in lines:
-        if not l:
+        if not l or l.isspace():
             continue
 
         indent_size = 0
@@ -111,5 +127,9 @@ def fix_indent(content):
 
         min_indent = min(indent_size, min_indent)
 
-    lines = [l[min_indent:] for l in lines]
+    lines = [" " * tab_size + l[min_indent:] for l in lines]
+
+    while lines and lines[0].isspace():
+        lines.pop(0)
+
     return "\n".join(lines)
