@@ -8,14 +8,18 @@ show = Show(__name__)
 @show.slide
 def slide0():
     """
-    # First slide
+    ## First slide
+
+    This is the first slide...
     """
 
 
 @show.slide
 def slide1():
     """
-    # Hello World
+    ## Hello World
+
+    This is the second slide
     """
 
 

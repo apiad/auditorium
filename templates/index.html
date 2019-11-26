@@ -6,46 +6,36 @@
 
 		<title>reveal.js</title>
 
-		<link rel="stylesheet" href="css/reset.css">
-		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/white.css">
+		<link rel="stylesheet" href="static/css/reset.css">
+		<link rel="stylesheet" href="static/css/reveal.css">
+		<link rel="stylesheet" href="static/css/theme/white.css">
 
 		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="lib/css/monokai.css">
+		<link rel="stylesheet" href="static/lib/css/monokai.css">
 
 		<!-- Printing and PDF exports -->
 		<script>
 			var link = document.createElement( 'link' );
 			link.rel = 'stylesheet';
 			link.type = 'text/css';
-			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'static/css/print/pdf.css' : 'static/css/print/paper.css';
 			document.getElementsByTagName( 'head' )[0].appendChild( link );
 		</script>
 	</head>
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>
-                    <h3>Example of Streamlit iframe</h3>
-
-                    <iframe id="stapp" data-slide-id="slide0" src="http://127.0.0.1:8501" frameborder="0" style="width: 100%; height: 300px;"></iframe>
-
-                    <p>And other HTML content...</p>
-
-                    <aside class="notes">
-                        Here are the speaker notes...
-                    </aside>
-                </section>
-
-				<section>
-                    <h3>And here comes another slide...</h3>
-
-                    <iframe id="stapp" data-slide-id="slide1" src="http://127.0.0.1:8501" frameborder="0" style="width: 100%; height: 300px;"></iframe>
-                </section>
+				{% for slide, md in slides.items() %}
+				<section id="{{ slide }}" data-markdown>
+					<textarea data-template>
+						{{ md }}
+					</textarea>
+				</section>
+				{% endfor %}
 			</div>
 		</div>
 
-        <script src="js/reveal.js"></script>
+        <script src="static/js/reveal.js"></script>
 
 		<script>
 			// More info about config & dependencies:
@@ -53,10 +43,10 @@
 			// - https://github.com/hakimel/reveal.js#dependencies
 			Reveal.initialize({
 				dependencies: [
-					{ src: 'plugin/markdown/marked.js' },
-					{ src: 'plugin/markdown/markdown.js' },
-					{ src: 'plugin/notes/notes.js', async: true },
-					{ src: 'plugin/highlight/highlight.js', async: true }
+					{ src: 'static/plugin/markdown/marked.js' },
+					{ src: 'static/plugin/markdown/markdown.js' },
+					{ src: 'static/plugin/notes/notes.js', async: true },
+					{ src: 'static/plugin/highlight/highlight.js', async: true }
 				]
 			});
 		</script>
