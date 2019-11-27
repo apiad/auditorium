@@ -53,7 +53,7 @@ def the_basics():
     from pyshow import Show
     show = Show(__name__)""")
 
-    show.markdown("The add a method for every slide, decorated with `@show.slide`.")
+    show.markdown("Then add a method for every slide, decorated with `@show.slide`.")
 
     show.code("""
     @show.slide
@@ -87,7 +87,7 @@ def static_content():
     ## Static Content
 
     Static content can also be added directly as markdown in
-    the `docstring` of the slide method.
+    the `docstring` of the corresponding method.
     """
 
     show.hrule()
@@ -99,7 +99,7 @@ def static_content():
         ## Static Content
 
         Static content can also be added directly as markdown in
-        the `docstring` of the slide method.
+        the `docstring` of the corresponding method.
         \"\"\"
     """)
 
@@ -136,10 +136,13 @@ def pyplot():
     also very easily.
     """
     from matplotlib import pyplot as plt
+    import numpy as np
 
-    data = show.text_input("1,2,3,2,4")
-    plt.plot([int(s) for s in data.split(',')])
-    show.pyplot(plt, fmt='png', height=300)
+    function = show.text_input("sin(x) * cos(2 * x)")
+    x = np.linspace(0, 10, 100)
+    y = eval(function, np.__dict__, dict(x=x))
+    plt.plot(x, y)
+    show.pyplot(plt, fmt='png', height=350)
 
 
 if __name__ == "__main__":
