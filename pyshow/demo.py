@@ -88,9 +88,6 @@ def static_content():
 
     Static content can also be added directly as markdown in
     the `docstring` of the slide method.
-
-    * Lists and other markup work.
-    * And **formatting** does _too_.
     """
 
     show.hrule()
@@ -103,9 +100,6 @@ def static_content():
 
         Static content can also be added directly as markdown in
         the `docstring` of the slide method.
-
-        * Lists and other markup work.
-        * And **formatting** does _too_.
         \"\"\"
     """)
 
@@ -115,7 +109,7 @@ def data_binding():
     ## Dynamic Data
 
     Use dynamic data with two-way binding to add complex Python logic
-    to your presentation. Try changing the text in the following input.
+    to your presentation.
     """
 
     text = show.text_input("dlrow")
@@ -132,14 +126,6 @@ def data_binding():
         text = "".join(reversed(text)).title()
         show.markdown(f"> Hello {text}!!")
     """)
-
-@show.slide
-def static_media():
-    """
-    ## Static Media is Easy!
-
-    ![](static/graphics/image.jpg)
-    """
 
 @show.slide
 def pyplot():
