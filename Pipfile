@@ -4,9 +4,16 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pytest = "*"
+pytest-cov = "*"
+pylint = "*"
+codecov = "*"
+matplotlib = "*"
 
 [packages]
 flask = "*"
+toml = "*"
+markdown = "*"
 
 [requires]
 python_version = "3.6"
