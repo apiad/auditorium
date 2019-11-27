@@ -115,7 +115,7 @@ Once Travis-CI and Codecov are setup, make sure to modify the top of this `Readm
 
 Change the `apiad/python-starter-pack` part to match your Github user/repository and you will immediately get these nice badges on your Readme file.
 
-### Step 6: Automatic deploy on PyPi
+### Step 6: Automatic deployment on PyPi
 
 The next step is to setup automatic deployment on the Python Package Index. We will start with deploying to the test channel before moving on deploying to the real channel.
 
