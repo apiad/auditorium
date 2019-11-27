@@ -1,6 +1,6 @@
 # coding: utf8
 
-from pyshow import Show
+from auditorium import Show
 
 show = Show(__name__)
 
