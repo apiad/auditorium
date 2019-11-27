@@ -1,7 +1,7 @@
 .PHONY: build clean install test lint cov
 
 # TODO: Update your project folder
-PROJECT=python_starter_pack
+PROJECT=auditorium
 
 build:
 	pipenv run python setup.py sdist bdist_wheel
