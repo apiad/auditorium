@@ -7,84 +7,122 @@ show = Show(__name__)
 
 @show.slide
 def intro():
-    show.markdown("# pyshow")
-    show.markdown("## Python powered slideshows right in your browser")
+    """
+    # pyshow
+    ## Python powered slideshows right in your browser
+    """
 
 @show.slide
 def what_is_this():
-    show.markdown("## What is PyShow")
-    show.markdown("""
+    """
+    ## What is PyShow
+
     `pyshow` is a Python module for creating slideshows which
     are ultimately displayed in a browser using the amazing
     library `reveal.js`.
-    """)
-    show.markdown("""
+
     With `pyshow` you don't need to learn JavaScript,
     HTML or CSS. Everything goes in your Python code,
     both presentation content and logic.
-    """)
+    """
+
     show.anchor(how_it_works, "See how it works...")
 
 @show.slide
 def how_it_works():
-    show.markdown("## How it works")
-    show.markdown("""
+    """
+    ## How it works
+
     `pyshow` setups a continuous feedback loop between Python
     and HTML/JavaScript that works automagically.
-    """)
-    show.markdown("""
+
     * Every slide in `pyshow` is a Python method.
     * You can mix up content with logic.
         - Inject variables into the presentation.
         - Receive back interaction events and values.
     * Layout is handled by `reveal.js`.
     * You only ever need to write Python code.
-    """)
+    """
 
 @show.slide
 def the_basics():
     show.markdown("## The basics")
     show.markdown("Start by declaring a `Show` instance.")
+
     show.code("""
     from pyshow import Show
     show = Show(__name__)""")
+
     show.markdown("The add a method for every slide, decorated with `@show.slide`.")
+
     show.code("""
     @show.slide
     def my_slide():
         # slide content
     """)
+
     show.markdown("Finally run the show.")
+
     show.code("show.run('localhost', 5050)")
 
 @show.slide
-def static_content():
-    show.markdown("## Some examples")
-    show.markdown("Static content is added with markdown.")
-    show.markdown("You can use **markdown** _formatting_.")
+def examples():
+    show.header("Some examples")
+    show.markdown("Slide content is added with _markdown_.")
+    show.markup("Or <strong>directly</strong> as HTML.")
 
-    show.markdown("<hr>")
+    show.hrule()
+
+    show.code("""
+    @show.slide
+    def example():
+        show.header("Some examples")
+        show.markdown("Slide content is added with _markdown_.")
+        show.markup("Or <strong>directly</strong> as HTML.")
+    """)
+
+@show.slide
+def static_content():
+    """
+    ## Static Content
+
+    Static content can also be added directly as markdown in
+    the `docstring` of the slide method.
+
+    * Lists and other markup work.
+    * And **formatting** does _too_.
+    """
+
+    show.hrule()
 
     show.code("""
     @show.slide
     def static_content():
-        show.markdown("## Some examples")
-        show.markdown("Static content is added with markdown.")
-        show.markdown("You can use **markdown** _formatting_.")
+        \"\"\"
+        ## Static Content
+
+        Static content can also be added directly as markdown in
+        the `docstring` of the slide method.
+
+        * Lists and other markup work.
+        * And **formatting** does _too_.
+        \"\"\"
     """)
 
 @show.slide
 def data_binding():
-    show.markdown("## Some examples")
-    show.markdown("""
+    """
+    ## Dynamic Data
+
     Use dynamic data with two-way binding to add complex Python logic
-    to your presentation. Try changing the text in the following input.""")
+    to your presentation. Try changing the text in the following input.
+    """
 
     text = show.text_input("dlrow")
     text = "".join(reversed(text)).title()
     show.markdown(f"> Hello {text}!!")
 
-    show.markdown("<hr>")
+    show.hrule()
 
     show.code("""
     @show.slide
@@ -94,6 +132,28 @@ def data_binding():
         text = "".join(reversed(text)).title()
         show.markdown(f"> Hello {text}!!")
     """)
+
+@show.slide
+def static_media():
+    """
+    ## Static Media is Easy!
+
+    ![](static/graphics/image.jpg)
+    """
+
+@show.slide
+def pyplot():
+    """
+    ## pyplot
+
+    Dynamically generated graphs with `pyplot` can be added
+    also very easily.
+    """
+    from matplotlib import pyplot as plt
+
+    data = show.text_input("1,2,3,2,4")
+    plt.plot([int(s) for s in data.split(',')])
+    show.pyplot(plt, fmt='png', height=300)
 
 
 if __name__ == "__main__":

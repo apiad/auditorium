@@ -52,17 +52,25 @@
 		</script>
 
 		<style>
-			input.text {
+			.reveal section input.text {
 				font-size: 28pt;
 				padding: 5px;
 				border-radius: 5px;
 				border: 1px solid gray;
 			}
+
+			.reveal section img.pyplot {
+				border: none;
+				box-shadow: none;
+				margin: none;
+			}
 		</style>
 
 		<script>
 			document.querySelectorAll("input").forEach(function (el) {
-				el.onkeyup = function(ev) {
+				event = el.attributes['data-event'].value;
+
+				el[event] = function(ev) {
 					var newValue = el.value;
 					var slide = el.attributes['data-slide'].value;
 					var item_id = el.id;

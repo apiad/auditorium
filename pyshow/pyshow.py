@@ -1,9 +1,13 @@
 # coding: utf8
 
-import jinja2
-from flask import Flask, render_template, send_from_directory, jsonify
-from markdown import markdown
+import base64
+import io
 from enum import Enum
+
+import jinja2
+from flask import Flask, jsonify, render_template, send_from_directory
+from markdown import markdown
+
 
 class ShowMode(Enum):
     Markup = 1
@@ -34,6 +38,23 @@ class Show(Flask):
 
     ## Binding methods
 
+    def title(self, text):
+        return self.header(text, 1)
+
+    def header(self, text, level=2):
+        return self.markdown("#" * level + " " + text)
+
+    def hrule(self):
+        return self.markup("<hr>")
+
+    def markup(self, content):
+        item_id, id_markup = self._get_unique_id("markup")
+
+        if self._mode == ShowMode.Markup:
+            self.current_content.append(f'<div {id_markup}>{fix_indent(content)}</div>')
+        else:
+            self.current_update[item_id] = fix_indent(content)
+
     def markdown(self, content):
         item_id, id_markup = self._get_unique_id("markdown")
 
@@ -42,15 +63,39 @@ class Show(Flask):
         else:
             self.current_update[item_id] = markdown(fix_indent(content))
 
-    def text_input(self, default=""):
+    def text_input(self, default="", track_keys=True):
         item_id, id_markup = self._get_unique_id("text-input")
 
+        event = "onkeyup" if track_keys else "onchange"
+
         if self._mode == ShowMode.Markup:
-            self.current_content.append(f'<input {id_markup} type="text" class="text" value="{default}"></input>')
+            self.current_content.append(f'<input {id_markup} data-event="{event}" type="text" class="text" value="{default}"></input>')
             self._global_values[item_id] = default
             return default
         else:
             return self._global_values[item_id]
+
+    def pyplot(self, plt, height=400, aspect=4/3, fmt="png"):
+        item_id, id_markup = self._get_unique_id("pyplot")
+        plt.tight_layout()
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format=fmt)
+        plt.clf()
+        buffer.seek(0)
+
+        if fmt == 'png':
+            code = base64.b64encode(buffer.read(-1)).decode('ascii')
+            markup = f'<img width="{aspect * height}px" height="{height}px" class="pyplot" src="data:image/png;base64, {code}"></img>'
+        elif fmt == 'svg':
+            code = buffer.read(-1).decode('ascii')
+            markup = code
+        else:
+            raise ValueError("Invalid value for parameter `fmt`, must be 'png' or 'svg'.")
+
+        if self._mode == ShowMode.Markup:
+            self.current_content.append(f"<div {id_markup}>{markup}</div>")
+        else:
+            self.current_update[item_id] = markup
 
     def anchor(self, slide, text):
         item_id, id_markup = self._get_unique_id("anchor")
@@ -88,7 +133,12 @@ class Show(Flask):
     def _run(self, slide):
         self._unique_id = 0
         self.current_slide = slide
-        self.slides[slide]()
+        func = self.slides[slide]
+
+        if func.__doc__:
+            self.markdown(func.__doc__)
+
+        func()
 
     def _get_unique_id(self, markup):
         self._unique_id += 1
