@@ -34,14 +34,14 @@ def get_install_requirements():
 
 setup(
     # TODO: Change your library name and additional information down here
-    name='python-starter-pack',
-    packages=['python_starter_pack'],
-    url='https://github.com/apiad/python-starter-pack',
-    download_url='https://github.com/apiad/python-starter-pack/tarball/{}'.format(VERSION),
+    name='auditorium',
+    packages=['auditorium'],
+    url='https://github.com/apiad/auditorium',
+    download_url='https://github.com/apiad/auditorium/tarball/{}'.format(VERSION),
     license='MIT',
     author='Alejandro Piad',
     author_email='apiad@apiad.net',
-    description='A starter pack for Python modules.',
+    description='A Python-powered slideshow maker with steroids.',
 
     # This should automatically take your long description from Readme.md
     long_description=open('Readme.md').read(),
@@ -53,7 +53,7 @@ setup(
 
     # TODO (Optional): Set your entry-points (CLI apps to register) here
     entry_points={
-        'console_scripts': ['python-starter-pack=python_starter_pack:say_hello'],
+        # 'console_scripts': ['python-starter-pack=python_starter_pack:say_hello'],
     },
 
     # TODO: Choose your classifiers carefully
