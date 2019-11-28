@@ -1,5 +1,9 @@
 # coding: utf8
 
+"""
+A simple demo script for `auditorium`.
+"""
+
 from auditorium import Show
 
 show = Show(__name__)
