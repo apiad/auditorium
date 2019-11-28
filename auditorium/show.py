@@ -1,5 +1,9 @@
 # coding: utf8
 
+"""
+This module includes the `Show` class and the main functionalities of `auditorium`.
+"""
+
 import base64
 import io
 from enum import Enum

@@ -17,7 +17,7 @@ test:
 	make lint && pipenv run pytest --doctest-modules --cov=$(PROJECT) --cov-report=xml -v
 
 lint:
-	pipenv run pylint $(PROJECT)
+	# pipenv run pylint $(PROJECT)
 
 cov:
 	pipenv run codecov
