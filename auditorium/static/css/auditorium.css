@@ -1,0 +1,12 @@
+.reveal section input.text {
+    font-size: 28pt;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid gray;
+}
+
+.reveal section img.pyplot {
+    border: none;
+    box-shadow: none;
+    margin: none;
+}

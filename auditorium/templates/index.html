@@ -9,6 +9,7 @@
 		<link rel="stylesheet" href="static/css/reset.css">
 		<link rel="stylesheet" href="static/css/reveal.css">
 		<link rel="stylesheet" href="static/css/theme/white.css">
+		<link rel="stylesheet" href="static/css/auditorium.css">
 
 		<!-- Theme used for syntax highlighting of code -->
 		<link rel="stylesheet" href="static/lib/css/monokai.css">
@@ -51,40 +52,6 @@
 			});
 		</script>
 
-		<style>
-			.reveal section input.text {
-				font-size: 28pt;
-				padding: 5px;
-				border-radius: 5px;
-				border: 1px solid gray;
-			}
-
-			.reveal section img.pyplot {
-				border: none;
-				box-shadow: none;
-				margin: none;
-			}
-		</style>
-
-		<script>
-			document.querySelectorAll("input").forEach(function (el) {
-				event = el.attributes['data-event'].value;
-
-				el[event] = function(ev) {
-					var newValue = el.value;
-					var slide = el.attributes['data-slide'].value;
-					var item_id = el.id;
-					var url = "update/" + slide + "/" + item_id + "/" + newValue;
-
-					fetch(url).then(resp => resp.json()).then(
-						json => {
-							for (item_id in json) {
-								document.querySelector("#" + item_id).innerHTML = json[item_id];
-							}
-						}
-					);
-				}
-			});
-		</script>
+		<script src="static/js/auditorium.js"></script>
 	</body>
 </html>
