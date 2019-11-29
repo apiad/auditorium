@@ -12,20 +12,20 @@ show = Show(__name__)
 @show.slide
 def intro():
     """
-    # pyshow
-    ## Python powered slideshows right in your browser
+    # Auditorium
+    ## A Python-powered slideshow generator with steroids
     """
 
 @show.slide
 def what_is_this():
     """
-    ## What is PyShow
+    ## What is Auditorium
 
-    `pyshow` is a Python module for creating slideshows which
+    `auditorium` is a Python module for creating slideshows which
     are ultimately displayed in a browser using the amazing
     library `reveal.js`.
 
-    With `pyshow` you don't need to learn JavaScript,
+    With `auditorium` you don't need to learn JavaScript,
     HTML or CSS. Everything goes in your Python code,
     both presentation content and logic.
     """
@@ -37,10 +37,10 @@ def how_it_works():
     """
     ## How it works
 
-    `pyshow` setups a continuous feedback loop between Python
-    and HTML/JavaScript that works automagically.
+    `auditorium` creates a continuous feedback loop between Python
+    and HTML/JavaScript.
 
-    * Every slide in `pyshow` is a Python method.
+    * Every slide in `auditorium` is a Python method.
     * You can mix up content with logic.
         - Inject variables into the presentation.
         - Receive back interaction events and values.
@@ -145,9 +145,8 @@ def pyplot():
     function = show.text_input("sin(x) * cos(2 * x)")
     x = np.linspace(0, 10, 100)
     y = eval(function, np.__dict__, dict(x=x))
-    plt.plot(x, y)
     show.pyplot(plt, fmt='png', height=350)
-
+    plt.plot(x, y)
 
 if __name__ == "__main__":
     show.run("localhost", 5050, debug=True)
