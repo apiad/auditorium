@@ -110,7 +110,7 @@ class Show(Flask):
             self.current_update[item_id] = text
 
     def code(self, text):
-        item_id, id_markup = self._get_unique_id("code")
+        _, id_markup = self._get_unique_id("code")
         content = fix_indent(text, tab_size=4)
 
         if self._mode == ShowMode.Markup:
