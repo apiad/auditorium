@@ -13,7 +13,7 @@ This opens the door to a few interesting use cases:
 * You can insert components in the slides that respond to user input, and execute a Python code in response. For example, you can generate an interactive graph that can be modified by moving sliders in a slideshow.
 * You can create beautiful animations with simple Python code, that automatically play on a slide, using visualization libraries or simple HTML markup.
 
-And all of this without writing a single line of
+And all of this without writing a single line of HTML or Javascript.
 
 ## Collaboration
 
