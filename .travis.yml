@@ -9,6 +9,9 @@ install: make install
 script: make test
 after_success: make cov
 
+notifications:
+  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
 deploy:
   - provider: pypi
     user: $PYPI_USER
