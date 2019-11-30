@@ -9,7 +9,7 @@ import io
 from enum import Enum
 
 import jinja2
-from flask import Flask, jsonify, render_template, send_from_directory
+from flask import Flask, jsonify, render_template, send_from_directory, request
 from markdown import markdown
 
 
@@ -25,7 +25,7 @@ class Show(Flask):
 
         self.route("/")(self._index)
         self.route("/static/<path:filename>")(self._serve_static)
-        self.route("/update/<slide>/<item_id>/<value>")(self._update)
+        self.route("/update", methods=['POST'])(self._update)
 
         self.current_content = []
         self.current_update = {}
@@ -118,6 +118,18 @@ class Show(Flask):
         # else:
         #     self.current_update[item_id] = markdown(content)
 
+    def animation(self, steps=10, time=0.1, loop=True):
+        item_id, id_markup = self._get_unique_id('animation')
+
+        if self._mode == ShowMode.Markup:
+            self.current_content.append(f'<animation {id_markup} data-steps="{steps}" data-time="{time}" data-loop="{loop}"></animation>')
+            self._global_values[item_id] = Animation(steps, time, loop)
+
+        return self._global_values[item_id]
+
+    def section(self):
+        pass
+
     ## Internal API
 
     def do_markup(self, slide):
@@ -151,9 +163,15 @@ class Show(Flask):
 
     ## Routes
 
-    def _update(self, slide, item_id, value):
-        self._global_values[item_id] = value
-        self.do_code(slide)
+    def _update(self):
+        data = request.get_json()
+
+        if data['type'] == 'input':
+            self._global_values[data['id']] = data['value']
+        elif data['type'] == 'animation':
+            self._global_values[data['id']].next()
+
+        self.do_code(data['slide'])
         return jsonify(self.current_update)
 
     def _index(self):
@@ -161,6 +179,33 @@ class Show(Flask):
 
     def _serve_static(self, filename):
         return send_from_directory("static", filename)
+
+
+class Animation:
+    def __init__(self, steps, time, loop):
+        self.steps = steps
+        self.time = time
+        self.loop = loop
+        self._current = 0
+
+    @property
+    def current(self):
+        return self._current
+
+    def next(self):
+        self._current += 1
+
+        if self._current >= self.steps:
+            if self.loop:
+                self._current = 0
+            else:
+                self._current = self.steps - 1
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
 
 
 def fix_indent(content, tab_size=0):

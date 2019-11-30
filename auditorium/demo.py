@@ -132,6 +132,24 @@ def data_binding():
     """)
 
 @show.slide
+def animation():
+    """
+    ## Animations
+
+    You can create simple stateless animations with pure Python
+    """
+
+    with show.animation(steps=10, time=0.33, loop=True) as anim:
+        show.markdown("> ### ." + ("." * anim.current))
+
+    show.hrule()
+
+    show.code("""
+    with show.animation(steps=10, time=0.33, loop=True) as anim:
+        show.markdown("> ### ." + ("." * anim.current))
+    """)
+
+@show.slide
 def pyplot():
     """
     ## pyplot
@@ -141,12 +159,46 @@ def pyplot():
     """
     from matplotlib import pyplot as plt
     import numpy as np
+    import math
 
-    function = show.text_input("sin(x) * cos(2 * x)")
-    x = np.linspace(0, 10, 100)
-    y = eval(function, np.__dict__, dict(x=x))
-    show.pyplot(plt, fmt='png', height=350)
+    x = np.linspace(0, 2 * math.pi, 100)
+    y = np.sin(x) + np.cos(x)
     plt.plot(x, y)
+    show.pyplot(plt, fmt='png', height=350)
+
+# section = show.section()
+
+# @section.slide
+# def vertical_1():
+#     """
+#     ## Vertical Slides
+
+#     Vertical slides allow you to create "read-more" like
+#     features in your slideshow.
+#     They can be skipped on shorter presentations and left
+#     for more interested audiences.
+
+#     Press `DOWN` instead of `LEFT` or click the down arrow.
+#     """
+
+# @section.slide
+# def vertical_2():
+#     """
+#     ## Vertical Slides: Code
+#     """
+
+#     show.code("""
+#     section = show.section()
+
+#     @section.slide
+#     def vertical_1():
+#         # content of first vertical slide
+
+#     @section.slide
+#     def vertical_2():
+#         # content of second vertical slide
+#     """)
+
 
 if __name__ == "__main__":
     show.run("localhost", 5050, debug=True)
