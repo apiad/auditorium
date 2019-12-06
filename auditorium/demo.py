@@ -219,27 +219,13 @@ def fragments():
 
     with show.fragment('fade-in'):
         with show.columns(count=3) as cl:
-            with show.fragment('grow'):
-                show.markdown('`grow`')
+            for i, style in enumerate('grow shrink fade-up fade-in-then-out highlight-blue fade-out'.split()):
+                if i > 0 and i % 2 == 0:
+                    cl.tab()
 
-            with show.fragment('shrink'):
-                show.markdown('`shrink`')
+                with show.fragment(style):
+                    show.markdown(f'`{style}`')
 
-            cl.tab()
-
-            with show.fragment('fade-up'):
-                show.markdown('`fade-up`')
-
-            with show.fragment('fade-in-then-out'):
-                show.markdown('`fade-in-then-out`')
-
-            cl.tab()
-
-            with show.fragment('highlight-blue'):
-                show.markdown('`highlight-blue`')
-
-            with show.fragment('fade-out'):
-                show.markdown('`fade-out`')
 
 
     with show.fragment():
