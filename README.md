@@ -15,11 +15,17 @@ This opens the door to a few interesting use cases:
 
 **And all of this without writing a single line of HTML or JavaScript.**
 
-## Demo
+## Installation
 
-> If you to see a demo of `auditorium` in action, visit [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net), or embedded below.
+Simply run:
 
-<iframe src="https://auditorium-demo.apiad.net"></iframe>
+    pip install auditorium
+
+To see a quick demo run:
+
+    python -m auditorium.demo
+
+And point your browser at [localhost:5050](http://localhost:5050).
 
 ## Quick start
 
