@@ -192,38 +192,38 @@ def layout():
         """)
 
 
-# section = show.section()
+# with show.vertical():
 
-# @section.slide
-# def vertical_1():
-#     """
-#     ## Vertical Slides
-
-#     Vertical slides allow you to create "read-more" like
-#     features in your slideshow.
-#     They can be skipped on shorter presentations and left
-#     for more interested audiences.
-
-#     Press `DOWN` instead of `LEFT` or click the down arrow.
-#     """
-
-# @section.slide
-# def vertical_2():
-#     """
-#     ## Vertical Slides: Code
-#     """
-
-#     show.code("""
-#     section = show.section()
-
-#     @section.slide
+#     @show.slide
 #     def vertical_1():
-#         # content of first vertical slide
+#         """
+#         ## Vertical Slides
 
-#     @section.slide
+#         Vertical slides allow you to create "read-more" like
+#         features in your slideshow.
+#         They can be skipped on shorter presentations and left
+#         for more interested audiences.
+
+#         Press `DOWN` instead of `LEFT` or click the down arrow.
+#         """
+
+#     @show.slide
 #     def vertical_2():
-#         # content of second vertical slide
-#     """)
+#         """
+#         ## Vertical Slides: Code
+#         """
+
+#         show.code("""
+#         with show.vertical():
+
+#             @show.slide
+#             def vertical_1():
+#                 # content of first vertical slide
+
+#             @show.slide
+#             def vertical_2():
+#                 # content of second vertical slide
+#         """)
 
 
 if __name__ == "__main__":

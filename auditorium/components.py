@@ -53,3 +53,15 @@ class Column:
     def __exit__(self, *args, **kwargs):
         self.show.current_content.append('</div>')
         self.show.current_content.append('</div>')
+
+
+class Vertical:
+    def __init__(self, show):
+        self.show = show
+
+    def __enter__(self):
+        self.show.current_content.append("<section>")
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.show.current_content.append("</section>")

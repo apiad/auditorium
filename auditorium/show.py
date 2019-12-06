@@ -15,6 +15,7 @@ from markdown import markdown
 from .components import Animation
 from .components import Column
 from .components import ShowMode
+from .components import Vertical
 
 
 class Show:
@@ -138,6 +139,9 @@ class Show:
 
     def columns(self, *widths):
         return Column(widths, self)
+
+    # def vertical(self):
+    #     return Vertical(self)
 
     ## Internal API
 
