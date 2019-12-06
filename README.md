@@ -13,7 +13,7 @@ This opens the door to a few interesting use cases:
 * You can insert components in the slides that respond to user input, and execute a Python code in response. For example, you can generate an interactive graph that can be modified by moving sliders in a slideshow.
 * You can create beautiful animations with simple Python code, that automatically play on a slide, using visualization libraries or simple HTML markup.
 
-**And all of this without writing a single line of HTML or Javascript.**
+**And all of this without writing a single line of HTML or JavaScript.**
 
 ## Demo
 
@@ -89,6 +89,28 @@ def pyplot():
 ```
 
 > See a full demo of `auditorium` at [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
+
+## What's the catch
+
+Auditorium covers a fairly simple use case that I haven't seen solved for a long time. I came up with this idea a while trying to make better slideshows for my lectures at the University of Havana. I need to display complex math stuff, ideally animated, and sometimes make modifications on the fly according to the interaction with students. They could ask how a function would look if some parameter where changed, etc.
+
+Along that path I grew up from Power Point to JavaScript-based slides (like [reveal.sj](https://revealjs.com)) and sometimes even coded some simple behavior in JS, like changing a chart's parameters. However, for the most complex stuff I want to use Python, because otherwise I would need to redo a lot of coding in JS. For example, I'm teaching compilers now, and I want to show interactively how a parse tree is built for a regular expression. I simply cannot rewrite my regex engine in JS just for a slideshow.
+
+Then I discovered [streamlit](https://streamlit.io) and for a while tried to move my slides to streamlit format. Streamlit is awesome, but is aimed at a completely different use case. It's quite cumbersome to force it to behave like a slideshow: the flow is  not natural, and the styling options are very restrictive. On the other hand, they handle a lot of complex scenarios which I simply don't need in a slideshow, like caching and a lot of magic with Pandas and Numpy. Contrary to streamlit, I do want custom CSS and HTML to be easy to inject, because styling is very important in slides.
+
+So I decided to write my own slideshow generator, just for my simple use cases. That being said, there are some known deficiencies that I might fix, and some other which I probably will not, even in the long run.
+
+### Slides need to be fast
+
+A slide's code is executed completely every time that slide needs to be rendered. That is, once during loading and then when inputs change. Hence, you slide logic should be fairly fast. This is particularly true for animations, don't expect to be able to train a neural network in-between slides. The slide logic is meant to be simple, the kind of one-liners you can run every keystroke. If you need to interactively draw the loss value of a neural network, either is gonna take a while or you have to fake it, compute it offline and then simply animate it.
+
+### All slides are executed on load
+
+At some point, if I run into the problem, I may add a "lazy" loading option so that only the first few slides are executed. For now, on the first load all slides are going to be run, which might increase significantly your loading time if you have complex logic in each slide. If this is an issue for a lot of people it might become a priority.
+
+### The show state is global
+
+Right now there is a single `Show` instance running the show, so several people looking at the same slideshow will share the values for the interactive inputs and animation steps. This might create weird scenarios in which you are typing into an input textbox and you see a different result because another viewer is typing on a different browser. I don't know right now the extent to which this is an important issue, so I might fix it in the future if necessary.
 
 ## History
 
