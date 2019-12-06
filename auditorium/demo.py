@@ -206,6 +206,51 @@ def blocks():
             show.markdown("When nothing works...")
 
 
+@show.slide
+def fragments():
+    """
+    ## Fragments
+
+    Fragments allow to animate elements inside a slide.
+    """
+
+    with show.fragment():
+        show.markdown("The can have different animations as well...")
+
+    with show.fragment('fade-in'):
+        with show.columns(count=3) as cl:
+            with show.fragment('grow'):
+                show.markdown('`grow`')
+
+            with show.fragment('shrink'):
+                show.markdown('`shrink`')
+
+            cl.tab()
+
+            with show.fragment('fade-up'):
+                show.markdown('`fade-up`')
+
+            with show.fragment('fade-in-then-out'):
+                show.markdown('`fade-in-then-out`')
+
+            cl.tab()
+
+            with show.fragment('highlight-blue'):
+                show.markdown('`highlight-blue`')
+
+            with show.fragment('fade-out'):
+                show.markdown('`fade-out`')
+
+
+    with show.fragment():
+        show.hrule()
+        show.code("""
+        with show.fragment(style='...'): # fade-in, grow, ...
+            # content
+        """)
+
+
+
 with show.vertical():
     @show.slide
     def vertical_1():

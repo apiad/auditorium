@@ -158,6 +158,7 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ### v0.1.3 (pre-release)
 
+* Added support for fragments.
 * Added support for vertical slides
 * Added custom layout options with `show.columns`.
 * Added styled block with `show.block`.

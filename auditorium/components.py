@@ -79,3 +79,16 @@ class Block:
 
     def __exit__(self, *args):
         self.show.current_content.append('</div></div>')
+
+
+class Fragment:
+    def __init__(self, show, style):
+        self.show = show
+        self.style = style
+
+    def __enter__(self):
+        self.show.current_content.append(f'<div class="fragment {self.style}">')
+        return self
+
+    def __exit__(self, *args):
+        self.show.current_content.append('</div>')

@@ -17,6 +17,7 @@ from .components import Column
 from .components import ShowMode
 from .components import Vertical
 from .components import Block
+from .components import Fragment
 from .utils import fix_indent
 
 
@@ -141,7 +142,10 @@ class Show:
 
         return self._global_values[item_id]
 
-    def columns(self, *widths):
+    def columns(self, *widths, count=0):
+        if not widths and count:
+            widths = [1.0/count for _ in range(count)]
+
         return Column(widths, self)
 
     def vertical(self):
@@ -149,6 +153,9 @@ class Show:
 
     def block(self, title="", style='default'):
         return Block(self, title, style)
+
+    def fragment(self, style='fade-in'):
+        return Fragment(self, style)
 
     def success(self, title=""):
         return self.block(title, 'success')
