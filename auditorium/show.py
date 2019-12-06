@@ -16,6 +16,7 @@ from .components import Animation
 from .components import Column
 from .components import ShowMode
 from .components import Vertical
+from .components import Block
 from .utils import fix_indent
 
 
@@ -145,6 +146,18 @@ class Show:
 
     def vertical(self):
         return Vertical(self)
+
+    def block(self, title="", style='default'):
+        return Block(self, title, style)
+
+    def success(self, title=""):
+        return self.block(title, 'success')
+
+    def warning(self, title=""):
+        return self.block(title, 'warning')
+
+    def error(self, title=""):
+        return self.block(title, 'error')
 
     ## Internal API
 

@@ -65,3 +65,17 @@ class Vertical:
 
     def __exit__(self, *args, **kwargs):
         self.show.slide_ids.append("show::end-section")
+
+
+class Block:
+    def __init__(self, show, title, style):
+        self.show = show
+        self.title = title
+        self.style = style
+
+    def __enter__(self):
+        self.show.current_content.append(f'<div class="block block-{self.style}"><h1 class="block-title">{self.title}</h1><div class="block-content">')
+        return self
+
+    def __exit__(self, *args):
+        self.show.current_content.append('</div></div>')

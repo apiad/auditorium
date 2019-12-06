@@ -16,6 +16,7 @@ def intro():
     ## A Python-powered slideshow generator with steroids
     """
 
+
 @show.slide
 def what_is_this():
     """
@@ -29,6 +30,7 @@ def what_is_this():
     HTML or CSS. Everything goes in your Python code,
     both presentation content and logic.
     """
+
 
 @show.slide
 def how_it_works():
@@ -45,6 +47,7 @@ def how_it_works():
     * Layout is handled by `reveal.js`.
     * You only ever need to write Python code.
     """
+
 
 @show.slide
 def the_basics():
@@ -67,6 +70,7 @@ def the_basics():
 
     show.code("show.run('localhost', 5050)")
 
+
 @show.slide
 def examples():
     show.header("Some examples")
@@ -82,6 +86,7 @@ def examples():
         show.markdown("Slide content is added with _markdown_.")
         show.markup("Or <strong>directly</strong> as HTML.")
     """)
+
 
 @show.slide
 def static_content():
@@ -104,6 +109,7 @@ def static_content():
         the `docstring` of the corresponding method.
         \"\"\"
     """)
+
 
 @show.slide
 def layout():
@@ -128,6 +134,7 @@ def layout():
             cl.tab()
             show.code("...")
         """)
+
 
 @show.slide
 def data_binding():
@@ -155,6 +162,7 @@ def data_binding():
         show.markdown(f"Hello {text}!!")
     """)
 
+
 @show.slide
 def animation():
     """
@@ -173,8 +181,32 @@ def animation():
         show.markdown("> ### ." + ("." * anim.current))
     """)
 
-with show.vertical():
 
+@show.slide
+def blocks():
+    """
+    ## Blocks
+
+    Like beamer, pre-styled blocks are available.
+    """
+    with show.columns(0.5, 0.5) as cl:
+
+        with show.block('Standard block'):
+            show.markdown("And its content...")
+
+        with show.success('Success block'):
+            show.markdown("For happy endings...")
+
+        cl.tab()
+
+        with show.warning('Warning block'):
+            show.markdown("For hairy stuff...")
+
+        with show.error('Error block'):
+            show.markdown("When nothing works...")
+
+
+with show.vertical():
     @show.slide
     def vertical_1():
         """
@@ -184,9 +216,11 @@ with show.vertical():
         features in your slideshow.
         They can be skipped on shorter presentations and left
         for more interested audiences.
-
-        Press `DOWN` instead of `LEFT` or click the down arrow.
         """
+
+        with show.warning():
+            show.markdown('Press `DOWN` instead of `LEFT` or click the down arrow.')
+
 
     @show.slide
     def vertical_2():
@@ -208,7 +242,6 @@ with show.vertical():
 
 
 with show.vertical():
-
     @show.slide
     def pyplot():
         """
@@ -235,9 +268,10 @@ with show.vertical():
 
                 cl.tab()
 
-                show.markdown(f"Samples: {len(x)}")
-                show.markdown(f"Inside: {colors.count('green')}")
-                show.markdown("**Pi = %.3f**" % (4 * colors.count('green') / len(x) if len(x) > 0 else 0))
+                with show.block('Monte Carlo Sampling'):
+                    show.markdown(f"Samples: {len(x)}")
+                    show.markdown(f"Inside: {colors.count('green')}")
+                    show.markdown("**Pi = %.3f**" % (4 * colors.count('green') / len(x) if len(x) > 0 else 0))
 
     @show.slide
     def pyplot_code():

@@ -128,6 +128,7 @@ It is very tempting to do things like getting a text from an input box and passi
 
 * Added support for vertical slides
 * Added custom layout options with `show.columns`.
+* Added styled block with `show.block`.
 * Added parameter `language` for `show.code`, defaulting to `"python"`.
 * Better layout for columns, with horizontal centering.
 * Better layout for input texts.
