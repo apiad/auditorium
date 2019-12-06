@@ -122,12 +122,12 @@ class Show:
         else:
             self.current_update[item_id] = text
 
-    def code(self, text):
+    def code(self, text, language='python'):
         _, id_markup = self._get_unique_id("code")
-        content = fix_indent(text, tab_size=4)
+        content = fix_indent(text)
 
         if self._mode == ShowMode.Markup:
-            self.current_content.append(f'<div {id_markup}>{markdown(content)}</div>')
+            self.current_content.append(f'<div {id_markup}><pre><code class="{language}">{content}</pre></code></div>')
         # else:
         #     self.current_update[item_id] = markdown(content)
 

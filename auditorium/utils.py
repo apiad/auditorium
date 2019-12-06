@@ -21,7 +21,7 @@ def fix_indent(content, tab_size=0):
 
     lines = [" " * tab_size + l[min_indent:] for l in lines]
 
-    while lines and lines[0].isspace():
+    while lines and not lines[0] or lines[0].isspace():
         lines.pop(0)
 
     return "\n".join(lines)

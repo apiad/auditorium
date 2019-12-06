@@ -126,12 +126,14 @@ It is very tempting to do things like getting a text from an input box and passi
 
 ### v0.1.3 (pre-release)
 
+* Added support for vertical slides
+* Added custom layout options with `show.columns`.
+* Added parameter `language` for `show.code`, defaulting to `"python"`.
 * Better layout for columns, with horizontal centering.
 * Better layout for input texts.
-* Fix error reloading on a slide with an animation.
 * Better example for the `pyplot` support in the demo.
-* Added custom layout options with `show.columns`.
 * Fixed some style issues.
+* Fixed error reloading on a slide with an animation.
 * Updated Readme with some examples.
 
 ### v0.1.2
