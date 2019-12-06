@@ -15,6 +15,27 @@ This opens the door to a few interesting use cases:
 
 And all of this without writing a single line of HTML or Javascript.
 
+## History
+
+### v0.1.3
+
+* Added custom layout options with `show.columns`.
+* Fixed some style issues.
+
+### v0.1.2
+
+* Refactor custom CSS and Javascript into `auditorium.css` and `auditorium.js` respectively.
+
+### v0.1.1
+
+* Added basic binding for variables
+* Added support for simple animations with `show.animation`.
+* Added support for `pyplot` rendering.
+
+### v0.1.0
+
+* Initial version with basic functionality
+
 ## Collaboration
 
 License is MIT, so you know the drill: fork, develop, add tests, pull request, rinse and repeat.
