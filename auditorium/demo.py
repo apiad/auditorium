@@ -30,8 +30,6 @@ def what_is_this():
     both presentation content and logic.
     """
 
-    show.anchor(how_it_works, "See how it works...")
-
 @show.slide
 def how_it_works():
     """
@@ -168,6 +166,31 @@ def pyplot():
         plt.plot(x, y)
         plt.ylim(-2,2)
         show.pyplot(plt, fmt='png', height=350)
+
+@show.slide
+def layout():
+    """
+    ## Custom layout
+
+    Several common layouts can be compossed.
+    """
+
+    show.hrule()
+
+    with show.columns(0.4, 0.6) as cl:
+        show.markdown("#### Content")
+        show.markdown("You can put custom content in any column...")
+
+        cl.tab()
+        show.code("""
+        with show.columns(0.4, 0.6):
+            show.markdown("#### Content")
+            show.markdown("...")
+
+            cl.tab()
+            show.code("...")
+        """)
+
 
 # section = show.section()
 

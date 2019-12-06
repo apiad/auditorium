@@ -1,5 +1,11 @@
 # coding: utf8
 
+from enum import IntEnum
+
+class ShowMode(IntEnum):
+    Markup = 1
+    Code = 2
+
 
 class Animation:
     def __init__(self, steps, time, loop):
@@ -26,3 +32,24 @@ class Animation:
 
     def __exit__(self, *args):
         pass
+
+
+class Column:
+    def __init__(self, widths, show):
+        self.widths = list(widths)
+        self.show = show
+
+    def __enter__(self):
+        self.show.current_content.append(f'<div class="columns">')
+        self.show.current_content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
+        self.widths.pop(0)
+        return self
+
+    def tab(self):
+        self.show.current_content.append(f'</div>')
+        self.show.current_content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
+        self.widths.pop(0)
+
+    def __exit__(self, *args, **kwargs):
+        self.show.current_content.append('</div>')
+        self.show.current_content.append('</div>')

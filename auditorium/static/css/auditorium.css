@@ -1,12 +1,24 @@
 .reveal section input.text {
     font-size: 28pt;
     padding: 5px;
-    border-radius: 5px;
-    border: 1px solid gray;
+    /* border-radius: 5px; */
+    border: 0px;
+    border-bottom: 1px dashed black;
+    text-align: center;
+}
+
+.reveal section input.text:focus {
+    border: 0px;
+    border-bottom: 1px solid navy;
+    outline: none;
 }
 
 .reveal section img.pyplot {
     border: none;
     box-shadow: none;
     margin: none;
+}
+
+.reveal section div.columns {
+    display: flex;
 }

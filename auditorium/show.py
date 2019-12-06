@@ -13,11 +13,8 @@ from flask import Flask, jsonify, render_template, send_from_directory, request
 from markdown import markdown
 
 from .components import Animation
-
-
-class ShowMode(Enum):
-    Markup = 1
-    Code = 2
+from .components import Column
+from .components import ShowMode
 
 
 class Show:
@@ -139,8 +136,8 @@ class Show:
 
         return self._global_values[item_id]
 
-    def section(self):
-        pass
+    def columns(self, *widths):
+        return Column(widths, self)
 
     ## Internal API
 
