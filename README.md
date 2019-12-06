@@ -124,15 +124,12 @@ It is very tempting to do things like getting a text from an input box and passi
 
 ## History
 
-### v0.1.4
+### v0.1.3
 
 * Better layout for columns, with horizontal centering.
 * Better layout for input texts.
 * Fix error reloading on a slide with an animation.
 * Better example for the `pyplot` support in the demo.
-
-### v0.1.3
-
 * Added custom layout options with `show.columns`.
 * Fixed some style issues.
 * Updated Readme with some examples.
