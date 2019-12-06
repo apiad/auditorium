@@ -124,7 +124,7 @@ It is very tempting to do things like getting a text from an input box and passi
 
 ## History
 
-### v0.1.3
+### v0.1.3 (pre-release)
 
 * Better layout for columns, with horizontal centering.
 * Better layout for input texts.
