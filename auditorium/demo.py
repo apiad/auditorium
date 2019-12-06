@@ -219,7 +219,6 @@ with show.vertical():
         """
         from matplotlib import pyplot as plt
         import numpy as np
-        import math
 
         xg = np.random.RandomState(0)
         yg = np.random.RandomState(1)
