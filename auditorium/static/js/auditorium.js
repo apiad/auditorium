@@ -81,5 +81,9 @@ function setupInput(parent) {
     });
 }
 
-setupAnimations(Reveal.getCurrentSlide());
-setupInput(Reveal.getCurrentSlide());
+(function (currentSlide) {
+    if (currentSlide) {
+        setupAnimations(Reveal.getCurrentSlide());
+        setupInput(Reveal.getCurrentSlide());
+    }
+}(Reveal.getCurrentSlide()));
