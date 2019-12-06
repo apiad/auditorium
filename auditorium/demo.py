@@ -55,7 +55,7 @@ def the_basics():
     from auditorium import Show
     show = Show("Auditorium Demo")""")
 
-    show.markdown("Then add a method for every slide, decorated with `@show.slide`.")
+    show.markdown("add a method for every slide, decorated with `@show.slide`.")
 
     show.code("""
     @show.slide
@@ -106,17 +106,43 @@ def static_content():
     """)
 
 @show.slide
+def layout():
+    """
+    ## Custom layout
+
+    More complex layouts can be compossed.
+    """
+
+    show.hrule()
+
+    with show.columns(0.4, 0.6) as cl:
+        show.markdown("#### Content")
+        show.markdown("You can put custom content in any column...")
+
+        cl.tab()
+        show.code("""
+        with show.columns(0.4, 0.6) as cl:
+            show.markdown("#### Content")
+            show.markdown("...")
+
+            cl.tab()
+            show.code("...")
+        """)
+
+@show.slide
 def data_binding():
     """
     ## Dynamic Data
 
-    Use dynamic data with two-way binding to add complex Python logic
+    Use dynamic data with two-way binding to add executable Python logic
     to your presentation.
     """
 
-    text = show.text_input("dlrow")
-    text = "".join(reversed(text)).title()
-    show.markdown(f"> Hello {text}!!")
+    with show.columns(0.5, 0.5) as cl:
+        text = show.text_input("dlrow")
+        text = "".join(reversed(text)).title()
+        cl.tab()
+        show.markdown(f"Hello {text}!!")
 
     show.hrule()
 
@@ -126,7 +152,7 @@ def data_binding():
         # ...
         text = show.text_input("dlrow")
         text = "".join(reversed(text)).title()
-        show.markdown(f"> Hello {text}!!")
+        show.markdown(f"Hello {text}!!")
     """)
 
 @show.slide
@@ -159,38 +185,24 @@ def pyplot():
     import numpy as np
     import math
 
-    with show.animation(steps=50, time=0.33, loop=True) as anim:
-        step = anim.current * 2 * math.pi / 50
-        x = np.linspace(0, 2 * math.pi, 100)
-        y = np.sin(x + step) + np.cos(x + step)
-        plt.plot(x, y)
-        plt.ylim(-2,2)
-        show.pyplot(plt, fmt='png', height=350)
+    xg = np.random.RandomState(0)
+    yg = np.random.RandomState(1)
 
-@show.slide
-def layout():
-    """
-    ## Custom layout
-
-    Several common layouts can be compossed.
-    """
-
-    show.hrule()
-
-    with show.columns(0.4, 0.6) as cl:
-        show.markdown("#### Content")
-        show.markdown("You can put custom content in any column...")
-
-        cl.tab()
-        show.code("""
-        with show.columns(0.4, 0.6):
-            show.markdown("#### Content")
-            show.markdown("...")
+    with show.columns(0.5, 0.5) as cl:
+        with show.animation(steps=100, time=0.33, loop=True) as anim:
+            x = xg.uniform(size=anim.current * 50)
+            y = yg.uniform(size=anim.current * 50)
+            colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange' for (xi, yi) in zip(x,y)]
+            plt.scatter(x, y, s=3, c=colors)
+            plt.ylim(0, 1)
+            plt.xlim(0, 1)
+            show.pyplot(plt, fmt='png', height=350)
 
             cl.tab()
-            show.code("...")
-        """)
 
+            show.markdown(f"Samples: {len(x)}")
+            show.markdown(f"Inside: {colors.count('green')}")
+            show.markdown("**Pi = %.3f**" % (4 * colors.count('green') / len(x) if len(x) > 0 else 0))
 
 # with show.vertical():
 

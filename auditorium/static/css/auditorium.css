@@ -1,7 +1,8 @@
 .reveal section input.text {
     font-size: 28pt;
     padding: 5px;
-    /* border-radius: 5px; */
+    width: 70%;
+    margin: 20px 0;
     border: 0px;
     border-bottom: 1px dashed black;
     text-align: center;
@@ -21,4 +22,9 @@
 
 .reveal section div.columns {
     display: flex;
+}
+
+.reveal section div.column {
+    margin-top: auto;
+    margin-bottom: auto;
 }

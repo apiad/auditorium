@@ -80,3 +80,6 @@ function setupInput(parent) {
         }
     });
 }
+
+setupAnimations(Reveal.getCurrentSlide());
+setupInput(Reveal.getCurrentSlide());
