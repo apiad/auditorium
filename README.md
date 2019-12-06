@@ -112,6 +112,10 @@ At some point, if I run into the problem, I may add a "lazy" loading option so t
 
 Right now there is a single `Show` instance running the show, so several people looking at the same slideshow will share the values for the interactive inputs and animation steps. This might create weird scenarios in which you are typing into an input textbox and you see a different result because another viewer is typing on a different browser. I don't know right now the extent to which this is an important issue, so I might fix it in the future if necessary.
 
+### Watch out for code injection!
+
+It is very tempting to do things like geting a text from an input box and passing it through `eval` in Python, so that you can render different functions interactively. As long as you serve your presentations on `localhost` and show them yourself, feel free. However, beware when hosting presentations online. Since the backend code runs in your computer, a viewer could inject nasty stuff such as importing `os` and deleting your home folder! In the future I might add a `--safe` option that only allows for animations and other interactive behaviors that don't use input directly from the user. Staying away from `eval` and `exec` should keep you safe in most scenarios, but the basic suggestion is don't do anything you would'nt do in a regular web application, since all security issues are the same.
+
 ## History
 
 ### v0.1.3
