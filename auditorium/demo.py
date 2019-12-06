@@ -6,7 +6,7 @@ A simple demo script for `auditorium`.
 
 from auditorium import Show
 
-show = Show(__name__)
+show = Show("Auditorium Demo")
 
 
 @show.slide
@@ -54,8 +54,8 @@ def the_basics():
     show.markdown("Start by declaring a `Show` instance.")
 
     show.code("""
-    from pyshow import Show
-    show = Show(__name__)""")
+    from auditorium import Show
+    show = Show("Auditorium Demo")""")
 
     show.markdown("Then add a method for every slide, decorated with `@show.slide`.")
 
@@ -161,10 +161,13 @@ def pyplot():
     import numpy as np
     import math
 
-    x = np.linspace(0, 2 * math.pi, 100)
-    y = np.sin(x) + np.cos(x)
-    plt.plot(x, y)
-    show.pyplot(plt, fmt='png', height=350)
+    with show.animation(steps=50, time=0.33, loop=True) as anim:
+        step = anim.current * 2 * math.pi / 50
+        x = np.linspace(0, 2 * math.pi, 100)
+        y = np.sin(x + step) + np.cos(x + step)
+        plt.plot(x, y)
+        plt.ylim(-2,2)
+        show.pyplot(plt, fmt='png', height=350)
 
 # section = show.section()
 

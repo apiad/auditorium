@@ -18,21 +18,31 @@ class ShowMode(Enum):
     Code = 2
 
 
-class Show(Flask):
-    def __init__(self, *args, **kwargs):
-        super(Show, self).__init__(*args, **kwargs)
+class Show:
+    def __init__(self, title=""):
         self.slides = {}
 
-        self.route("/")(self._index)
-        self.route("/static/<path:filename>")(self._serve_static)
-        self.route("/update", methods=['POST'])(self._update)
+        self.flask = Flask("auditorium")
+        self.flask.route("/")(self._index)
+        self.flask.route("/static/<path:filename>")(self._serve_static)
+        self.flask.route("/update", methods=['POST'])(self._update)
 
+        self._title = title
         self.current_content = []
         self.current_update = {}
         self.current_slide = None
         self._unique_id = 0
         self._global_values = {}
         self._mode = ShowMode.Markup
+
+    ## Show functions
+
+    def run(self, host, port, *args, **kwargs):
+        self.flask.run(host=host, port=port, *args, **kwargs)
+
+    @property
+    def show_title(self):
+        return self._title
 
     ## @slide decorator
 
