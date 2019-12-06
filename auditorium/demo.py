@@ -173,69 +173,91 @@ def animation():
         show.markdown("> ### ." + ("." * anim.current))
     """)
 
-@show.slide
-def pyplot():
-    """
-    ## pyplot
+with show.vertical():
 
-    Dynamically generated graphs with `pyplot` can be added
-    also very easily.
-    """
-    from matplotlib import pyplot as plt
-    import numpy as np
-    import math
+    @show.slide
+    def vertical_1():
+        """
+        ## Vertical Slides
 
-    xg = np.random.RandomState(0)
-    yg = np.random.RandomState(1)
+        Vertical slides allow you to create "read-more" like
+        features in your slideshow.
+        They can be skipped on shorter presentations and left
+        for more interested audiences.
 
-    with show.columns(0.5, 0.5) as cl:
+        Press `DOWN` instead of `LEFT` or click the down arrow.
+        """
+
+    @show.slide
+    def vertical_2():
+        """
+        ## Vertical Slides: Code
+        """
+
+        show.code("""
+        with show.vertical():
+
+            @show.slide
+            def vertical_1():
+                # content of first vertical slide
+
+            @show.slide
+            def vertical_2():
+                # content of second vertical slide
+        """)
+
+
+with show.vertical():
+
+    @show.slide
+    def pyplot():
+        """
+        ## pyplot
+
+        Dynamically generated graphs with `pyplot` can be added
+        also very easily.
+        """
+        from matplotlib import pyplot as plt
+        import numpy as np
+        import math
+
+        xg = np.random.RandomState(0)
+        yg = np.random.RandomState(1)
+
+        with show.columns(0.5, 0.5) as cl:
+            with show.animation(steps=100, time=0.33, loop=True) as anim:
+                x = xg.uniform(size=anim.current * 50)
+                y = yg.uniform(size=anim.current * 50)
+                colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange' for (xi, yi) in zip(x,y)]
+                plt.scatter(x, y, s=3, c=colors)
+                plt.ylim(0, 1)
+                plt.xlim(0, 1)
+                show.pyplot(plt, fmt='png', height=350)
+
+                cl.tab()
+
+                show.markdown(f"Samples: {len(x)}")
+                show.markdown(f"Inside: {colors.count('green')}")
+                show.markdown("**Pi = %.3f**" % (4 * colors.count('green') / len(x) if len(x) > 0 else 0))
+
+    @show.slide
+    def pyplot_code():
+        """### Pyplot: Code"""
+
+        show.code("""
+        xg = np.random.RandomState(0)
+        yg = np.random.RandomState(1)
+
         with show.animation(steps=100, time=0.33, loop=True) as anim:
             x = xg.uniform(size=anim.current * 50)
             y = yg.uniform(size=anim.current * 50)
-            colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange' for (xi, yi) in zip(x,y)]
+            colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange'
+                       for (xi, yi) in zip(x,y)]
             plt.scatter(x, y, s=3, c=colors)
             plt.ylim(0, 1)
             plt.xlim(0, 1)
             show.pyplot(plt, fmt='png', height=350)
-
-            cl.tab()
-
-            show.markdown(f"Samples: {len(x)}")
-            show.markdown(f"Inside: {colors.count('green')}")
-            show.markdown("**Pi = %.3f**" % (4 * colors.count('green') / len(x) if len(x) > 0 else 0))
-
-# with show.vertical():
-
-#     @show.slide
-#     def vertical_1():
-#         """
-#         ## Vertical Slides
-
-#         Vertical slides allow you to create "read-more" like
-#         features in your slideshow.
-#         They can be skipped on shorter presentations and left
-#         for more interested audiences.
-
-#         Press `DOWN` instead of `LEFT` or click the down arrow.
-#         """
-
-#     @show.slide
-#     def vertical_2():
-#         """
-#         ## Vertical Slides: Code
-#         """
-
-#         show.code("""
-#         with show.vertical():
-
-#             @show.slide
-#             def vertical_1():
-#                 # content of first vertical slide
-
-#             @show.slide
-#             def vertical_2():
-#                 # content of second vertical slide
-#         """)
+        """)
 
 
 if __name__ == "__main__":

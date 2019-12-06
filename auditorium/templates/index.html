@@ -26,10 +26,20 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				{% for slide in show.slides %}
+				{% for slide in show.slide_ids %}
+
+				{% if slide == 'show::start-section' %}
+				<section>
+				{% elif slide == 'show::end-section' %}
+				</section>
+				{% else %}
+
+				<!-- Section {{ slide }} -->
 				<section id="{{ slide }}">
 					{{ show.do_markup(slide) | safe }}
 				</section>
+
+				{% endif %}
 				{% endfor %}
 			</div>
 		</div>

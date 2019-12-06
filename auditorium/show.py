@@ -22,6 +22,7 @@ from .utils import fix_indent
 class Show:
     def __init__(self, title=""):
         self.slides = {}
+        self.slide_ids = []
 
         self.flask = Flask("auditorium")
         self.flask.route("/")(self._index)
@@ -48,6 +49,7 @@ class Show:
     ## @slide decorator
 
     def slide(self, func):
+        self.slide_ids.append(func.__name__)
         self.slides[func.__name__] = func
         return func
 
@@ -141,8 +143,8 @@ class Show:
     def columns(self, *widths):
         return Column(widths, self)
 
-    # def vertical(self):
-    #     return Vertical(self)
+    def vertical(self):
+        return Vertical(self)
 
     ## Internal API
 

@@ -60,8 +60,8 @@ class Vertical:
         self.show = show
 
     def __enter__(self):
-        self.show.current_content.append("<section>")
+        self.show.slide_ids.append("show::start-section")
         return self
 
     def __exit__(self, *args, **kwargs):
-        self.show.current_content.append("</section>")
+        self.show.slide_ids.append("show::end-section")
