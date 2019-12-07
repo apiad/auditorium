@@ -226,15 +226,12 @@ def fragments():
                 with show.fragment(style):
                     show.markdown(f'`{style}`')
 
-
-
     with show.fragment():
         show.hrule()
         show.code("""
         with show.fragment(style='...'): # fade-in, grow, ...
             # content
         """)
-
 
 
 with show.vertical():
@@ -251,7 +248,6 @@ with show.vertical():
 
         with show.warning():
             show.markdown('Press `DOWN` instead of `LEFT` or click the down arrow.')
-
 
     @show.slide
     def vertical_2():
@@ -288,7 +284,7 @@ with show.vertical():
         yg = np.random.RandomState(1)
 
         with show.columns(0.5, 0.5) as cl:
-            with show.animation(steps=60, time=0.33, loop=True) as anim:
+            with show.animation(steps=60, time=0.5, loop=True) as anim:
                 x = xg.uniform(size=anim.current * 50)
                 y = yg.uniform(size=anim.current * 50)
                 colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange' for (xi, yi) in zip(x,y)]
@@ -312,7 +308,7 @@ with show.vertical():
         xg = np.random.RandomState(0)
         yg = np.random.RandomState(1)
 
-        with show.animation(steps=60, time=0.33, loop=True) as anim:
+        with show.animation(steps=60, time=0.5, loop=True) as anim:
             x = xg.uniform(size=anim.current * 50)
             y = yg.uniform(size=anim.current * 50)
             colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange'
