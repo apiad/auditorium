@@ -35,7 +35,13 @@ class Animation:
 
 
 class Column:
-    def __init__(self, widths, show):
+    def __init__(self, show, *widths):
+        if len(widths) == 1:
+            widths = [1.0/widths[0] for _ in range(widths[0])]
+
+        total_width = sum(widths) + 0.01
+        widths = [w/total_width for w in widths]
+
         self.widths = list(widths)
         self.show = show
 

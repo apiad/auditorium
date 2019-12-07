@@ -121,13 +121,13 @@ def layout():
 
     show.hrule()
 
-    with show.columns(0.4, 0.6) as cl:
+    with show.columns(2, 3) as cl:
         show.markdown("#### Content")
         show.markdown("You can put custom content in any column...")
 
         cl.tab()
         show.code("""
-        with show.columns(0.4, 0.6) as cl:
+        with show.columns(2, 3) as cl:
             show.markdown("#### Content")
             show.markdown("...")
 
@@ -145,7 +145,7 @@ def data_binding():
     to your presentation.
     """
 
-    with show.columns(0.5, 0.5) as cl:
+    with show.columns(2) as cl:
         text = show.text_input("dlrow")
         text = "".join(reversed(text)).title()
         cl.tab()
@@ -189,7 +189,7 @@ def blocks():
 
     Like beamer, pre-styled blocks are available.
     """
-    with show.columns(0.5, 0.5) as cl:
+    with show.columns(2) as cl:
 
         with show.block('Standard block'):
             show.markdown("And its content...")
@@ -204,34 +204,6 @@ def blocks():
 
         with show.error('Error block'):
             show.markdown("When nothing works...")
-
-
-@show.slide
-def fragments():
-    """
-    ## Fragments
-
-    Fragments allow to animate elements inside a slide.
-    """
-
-    with show.fragment():
-        show.markdown("The can have different animations as well...")
-
-    with show.fragment('fade-in'):
-        with show.columns(count=3) as cl:
-            for i, style in enumerate('grow shrink fade-up fade-in-then-out highlight-blue fade-out'.split()):
-                if i > 0 and i % 2 == 0:
-                    cl.tab()
-
-                with show.fragment(style):
-                    show.markdown(f'`{style}`')
-
-    with show.fragment():
-        show.hrule()
-        show.code("""
-        with show.fragment(style='...'): # fade-in, grow, ...
-            # content
-        """)
 
 
 with show.vertical():
@@ -269,6 +241,45 @@ with show.vertical():
 
 
 with show.vertical():
+
+    @show.slide
+    def fragments():
+        """
+        ## Fragments
+
+        Fragments allow to animate elements inside a slide.
+        """
+
+        with show.fragment():
+            show.markdown("The can have different animations as well...")
+
+        with show.fragment():
+            show.hrule()
+            show.code("""
+            with show.fragment(style='...'): # fade-in, grow, ...
+                # content
+            """)
+
+    @show.slide
+    def fragment_examples():
+        """
+        ## Fragment examples
+
+        Here are some of the possible fragment animations.
+        """
+
+        with show.columns(3) as cl:
+            for i, style in enumerate('grow shrink fade-in fade-out fade-up fade-down fade-left fade-right highlight-blue highlight-red highlight-green'.split()):
+                if i > 0 and i % 4 == 0:
+                    cl.tab()
+
+                with show.fragment(style):
+                    show.markdown(f'`{style}`')
+
+
+
+
+with show.vertical():
     @show.slide
     def pyplot():
         """
@@ -283,7 +294,7 @@ with show.vertical():
         xg = np.random.RandomState(0)
         yg = np.random.RandomState(1)
 
-        with show.columns(0.5, 0.5) as cl:
+        with show.columns(2) as cl:
             with show.animation(steps=60, time=0.5, loop=True) as anim:
                 x = xg.uniform(size=anim.current * 50)
                 y = yg.uniform(size=anim.current * 50)

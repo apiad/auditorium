@@ -142,11 +142,8 @@ class Show:
 
         return self._global_values[item_id]
 
-    def columns(self, *widths, count=0):
-        if not widths and count:
-            widths = [1.0/count for _ in range(count)]
-
-        return Column(widths, self)
+    def columns(self, *widths):
+        return Column(self, *widths)
 
     def vertical(self):
         return Vertical(self)
