@@ -42,6 +42,8 @@ setup(
     author='Alejandro Piad',
     author_email='apiad@apiad.net',
     description='A Python-powered slideshow maker with steroids.',
+    include_package_data=True,
+    zip_safe=False,
 
     # This should automatically take your long description from Readme.md
     long_description=open('README.md').read(),
