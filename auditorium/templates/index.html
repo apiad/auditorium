@@ -4,11 +4,12 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+		<title>{{ show.show_title }}</title>
 
 		<link rel="stylesheet" href="static/css/reset.css">
 		<link rel="stylesheet" href="static/css/reveal.css">
 		<link rel="stylesheet" href="static/css/theme/white.css">
+		<link rel="stylesheet" href="static/css/auditorium.css">
 
 		<!-- Theme used for syntax highlighting of code -->
 		<link rel="stylesheet" href="static/lib/css/monokai.css">
@@ -25,10 +26,20 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				{% for slide in show.slides %}
+				{% for slide in show.slide_ids %}
+
+				{% if slide == 'show::start-section' %}
+				<section>
+				{% elif slide == 'show::end-section' %}
+				</section>
+				{% else %}
+
+				<!-- Section {{ slide }} -->
 				<section id="{{ slide }}">
 					{{ show.do_markup(slide) | safe }}
 				</section>
+
+				{% endif %}
 				{% endfor %}
 			</div>
 		</div>
@@ -41,50 +52,17 @@
 			// - https://github.com/hakimel/reveal.js#dependencies
 			Reveal.initialize({
 				dependencies: [
-					{ src: 'static/plugin/markdown/marked.js' },
-					{ src: 'static/plugin/markdown/markdown.js' },
-					{ src: 'static/plugin/notes/notes.js', async: true },
-					{ src: 'static/plugin/highlight/highlight.js', async: true }
+					// TODO: Include mathjax in statics
+					// { src: 'static/plugin/math/math.js' },
+					// TODO: Notes don't work with animations
+					// { src: 'static/plugin/notes/notes.js' },
+					{ src: 'static/plugin/highlight/highlight.js' },
 				],
 
 				hash: true,
 			});
 		</script>
 
-		<style>
-			.reveal section input.text {
-				font-size: 28pt;
-				padding: 5px;
-				border-radius: 5px;
-				border: 1px solid gray;
-			}
-
-			.reveal section img.pyplot {
-				border: none;
-				box-shadow: none;
-				margin: none;
-			}
-		</style>
-
-		<script>
-			document.querySelectorAll("input").forEach(function (el) {
-				event = el.attributes['data-event'].value;
-
-				el[event] = function(ev) {
-					var newValue = el.value;
-					var slide = el.attributes['data-slide'].value;
-					var item_id = el.id;
-					var url = "update/" + slide + "/" + item_id + "/" + newValue;
-
-					fetch(url).then(resp => resp.json()).then(
-						json => {
-							for (item_id in json) {
-								document.querySelector("#" + item_id).innerHTML = json[item_id];
-							}
-						}
-					);
-				}
-			});
-		</script>
+		<script src="static/js/auditorium.js"></script>
 	</body>
 </html>

@@ -9,6 +9,9 @@ install: make install
 script: make test
 after_success: make cov
 
+notifications:
+  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
 deploy:
   - provider: pypi
     user: $PYPI_USER
@@ -17,10 +20,10 @@ deploy:
     on:
       tags: true
 
-  - provider: pypi
-    user: $TEST_PYPI_USER
-    password: $TEST_PYPI_PASSWORD
-    distributions: "sdist bdist_wheel"
-    server: https://test.pypi.org/legacy/
-    on:
-      branch: develop
+  # - provider: pypi
+  #   user: $TEST_PYPI_USER
+  #   password: $TEST_PYPI_PASSWORD
+  #   distributions: "sdist bdist_wheel"
+  #   server: https://test.pypi.org/legacy/
+  #   on:
+  #     branch: develop

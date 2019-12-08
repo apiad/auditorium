@@ -5,7 +5,7 @@ from setuptools import setup
 
 
 # TODO: Update version whenever changes
-VERSION = '0.1.0'
+VERSION = '0.1.3'
 
 
 def get_install_requirements():
@@ -44,7 +44,7 @@ setup(
     description='A Python-powered slideshow maker with steroids.',
 
     # This should automatically take your long description from Readme.md
-    long_description=open('Readme.md').read(),
+    long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
 
     # This should automatically pull your requirements from `Pipfile`

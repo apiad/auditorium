@@ -9,24 +9,29 @@ import io
 from enum import Enum
 
 import jinja2
-from flask import Flask, jsonify, render_template, send_from_directory
+from flask import Flask, jsonify, render_template, send_from_directory, request
 from markdown import markdown
 
+from .components import Animation
+from .components import Column
+from .components import ShowMode
+from .components import Vertical
+from .components import Block
+from .components import Fragment
+from .utils import fix_indent
 
-class ShowMode(Enum):
-    Markup = 1
-    Code = 2
 
-
-class Show(Flask):
-    def __init__(self, *args, **kwargs):
-        super(Show, self).__init__(*args, **kwargs)
+class Show:
+    def __init__(self, title=""):
         self.slides = {}
+        self.slide_ids = []
 
-        self.route("/")(self._index)
-        self.route("/static/<path:filename>")(self._serve_static)
-        self.route("/update/<slide>/<item_id>/<value>")(self._update)
+        self.flask = Flask("auditorium")
+        self.flask.route("/")(self._index)
+        self.flask.route("/static/<path:filename>")(self._serve_static)
+        self.flask.route("/update", methods=['POST'])(self._update)
 
+        self._title = title
         self.current_content = []
         self.current_update = {}
         self.current_slide = None
@@ -34,9 +39,19 @@ class Show(Flask):
         self._global_values = {}
         self._mode = ShowMode.Markup
 
+    ## Show functions
+
+    def run(self, host, port, *args, **kwargs):
+        self.flask.run(host=host, port=port, *args, **kwargs)
+
+    @property
+    def show_title(self):
+        return self._title
+
     ## @slide decorator
 
     def slide(self, func):
+        self.slide_ids.append(func.__name__)
         self.slides[func.__name__] = func
         return func
 
@@ -109,14 +124,44 @@ class Show(Flask):
         else:
             self.current_update[item_id] = text
 
-    def code(self, text):
-        item_id, id_markup = self._get_unique_id("code")
-        content = fix_indent(text, tab_size=4)
+    def code(self, text, language='python'):
+        _, id_markup = self._get_unique_id("code")
+        content = fix_indent(text)
 
         if self._mode == ShowMode.Markup:
-            self.current_content.append(f'<div {id_markup}>{markdown(content)}</div>')
+            self.current_content.append(f'<div {id_markup}><pre><code class="{language}">{content}</pre></code></div>')
         # else:
         #     self.current_update[item_id] = markdown(content)
+
+    def animation(self, steps=10, time=0.1, loop=True):
+        item_id, id_markup = self._get_unique_id('animation')
+
+        if self._mode == ShowMode.Markup:
+            self.current_content.append(f'<animation {id_markup} data-steps="{steps}" data-time="{time}" data-loop="{loop}"></animation>')
+            self._global_values[item_id] = Animation(steps, time, loop)
+
+        return self._global_values[item_id]
+
+    def columns(self, *widths):
+        return Column(self, *widths)
+
+    def vertical(self):
+        return Vertical(self)
+
+    def block(self, title="", style='default'):
+        return Block(self, title, style)
+
+    def fragment(self, style='fade-in'):
+        return Fragment(self, style)
+
+    def success(self, title=""):
+        return self.block(title, 'success')
+
+    def warning(self, title=""):
+        return self.block(title, 'warning')
+
+    def error(self, title=""):
+        return self.block(title, 'error')
 
     ## Internal API
 
@@ -151,9 +196,15 @@ class Show(Flask):
 
     ## Routes
 
-    def _update(self, slide, item_id, value):
-        self._global_values[item_id] = value
-        self.do_code(slide)
+    def _update(self):
+        data = request.get_json()
+
+        if data['type'] == 'input':
+            self._global_values[data['id']] = data['value']
+        elif data['type'] == 'animation':
+            self._global_values[data['id']].next()
+
+        self.do_code(data['slide'])
         return jsonify(self.current_update)
 
     def _index(self):
@@ -161,29 +212,3 @@ class Show(Flask):
 
     def _serve_static(self, filename):
         return send_from_directory("static", filename)
-
-
-def fix_indent(content, tab_size=0):
-    lines = content.split("\n")
-    min_indent = 1e50
-
-    for l in lines:
-        if not l or l.isspace():
-            continue
-
-        indent_size = 0
-
-        for c in l:
-            if c.isspace():
-                indent_size += 1
-            else:
-                break
-
-        min_indent = min(indent_size, min_indent)
-
-    lines = [" " * tab_size + l[min_indent:] for l in lines]
-
-    while lines and lines[0].isspace():
-        lines.pop(0)
-
-    return "\n".join(lines)

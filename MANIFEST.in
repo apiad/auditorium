@@ -1,1 +1,3 @@
 include Pipfile
+include auditorium/static/*.*
+include auditorium/templates/*

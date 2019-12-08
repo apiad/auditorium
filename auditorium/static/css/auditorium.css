@@ -1,0 +1,86 @@
+.reveal section input.text {
+    font-size: 28pt;
+    padding: 5px;
+    width: 70%;
+    margin: 20px 0;
+    border: 0px;
+    border-bottom: 1px dashed black;
+    text-align: center;
+}
+
+.reveal section input.text:focus {
+    border: 0px;
+    border-bottom: 1px solid navy;
+    outline: none;
+}
+
+.reveal section img.pyplot {
+    border: none;
+    box-shadow: none;
+    margin: none;
+}
+
+.reveal section div.columns {
+    display: flex;
+}
+
+.reveal section div.column {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.reveal section div.block {
+    width: 90%;
+    margin: auto;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+    margin-bottom: 20px;
+}
+
+.reveal section div.block .block-title {
+    padding-top: 2px;
+    font-size: 42px;
+    text-transform: none;
+    font-weight: bolder;
+    margin: 0;
+    color: white;
+}
+
+.reveal section div.block .block-content {
+    margin-bottom: 2px;
+}
+
+.reveal section div.block .block-content p {
+    margin: auto;
+}
+
+.reveal section div.block-default .block-title {
+    background-color: navy;
+}
+
+.reveal section div.block-success .block-title {
+    background-color: darkgreen;
+}
+
+.reveal section div.block-warning .block-title {
+    background-color: darkorange;
+}
+
+.reveal section div.block-error .block-title {
+    background-color: darkred;
+}
+
+.reveal section div.block-default .block-content {
+    color: navy;
+}
+
+.reveal section div.block-success .block-content {
+    color: darkgreen;
+}
+
+.reveal section div.block-warning .block-content {
+    color: darkorange;
+}
+
+.reveal section div.block-error .block-content {
+    color: darkred;
+}
