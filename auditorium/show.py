@@ -12,12 +12,7 @@ import jinja2
 from flask import Flask, jsonify, render_template, send_from_directory, request
 from markdown import markdown
 
-from .components import Animation
-from .components import Column
-from .components import ShowMode
-from .components import Vertical
-from .components import Block
-from .components import Fragment
+from .components import *
 from .utils import fix_indent
 
 
