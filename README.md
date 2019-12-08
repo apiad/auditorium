@@ -156,11 +156,11 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.1.4-dev (branch `develop`)
+### v0.1.4 (latest release and branch `master`)
 
 * Added support for `reveal.js` themes via `show.default_theme` and query-string argument `?theme=...`.
 
-### v0.1.3 (latest release and branch `master`)
+### v0.1.3
 
 * Added support for fragments.
 * Added support for vertical slides
