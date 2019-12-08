@@ -156,7 +156,7 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.1.3 (pre-release)
+### v0.1.3
 
 * Added support for fragments.
 * Added support for vertical slides
