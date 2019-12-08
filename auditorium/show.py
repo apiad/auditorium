@@ -148,11 +148,11 @@ class Show:
     def vertical(self):
         return Vertical(self)
 
-    def block(self, title="", style='default'):
-        return Block(self, title, style)
-
     def fragment(self, style='fade-in'):
         return Fragment(self, style)
+
+    def block(self, title="", style='default'):
+        return Block(self, title, style)
 
     def success(self, title=""):
         return self.block(title, 'success')
