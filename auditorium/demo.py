@@ -182,30 +182,6 @@ def animation():
     """)
 
 
-@show.slide
-def blocks():
-    """
-    ## Blocks
-
-    Like beamer, pre-styled blocks are available.
-    """
-    with show.columns(2) as cl:
-
-        with show.block('Standard block'):
-            show.markdown("And its content...")
-
-        with show.success('Success block'):
-            show.markdown("For happy endings...")
-
-        cl.tab()
-
-        with show.warning('Warning block'):
-            show.markdown("For hairy stuff...")
-
-        with show.error('Error block'):
-            show.markdown("When nothing works...")
-
-
 with show.vertical():
     @show.slide
     def vertical_1():
@@ -241,7 +217,52 @@ with show.vertical():
 
 
 with show.vertical():
+    @show.slide
+    def blocks():
+        """
+        ## Blocks
 
+        Like beamer, pre-styled blocks are available.
+        """
+
+        with show.columns(2) as cl:
+
+            with show.block('Standard block'):
+                show.markdown("And its content...")
+
+            with show.success('Success block'):
+                show.markdown("For happy endings...")
+
+            cl.tab()
+
+            with show.warning('Warning block'):
+                show.markdown("For hairy stuff...")
+
+            with show.error('Error block'):
+                show.markdown("When nothing works...")
+
+    @show.slide
+    def blocks_code():
+        """
+        ## Blocks: Code
+        """
+
+        show.code("""
+        with show.block('Standard block'):
+            show.markdown("And its content...")
+
+        with show.success('Success block'):
+            show.markdown("For happy endings...")
+
+        with show.warning('Warning block'):
+            show.markdown("For hairy stuff...")
+
+        with show.error('Error block'):
+            show.markdown("When nothing works...")
+        """)
+
+
+with show.vertical():
     @show.slide
     def fragments():
         """
@@ -275,8 +296,6 @@ with show.vertical():
 
                 with show.fragment(style):
                     show.markdown(f'`{style}`')
-
-
 
 
 with show.vertical():
@@ -329,6 +348,21 @@ with show.vertical():
             plt.xlim(0, 1)
             show.pyplot(plt, fmt='png', height=350)
         """)
+
+
+@show.slide
+def themes():
+    """
+    ## Themes
+    """
+
+    show.markdown("A standard `reveal.js` theme can be specified at creation time:")
+    show.code("show = Show(default_theme='black')")
+
+    show.markdown("Or directly as a query string arg:")
+
+    with show.block():
+        show.anchor("/?theme=black#/themes")
 
 
 if __name__ == "__main__":

@@ -22,9 +22,10 @@ from .utils import fix_indent
 
 
 class Show:
-    def __init__(self, title=""):
+    def __init__(self, title="", default_theme='white'):
         self.slides = {}
         self.slide_ids = []
+        self.default_theme = default_theme
 
         self.flask = Flask("auditorium")
         self.flask.route("/")(self._index)
@@ -116,11 +117,17 @@ class Show:
         else:
             self.current_update[item_id] = markup
 
-    def anchor(self, slide, text):
+    def anchor(self, slide_or_href, text=None):
         item_id, id_markup = self._get_unique_id("anchor")
 
         if self._mode == ShowMode.Markup:
-            self.current_content.append(f'<a {id_markup} href=#/{slide.__name__}>{text}</a>')
+            if hasattr(slide_or_href, '__name__'):
+                slide_or_href = "#/" + slide_or_href.__name__
+
+            if text is None:
+                text = slide_or_href
+
+            self.current_content.append(f'<a {id_markup} href="{slide_or_href}">{text}</a>')
         else:
             self.current_update[item_id] = text
 
@@ -148,11 +155,11 @@ class Show:
     def vertical(self):
         return Vertical(self)
 
-    def block(self, title="", style='default'):
-        return Block(self, title, style)
-
     def fragment(self, style='fade-in'):
         return Fragment(self, style)
+
+    def block(self, title="", style='default'):
+        return Block(self, title, style)
 
     def success(self, title=""):
         return self.block(title, 'success')
@@ -208,7 +215,8 @@ class Show:
         return jsonify(self.current_update)
 
     def _index(self):
-        return render_template("index.html", show=self)
+        theme = request.args.get("theme", self.default_theme)
+        return render_template("index.html", show=self, theme=theme)
 
     def _serve_static(self, filename):
         return send_from_directory("static", filename)
