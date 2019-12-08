@@ -58,7 +58,7 @@ def the_basics():
     from auditorium import Show
     show = Show("Auditorium Demo")""")
 
-    show.markdown("add a method for every slide, decorated with `@show.slide`.")
+    show.markdown("Add a method for every slide, decorated with `@show.slide`.")
 
     show.code("""
     @show.slide
