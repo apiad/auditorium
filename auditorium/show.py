@@ -117,11 +117,17 @@ class Show:
         else:
             self.current_update[item_id] = markup
 
-    def anchor(self, slide, text):
+    def anchor(self, slide_or_href, text=None):
         item_id, id_markup = self._get_unique_id("anchor")
 
         if self._mode == ShowMode.Markup:
-            self.current_content.append(f'<a {id_markup} href=#/{slide.__name__}>{text}</a>')
+            if hasattr(slide_or_href, '__name__'):
+                slide_or_href = "#/" + slide_or_href.__name__
+
+            if text is None:
+                text = slide_or_href
+
+            self.current_content.append(f'<a {id_markup} href="{slide_or_href}">{text}</a>')
         else:
             self.current_update[item_id] = text
 
