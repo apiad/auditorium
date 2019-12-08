@@ -366,4 +366,5 @@ def themes():
 
 
 if __name__ == "__main__":
-    show.run("localhost", 5050, debug=True)
+    import sys
+    show.run("localhost", 5050, debug='--debug' in sys.argv)
