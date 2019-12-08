@@ -22,9 +22,10 @@ from .utils import fix_indent
 
 
 class Show:
-    def __init__(self, title=""):
+    def __init__(self, title="", default_theme='white'):
         self.slides = {}
         self.slide_ids = []
+        self.default_theme = default_theme
 
         self.flask = Flask("auditorium")
         self.flask.route("/")(self._index)
@@ -208,7 +209,8 @@ class Show:
         return jsonify(self.current_update)
 
     def _index(self):
-        return render_template("index.html", show=self)
+        theme = request.args.get("theme", self.default_theme)
+        return render_template("index.html", show=self, theme=theme)
 
     def _serve_static(self, filename):
         return send_from_directory("static", filename)
