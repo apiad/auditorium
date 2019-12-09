@@ -27,15 +27,17 @@ Simply run:
 
 To see a quick demo run:
 
-    python -m auditorium.demo
+    auditorium demo
 
-And point your browser at [localhost:5050](http://localhost:5050).
+And point your browser at [localhost:6789](http://localhost:6789).
 
 ## Quick start
 
 In `auditorium` you create a presentation via the `Show` class:
 
 ```python
+# Content of <file.py>
+
 from auditorium import Show
 show = Show("My Show")
 ```
@@ -51,8 +53,14 @@ def one_slide():
 
 Then run the show:
 
+```bash
+auditorium run <file.py>
+```
+
+You can also directly call `show.run`, although the recommended way is the previous one.
+
 ```python
-show.run('localhost', 5050)
+show.run('localhost', 6789)
 ```
 
 The simplest possible form of content is static Markdown.
@@ -159,6 +167,7 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 ### v0.1.6-dev (branch `develop`)
 
 * Added an `auditorium demo` command for running the demo.
+* Added an `auditorium run <file.py>` command for running a specific slideshow.
 
 ### v0.1.5 (latest release and branch `master`)
 
