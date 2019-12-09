@@ -156,11 +156,9 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.1.5-dev (branch `develop`)
+### v0.1.5 (latest release and branch `master`)
 
-### v0.1.4 (latest release and branch `master`)
-
-* Added support for `reveal.js` themes via `show.default_theme` and query-string argument `?theme=...`.
+* Added support for `reveal.js` themes via `show.theme` and query-string argument `?theme=...`.
 * Fixed error with missing static files in the distribution package.
 
 ### v0.1.3
