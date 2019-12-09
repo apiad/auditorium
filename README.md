@@ -156,9 +156,11 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.1.4 (latest release and branch `master`)
+### v0.1.5 (latest release and branch `master`)
 
-* Added support for `reveal.js` themes via `show.default_theme` and query-string argument `?theme=...`.
+* Added support for `reveal.js` themes via `show.theme` and query-string argument `?theme=...`.
+* Improved testing coverage.
+* Fixed error with missing static files in the distribution package.
 
 ### v0.1.3
 
@@ -167,9 +169,9 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 * Added custom layout options with `show.columns`.
 * Added styled block with `show.block`.
 * Added parameter `language` for `show.code`, defaulting to `"python"`.
-* Better layout for columns, with horizontal centering.
-* Better layout for input texts.
-* Better example for the `pyplot` support in the demo.
+* Improved layout for columns, with horizontal centering.
+* Improved layout for input texts.
+* Improved example for the `pyplot` support in the demo.
 * Fixed some style issues.
 * Fixed error reloading on a slide with an animation.
 * Updated Readme with some examples.

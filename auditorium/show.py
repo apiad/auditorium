@@ -12,20 +12,15 @@ import jinja2
 from flask import Flask, jsonify, render_template, send_from_directory, request
 from markdown import markdown
 
-from .components import Animation
-from .components import Column
-from .components import ShowMode
-from .components import Vertical
-from .components import Block
-from .components import Fragment
+from .components import *
 from .utils import fix_indent
 
 
 class Show:
-    def __init__(self, title="", default_theme='white'):
+    def __init__(self, title="", theme='white'):
         self.slides = {}
         self.slide_ids = []
-        self.default_theme = default_theme
+        self.theme = theme
 
         self.flask = Flask("auditorium")
         self.flask.route("/")(self._index)
@@ -215,7 +210,7 @@ class Show:
         return jsonify(self.current_update)
 
     def _index(self):
-        theme = request.args.get("theme", self.default_theme)
+        theme = request.args.get("theme", self.theme)
         return render_template("index.html", show=self, theme=theme)
 
     def _serve_static(self, filename):

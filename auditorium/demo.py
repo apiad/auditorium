@@ -58,7 +58,7 @@ def the_basics():
     from auditorium import Show
     show = Show("Auditorium Demo")""")
 
-    show.markdown("add a method for every slide, decorated with `@show.slide`.")
+    show.markdown("Add a method for every slide, decorated with `@show.slide`.")
 
     show.code("""
     @show.slide
@@ -366,4 +366,5 @@ def themes():
 
 
 if __name__ == "__main__":
-    show.run("localhost", 5050, debug=True)
+    import sys
+    show.run("localhost", 5050, debug='--debug' in sys.argv)

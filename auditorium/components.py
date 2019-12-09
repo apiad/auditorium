@@ -2,6 +2,7 @@
 
 from enum import IntEnum
 
+
 class ShowMode(IntEnum):
     Markup = 1
     Code = 2
