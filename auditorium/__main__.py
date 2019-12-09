@@ -14,5 +14,9 @@ class Auditorium:
         show.run(host, port, debug=debug)
 
 
-if __name__ == "__main__":
+def main():
     fire.Fire(Auditorium, name='auditorium')
+
+
+if __name__ == "__main__":
+    main()
