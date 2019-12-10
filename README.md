@@ -59,7 +59,9 @@ Then run the show:
 auditorium run <file.py>
 ```
 
-You can also directly call `show.run`, although the recommended way is the previous one.
+Optionally, you can specify `--host` and `--port` as well as `--debug` which activates hot-reload and outputs debug info (powered by Flask).
+
+Alternatively, you can also directly call `show.run`, although the recommended way is the previous one.
 
 ```python
 show.run('localhost', 6789)
@@ -93,7 +95,7 @@ def interactive():
     show.markdown(f"> Hello {name}")
 ```
 
-> The slide code is considered stateless, and will be executed every time the input changes.
+The slide code is considered stateless, and will be executed every time the input changes.
 You should design your slides with this in mind to, for example, provide sensible default values that will work when your presentation first opens.
 
 Simple stateless animations can be created with `show.animation`, which execute the backend code for every frame.
@@ -127,13 +129,13 @@ Static content can be added with pure markdown.
 
 Pure Markdown can be used as long as all you need is static content. If you need more advanced features, you can add a Python code section anywhere in your slideshow and it will be executed.
 
-```markdown
-## Python content
+~~~markdown
+## Dynamic content
 
 If you need interaction or advanced `auditorium` features,
 simply add a code section.
 
-\```python
+```python
 with show.columns(2) as cl:
     text = show.text_input("World")
 
@@ -141,8 +143,8 @@ with show.columns(2) as cl:
 
     with show.success("Message"):
         show.markdown(f"Hello {text}")
-\```
 ```
+~~~
 
 An instance named `show` will be magically available in every Python code section. Beware that **local variables are not persisted** between different code sections. This is a by-design decision to save you a bunch of headaches, believe me.
 
@@ -157,9 +159,9 @@ If you want to see and example, check [auditorium/static/md/demo.md](auditorium/
 ## What's the catch
 
 Auditorium covers a fairly simple use case that I haven't seen solved for a long time.
-I came up with this idea a while trying to make better slideshows for my lectures at the University of Havana.
-I need to display complex math stuff, ideally animated, and sometimes make modifications on the fly according to the interaction with students.
-They could ask how a function would look if some parameter where changed, etc.
+I came up with this idea while trying to make better slideshows for my lectures at the University of Havana.
+I usually need to display complex math stuff and graphs, ideally animated, and sometimes make modifications on the fly according to the interaction with students.
+They could ask how a function would look if some parameters where changed, etc.
 
 Along that path I grew up from Power Point to JavaScript-based slides (like [reveal.sj](https://revealjs.com)) and sometimes even coded some simple behavior in JS, like changing a chart's parameters.
 However, for the most complex stuff I wanted to use Python, because otherwise I would need to redo a lot of coding in JS.
