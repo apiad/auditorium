@@ -136,7 +136,7 @@ Pure Markdown can be used as long as all you need is static content. If you need
 If you need interaction or advanced `auditorium` features,
 simply add a code section.
 
-```python
+```python :run
 with show.columns(2) as cl:
     text = show.text_input("World")
 
@@ -148,6 +148,8 @@ with show.columns(2) as cl:
 ~~~
 
 An instance named `show` will be magically available in every Python code section. Beware that **local variables are not persisted** between different code sections. This is a by-design decision to save you a bunch of headaches, believe me.
+
+You need to add `:run` to the code section declaration for it to be executed, otherwise `auditorium` will consider it just Markdown code and simply print it. If you want **both** to run and print the code, then add `:run :echo` to the code declaration part.
 
 Once you finished authoring you slideshow, simply run it just like before:
 
