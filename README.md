@@ -110,8 +110,6 @@ def pyplot():
         show.pyplot(plt, fmt='png', height=350)
 ```
 
-> See a full demo of `auditorium` at [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
-
 ## What's the catch
 
 Auditorium covers a fairly simple use case that I haven't seen solved for a long time.
