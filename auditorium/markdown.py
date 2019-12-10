@@ -39,23 +39,28 @@ class MarkdownSlide:
         self.content = []
 
         state = 'markdown' # or 'code'
+        language = ''
+        code_start = ''
         split = []
 
         for line in content:
             if state == 'markdown':
-                if line.startswith('```python'):
+                if line.startswith('```') or line.startswith('~~~'):
                     if split:
                         self.content.append(MarkdownContent(split))
 
                     split = []
                     state = 'code'
+                    code_start = line[:3]
+                    language = line[3:].split()[0]
+                    tags = line[3:].split()[1:]
                 else:
                     split.append(line)
 
             elif state == 'code':
-                if line.startswith('```'):
+                if line == code_start:
                     if split:
-                        self.content.append(PythonContent(split))
+                        self.content.append(PythonContent(split, language, tags))
 
                     split = []
                     state = 'markdown'
@@ -82,8 +87,17 @@ class MarkdownContent:
 
 
 class PythonContent:
-    def __init__(self, lines):
+    def __init__(self, lines, language, tags):
         self.lines = "\n".join(lines)
+        self.tags = tags
+        self.language = language
 
     def __call__(self, show):
-        exec(self.lines, dict(show=show), dict())
+        run = ':run' in self.tags
+        echo = not run or ':echo' in self.tags
+
+        if run:
+            exec(self.lines, dict(show=show), dict())
+
+        if echo:
+            show.code(self.lines, self.language)
