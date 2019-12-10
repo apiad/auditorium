@@ -6,14 +6,21 @@ This module includes the `Show` class and the main functionalities of `auditoriu
 
 import base64
 import io
+import os
 from enum import Enum
 
 import jinja2
-from flask import Flask, jsonify, render_template, send_from_directory, request
+from jinja2 import Template
 from markdown import markdown
+from sanic import Sanic
+from sanic.response import html, json
 
 from .components import *
 from .utils import fix_indent
+
+
+def path(p):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), p)
 
 
 class Show:
@@ -22,10 +29,10 @@ class Show:
         self.slide_ids = []
         self.theme = theme
 
-        self.flask = Flask("auditorium")
-        self.flask.route("/")(self._index)
-        self.flask.route("/static/<path:filename>")(self._serve_static)
-        self.flask.route("/update", methods=['POST'])(self._update)
+        self.app = Sanic("auditorium")
+        self.app.route("/")(self._index)
+        self.app.route("/update", methods=['POST'])(self._update)
+        self.app.static('static', path('static'))
 
         self._title = title
         self.current_content = []
@@ -35,10 +42,13 @@ class Show:
         self._global_values = {}
         self._mode = ShowMode.Markup
 
+        with open(path('templates/index.html')) as fp:
+            self._template = Template(fp.read())
+
     ## Show functions
 
     def run(self, host, port, *args, **kwargs):
-        self.flask.run(host=host, port=port, *args, **kwargs)
+        self.app.run(host=host, port=port, *args, **kwargs)
 
     @property
     def show_title(self):
@@ -209,8 +219,8 @@ class Show:
 
     ## Routes
 
-    def _update(self):
-        data = request.get_json()
+    async def _update(self, request):
+        data = request.json
 
         if data['type'] == 'input':
             self._global_values[data['id']] = data['value']
@@ -218,11 +228,8 @@ class Show:
             self._global_values[data['id']].next()
 
         self.do_code(data['slide'])
-        return jsonify(self.current_update)
+        return json(self.current_update)
 
-    def _index(self):
+    async def _index(self, request):
         theme = request.args.get("theme", self.theme)
-        return render_template("index.html", show=self, theme=theme)
-
-    def _serve_static(self, filename):
-        return send_from_directory("static", filename)
+        return html(self._template.render(show=self, theme=theme))

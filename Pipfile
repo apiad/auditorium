@@ -11,10 +11,10 @@ codecov = "*"
 matplotlib = "*"
 
 [packages]
-flask = "*"
 toml = "*"
 markdown = "*"
 fire = "*"
+sanic = "*"
 
 [requires]
 python_version = "3.6"
