@@ -164,12 +164,12 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.1.6-dev (branch `develop`)
+### v0.2.0  (latest release and branch `master`)
 
-* Added an `auditorium demo` command for running the demo.
-* Added an `auditorium run <file.py>` command for running a specific slideshow.
+* Added command `auditorium run <file.py>` for running a specific slideshow. This is now the preferred method.
+* Added command `auditorium demo` for running the demo.
 
-### v0.1.5 (latest release and branch `master`)
+### v0.1.5
 
 * Added support for `reveal.js` themes via `show.theme` and query-string argument `?theme=...`.
 * Improved testing coverage.
