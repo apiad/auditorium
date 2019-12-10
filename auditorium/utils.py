@@ -3,7 +3,7 @@
 
 def fix_indent(content, tab_size=0):
     lines = content.split("\n")
-    min_indent = 1e50
+    min_indent = 1000
 
     for l in lines:
         if not l or l.isspace():
@@ -19,9 +19,10 @@ def fix_indent(content, tab_size=0):
 
         min_indent = min(indent_size, min_indent)
 
-    lines = [" " * tab_size + l[min_indent:] for l in lines]
+    if min_indent < 10000:
+        lines = [" " * tab_size + l[min_indent:] for l in lines]
 
-    while lines and not lines[0] or lines[0].isspace():
+    while lines and (not lines[0] or lines[0].isspace()):
         lines.pop(0)
 
     return "\n".join(lines)

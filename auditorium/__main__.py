@@ -3,14 +3,21 @@
 import fire
 import runpy
 
+from auditorium.markdown import MarkdownLoader
+
 
 class Auditorium:
     @staticmethod
     def run(path, host='localhost', port=6789, debug=False, instance_name='show'):
         "Runs a custom Python script as a slideshow."
 
-        ns = runpy.run_path(path)
-        show = ns[instance_name]
+        if path.endswith('.py'):
+            ns = runpy.run_path(path)
+            show = ns[instance_name]
+        elif path.endswith('.md'):
+            loader = MarkdownLoader(path, instance_name=instance_name)
+            show = loader.parse()
+
         show.run(host=host, port=port, debug=debug)
 
     @staticmethod
