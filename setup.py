@@ -5,7 +5,7 @@ from setuptools import setup
 
 
 # TODO: Update version whenever changes
-VERSION = '0.1.5'
+VERSION = '0.2.0'
 
 
 def get_install_requirements():
@@ -55,7 +55,7 @@ setup(
 
     # TODO (Optional): Set your entry-points (CLI apps to register) here
     entry_points={
-        # 'console_scripts': ['python-starter-pack=python_starter_pack:say_hello'],
+        'console_scripts': ['auditorium=auditorium.__main__:main'],
     },
 
     # TODO: Choose your classifiers carefully

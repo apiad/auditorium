@@ -68,7 +68,7 @@ def the_basics():
 
     show.markdown("Finally run the show.")
 
-    show.code("show.run('localhost', 5050)")
+    show.code("auditorium run my_show.py", 'bash')
 
 
 @show.slide
@@ -357,14 +357,9 @@ def themes():
     """
 
     show.markdown("A standard `reveal.js` theme can be specified at creation time:")
-    show.code("show = Show(default_theme='black')")
+    show.code("show = Show(theme='black')")
 
     show.markdown("Or directly as a query string arg:")
 
     with show.block():
         show.anchor("/?theme=black#/themes")
-
-
-if __name__ == "__main__":
-    import sys
-    show.run("localhost", 5050, debug='--debug' in sys.argv)
