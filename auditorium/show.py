@@ -46,10 +46,21 @@ class Show:
 
     ## @slide decorator
 
-    def slide(self, func):
-        self.slide_ids.append(func.__name__)
-        self.slides[func.__name__] = func
-        return func
+    def slide(self, func=None, id=None):
+        if func is not None:
+            slide_id = id or func.__name__
+            self.slide_ids.append(slide_id)
+            self.slides[slide_id] = func
+            return func
+
+        elif id is not None:
+            def wrapper(func):
+                slide_id = id or func.__name__
+                self.slide_ids.append(slide_id)
+                self.slides[slide_id] = func
+                return func
+
+            return wrapper
 
     ## Binding methods
 
