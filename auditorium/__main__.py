@@ -2,6 +2,7 @@
 
 import fire
 import runpy
+import webbrowser
 
 from auditorium.markdown import MarkdownLoader
 
@@ -19,6 +20,7 @@ class Auditorium:
             show = loader.parse()
 
         show.run(host=host, port=port, debug=debug)
+        # webbrowser.open_new_tab(f"{host}:{port}")
 
     @staticmethod
     def demo(host='localhost', port=6789, debug=False):

@@ -60,7 +60,7 @@ Then run the show:
 auditorium run <file.py>
 ```
 
-Optionally, you can specify `--host` and `--port` as well as `--debug` which activates hot-reload and outputs debug info (powered by Flask).
+Optionally, you can specify `--host` and `--port` as well as `--debug` which activates hot-reload and outputs debug info (powered by Sanic).
 
 Alternatively, you can also directly call `show.run`, although the recommended way is the previous one.
 
@@ -211,11 +211,15 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.3.1 (branch `develop`)
+### v0.4.0
+
+* Ported to Sanic 🤓!
+
+### v0.3.1
 
 * Improved support for running Markdown.
 
-### v0.3.0 (latest release and branch `master`)
+### v0.3.0
 
 * Added support for running directly from Markdown files with `auditorium run <file.md>`.
 
