@@ -211,11 +211,15 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.3.1 (branch `develop`)
+### v0.4.0
+
+* Ported to Sanic 🤓!
+
+### v0.3.1
 
 * Improved support for running Markdown.
 
-### v0.3.0 (latest release and branch `master`)
+### v0.3.0
 
 * Added support for running directly from Markdown files with `auditorium run <file.md>`.
 
