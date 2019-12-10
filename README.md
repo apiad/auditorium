@@ -154,7 +154,7 @@ Once you finished authoring you slideshow, simply run it just like before:
 auditorium run <file.md>
 ```
 
-If you want to see and example, check [auditorium/static/md/demo.md](auditorium/static/md/demo.md)
+If you want to see an example, check [auditorium/static/md/demo.md](auditorium/static/md/demo.md)
 
 ## What's the catch
 
