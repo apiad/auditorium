@@ -60,7 +60,7 @@ Then run the show:
 auditorium run <file.py>
 ```
 
-Optionally, you can specify `--host` and `--port` as well as `--debug` which activates hot-reload and outputs debug info (powered by Flask).
+Optionally, you can specify `--host` and `--port` as well as `--debug` which activates hot-reload and outputs debug info (powered by Sanic).
 
 Alternatively, you can also directly call `show.run`, although the recommended way is the previous one.
 
