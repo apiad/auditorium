@@ -19,6 +19,8 @@ For example, you can generate an interactive graph that can be modified by movin
 
 **And all of this without writing a single line of HTML or JavaScript.**
 
+Alternatively, if you need little to no Python code, you can author your slideshow in pure Markdown and add some Python sprinkless here and there when necessary.
+
 ## Installation
 
 Simply run:
@@ -31,7 +33,7 @@ To see a quick demo run:
 
 And point your browser at [localhost:6789](http://localhost:6789).
 
-## Quick start
+## Quick Start - Python First
 
 In `auditorium` you create a presentation via the `Show` class:
 
@@ -109,6 +111,48 @@ def pyplot():
         plt.ylim(-2,2)
         show.pyplot(plt, fmt='png', height=350)
 ```
+
+## Quick Start - Markdown First
+
+Alternatively, if you need little to no Python, you can author your slideshow in pure Markdown. Every level-2 header (`##`) becomes a slide.
+
+```markdown
+## Static content
+
+Static content can be added with pure markdown.
+
+* Some _markdown_ content.
+* More **markdown** content.
+```
+
+Pure Markdown can be used as long as all you need is static content. If you need more advanced features, you can add a Python code section anywhere in your slideshow and it will be executed.
+
+```markdown
+## Python content
+
+If you need interaction or advanced `auditorium` features,
+simply add a code section.
+
+\```python
+with show.columns(2) as cl:
+    text = show.text_input("World")
+
+    cl.tab()
+
+    with show.success("Message"):
+        show.markdown(f"Hello {text}")
+\```
+```
+
+An instance named `show` will be magically available in every Python code section. Beware that **local variables are not persisted** between different code sections. This is a by-design decision to save you a bunch of headaches, believe me.
+
+Once you finished authoring you slideshow, simply run it just like before:
+
+```bash
+auditorium run <file.md>
+```
+
+If you want to see and example, check [auditorium/static/md/demo.md](auditorium/static/md/demo.md)
 
 ## What's the catch
 
