@@ -206,7 +206,11 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.2.0  (latest release and branch `master`)
+### v0.3.0  (latest release and branch `master`)
+
+* Added support for running directly from Markdown files with `auditorium run <file.md>`.
+
+### v0.2.0
 
 * Added command `auditorium run <file.py>` for running a specific slideshow. This is now the preferred method.
 * Added command `auditorium demo` for running the demo.
