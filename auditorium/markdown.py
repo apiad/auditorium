@@ -74,16 +74,18 @@ class MarkdownSlide:
                 raise ValueError("Didn't closed a Python line...")
 
     def __call__(self):
+        global_context = dict(show=self.show)
+
         for content in self.content:
-            content(self.show)
+            content(self.show, global_context)
 
 
 class MarkdownContent:
     def __init__(self, lines):
         self.lines = "\n".join(lines)
 
-    def __call__(self, show):
-        show.markdown(self.lines)
+    def __call__(self, show, global_context):
+        show.markdown(self.lines.format(**global_context))
 
 
 class PythonContent:
@@ -92,12 +94,18 @@ class PythonContent:
         self.tags = tags
         self.language = language
 
-    def __call__(self, show):
+    def __call__(self, show, global_context):
         run = ':run' in self.tags
         echo = not run or ':echo' in self.tags
+        persist = ':persist' in self.tags
+
+        local_context = dict()
 
         if run:
-            exec(self.lines, dict(show=show), dict())
+            exec(self.lines, global_context, local_context)
 
         if echo:
             show.code(self.lines, self.language)
+
+        if persist:
+            global_context.update(local_context)
