@@ -35,7 +35,22 @@ class Animation:
         pass
 
 
-class Column:
+class Wrapper:
+    def __enter__(self):
+        self.begin()
+        return self
+
+    def __exit__(self, *args):
+        return self.end()
+
+    def begin(self):
+        raise NotImplementedError()
+
+    def end(self):
+        raise NotImplementedError()
+
+
+class Column(Wrapper):
     def __init__(self, show, *widths):
         if len(widths) == 1:
             widths = [1.0/widths[0] for _ in range(widths[0])]
@@ -46,56 +61,52 @@ class Column:
         self.widths = list(widths)
         self.show = show
 
-    def __enter__(self):
+    def begin(self):
         self.show.current_content.append(f'<div class="columns">')
         self.show.current_content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
         self.widths.pop(0)
-        return self
 
     def tab(self):
         self.show.current_content.append(f'</div>')
         self.show.current_content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
         self.widths.pop(0)
 
-    def __exit__(self, *args, **kwargs):
+    def end(self):
         self.show.current_content.append('</div>')
         self.show.current_content.append('</div>')
 
 
-class Vertical:
+class Vertical(Wrapper):
     def __init__(self, show):
         self.show = show
 
-    def __enter__(self):
+    def begin(self):
         self.show.slide_ids.append("show::start-section")
-        return self
 
-    def __exit__(self, *args, **kwargs):
+    def end(self):
         self.show.slide_ids.append("show::end-section")
 
 
-class Block:
+class Block(Wrapper):
     def __init__(self, show, title, style):
         self.show = show
         self.title = title
         self.style = style
 
-    def __enter__(self):
+    def begin(self):
         self.show.current_content.append(f'<div class="block block-{self.style}"><h1 class="block-title">{self.title}</h1><div class="block-content">')
-        return self
 
-    def __exit__(self, *args):
+    def end(self):
         self.show.current_content.append('</div></div>')
 
 
-class Fragment:
+class Fragment(Wrapper):
     def __init__(self, show, style):
         self.show = show
         self.style = style
 
-    def __enter__(self):
+    def begin(self):
         self.show.current_content.append(f'<div class="fragment {self.style}">')
-        return self
 
-    def __exit__(self, *args):
+    def end(self, *args):
         self.show.current_content.append('</div>')
