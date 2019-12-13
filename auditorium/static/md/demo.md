@@ -30,7 +30,7 @@ block are **not** persisted. If you want to change this,
 use `:persist`.
 
 ```python :echo :run :persist
-cl = show.columns(2).begin()
+cl = show.columns(2)
 text = show.text_input("World")
 # cl and text persist
 ```
@@ -44,3 +44,31 @@ show.markdown(f"Hello {text}")
 ```python :run
 cl.end()
 ```
+
+## Markdown Variables
+
+Persistent local variables are injected
+into Markdown and can be interpolated inside the content.
+
+
+```python :run :persist
+cl = show.columns(2)
+text = show.text_input("World")
+cl.tab()
+```
+
+Hello {text}. This is is written in Markdown.
+
+```python :run
+cl.end()
+```
+
+<hr>
+
+~~~markdown
+```python :run :persist
+text = show.text_input("World")
+```
+
+Hello {text}. This is is written in Markdown.
+~~~

@@ -36,8 +36,11 @@ class Animation:
 
 
 class Wrapper:
-    def __enter__(self):
+    def __init__(self, show):
+        self.show = show
         self.begin()
+
+    def __enter__(self):
         return self
 
     def __exit__(self, *args):
@@ -59,13 +62,12 @@ class Column(Wrapper):
         widths = [w/total_width for w in widths]
 
         self.widths = list(widths)
-        self.show = show
+        super(Column, self).__init__(show)
 
     def begin(self):
         self.show.current_content.append(f'<div class="columns">')
         self.show.current_content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
         self.widths.pop(0)
-        return self
 
     def tab(self):
         self.show.current_content.append(f'</div>')
@@ -78,12 +80,8 @@ class Column(Wrapper):
 
 
 class Vertical(Wrapper):
-    def __init__(self, show):
-        self.show = show
-
     def begin(self):
         self.show.slide_ids.append("show::start-section")
-        return self
 
     def end(self):
         self.show.slide_ids.append("show::end-section")
@@ -91,13 +89,12 @@ class Vertical(Wrapper):
 
 class Block(Wrapper):
     def __init__(self, show, title, style):
-        self.show = show
         self.title = title
         self.style = style
+        super(Block, self).__init__(show)
 
     def begin(self):
         self.show.current_content.append(f'<div class="block block-{self.style}"><h1 class="block-title">{self.title}</h1><div class="block-content">')
-        return self
 
     def end(self):
         self.show.current_content.append('</div></div>')
@@ -105,12 +102,11 @@ class Block(Wrapper):
 
 class Fragment(Wrapper):
     def __init__(self, show, style):
-        self.show = show
         self.style = style
+        super(Fragment, self).__init__(show)
 
     def begin(self):
         self.show.current_content.append(f'<div class="fragment {self.style}">')
-        return self
 
     def end(self, *args):
         self.show.current_content.append('</div>')
