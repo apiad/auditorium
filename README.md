@@ -220,7 +220,7 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.4.1
+### v0.4.2
 
 * Added support for injecting Python variables in Markdown mode.
 
