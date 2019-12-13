@@ -22,3 +22,25 @@ with show.columns(2) as cl:
 ```
 
 An instance named `show` will be magically available.
+
+## Context
+
+By default local variables created in a Python
+block are **not** persisted. If you want to change this,
+use `:persist`.
+
+```python :echo :run :persist
+cl = show.columns(2).begin()
+text = show.text_input("World")
+# cl and text persist
+```
+
+```python :run :echo
+cl.tab()
+show.markdown(f"Hello {text}")
+# don't forget cl.end()
+```
+
+```python :run
+cl.end()
+```

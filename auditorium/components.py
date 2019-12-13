@@ -65,6 +65,7 @@ class Column(Wrapper):
         self.show.current_content.append(f'<div class="columns">')
         self.show.current_content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
         self.widths.pop(0)
+        return self
 
     def tab(self):
         self.show.current_content.append(f'</div>')
@@ -82,6 +83,7 @@ class Vertical(Wrapper):
 
     def begin(self):
         self.show.slide_ids.append("show::start-section")
+        return self
 
     def end(self):
         self.show.slide_ids.append("show::end-section")
@@ -95,6 +97,7 @@ class Block(Wrapper):
 
     def begin(self):
         self.show.current_content.append(f'<div class="block block-{self.style}"><h1 class="block-title">{self.title}</h1><div class="block-content">')
+        return self
 
     def end(self):
         self.show.current_content.append('</div></div>')
@@ -107,6 +110,7 @@ class Fragment(Wrapper):
 
     def begin(self):
         self.show.current_content.append(f'<div class="fragment {self.style}">')
+        return self
 
     def end(self, *args):
         self.show.current_content.append('</div>')
