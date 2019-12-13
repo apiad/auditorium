@@ -4,8 +4,6 @@ cache: pip
 
 python:
   - 3.6
-  - 3.7
-  - 3.8
 
 install: make install
 script: make test
@@ -21,11 +19,3 @@ deploy:
     distributions: "sdist bdist_wheel"
     on:
       tags: true
-
-  - provider: pypi
-    user: $TEST_PYPI_USER
-    password: $TEST_PYPI_PASSWORD
-    distributions: "sdist bdist_wheel"
-    server: https://test.pypi.org/legacy/
-    on:
-      branch: develop
