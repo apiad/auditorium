@@ -57,7 +57,7 @@ text = show.text_input("World")
 cl.tab()
 ```
 
-Hello {text}. This is is written in Markdown.
+**Hello {text}**. This is _pure_ Markdown.
 
 ```python :run
 cl.end()

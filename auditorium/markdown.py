@@ -85,7 +85,7 @@ class MarkdownContent:
         self.lines = "\n".join(lines)
 
     def __call__(self, show, global_context):
-        show.markdown(self.lines)
+        show.markdown(self.lines.format(**global_context))
 
 
 class PythonContent:

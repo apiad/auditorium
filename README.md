@@ -148,6 +148,15 @@ with show.columns(2) as cl:
 ~~~
 
 An instance named `show` will be magically available in every Python code section. Beware that **local variables are not persisted** between different code sections. This is a by-design decision to save you a bunch of headaches, believe me.
+If you want variables to persist accross code sections, add `:persist` in the code declaration section. This also let's you interpolate Python variables directly inside the Markdown content.
+
+~~~markdown
+```python  :run :persist
+text = show.text_input("World")
+```
+
+Hello {text}. This is pure Markdown.
+~~~
 
 You need to add `:run` to the code section declaration for it to be executed, otherwise `auditorium` will consider it just Markdown code and simply print it. If you want **both** to run and print the code, then add `:run :echo` to the code declaration part.
 
@@ -210,6 +219,10 @@ Since the backend code runs in your computer, a viewer could inject nasty stuff 
 Staying away from `eval` and `exec` should keep you safe in most scenarios, but the basic suggestion is don't do anything you wouldn't do in a regular web application, since all security issues are the same.
 
 ## History
+
+### v0.4.1
+
+* Added support for injecting Python variables in Markdown mode.
 
 ### v0.4.0
 
