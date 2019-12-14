@@ -8,6 +8,10 @@
     text-align: center;
 }
 
+.reveal section pre {
+    width: 98%;
+}
+
 .reveal section input.text:focus {
     border: 0px;
     border-bottom: 1px solid navy;

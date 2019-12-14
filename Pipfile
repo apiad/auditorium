@@ -16,6 +16,7 @@ markdown = "*"
 fire = "*"
 sanic = "*"
 jinja2 = "*"
+pygments = "*"
 
 [requires]
 python_version = "3.6"

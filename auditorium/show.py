@@ -15,6 +15,10 @@ from markdown import markdown
 from sanic import Sanic
 from sanic.response import html, json
 
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters.html import HtmlFormatter
+from pygments.styles import get_style_by_name
 
 from .components import ShowMode, Animation, Column, Vertical, Fragment, Block
 from .utils import fix_indent
@@ -25,7 +29,7 @@ def path(p):
 
 
 class Show:
-    def __init__(self, title="", theme='white'):
+    def __init__(self, title="", theme='white', code_style='monokai'):
         self.slides = {}
         self.slide_ids = []
         self.vertical_slides = {}
@@ -43,6 +47,7 @@ class Show:
         self._unique_id = 0
         self._global_values = {}
         self._mode = ShowMode.Edit
+        self._formatter = HtmlFormatter(style=get_style_by_name(code_style))
 
         with open(path('templates/content.html')) as fp:
             self._template_content = Template(fp.read())
@@ -175,8 +180,11 @@ class Show:
         _, id_markup = self._get_unique_id("code")
         content = fix_indent(text)
 
+        lexer = get_lexer_by_name(language)
+        code = highlight(content, lexer, self._formatter)
+
         if self._mode == ShowMode.Markup:
-            self.current_content.append(f'<div {id_markup}><pre><code class="{language}">{content}</pre></code></div>')
+            self.current_content.append(f'<div {id_markup}>{code}</div>')
         # else:
         #     self.current_update[item_id] = markdown(content)
 
@@ -250,8 +258,17 @@ class Show:
         with open(path(src)) as fp:
             return fp.read()
 
+    def _code_style(self):
+        return self._formatter.get_style_defs('.highlight')
+
     def render(self, theme=None):
-        return self._template_static.render(show=self, content=self._render_content(), embed=self._embed, theme=theme or self.theme)
+        return self._template_static.render(
+            show=self,
+            content=self._render_content(),
+            code_style=self._code_style(),
+            embed=self._embed,
+            theme=theme or self.theme
+        )
 
     ## Routes
 
@@ -268,4 +285,9 @@ class Show:
 
     async def _index(self, request):
         theme = request.args.get("theme", self.theme)
-        return html(self._template_dynamic.render(show=self, content=self._content, theme=theme))
+        return html(self._template_dynamic.render(
+            show=self,
+            content=self._content,
+            code_style=self._code_style(),
+            theme=theme
+        ))

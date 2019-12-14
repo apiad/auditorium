@@ -12,8 +12,7 @@
 		<style>{{ embed("static/css/auditorium.css") | safe }}</style>
 		<style>{{ embed("static/css/auditorium-" + theme + ".css") | safe }}</style>
 
-		<!-- Theme used for syntax highlighting of code -->
-		<style>{{ embed("static/lib/css/monokai.css") | safe }}</style>
+		<style>{{ code_style | safe }}</style>
 
 		<!-- Printing and PDF exports -->
 		<script>
@@ -45,9 +44,6 @@
 				hash: true,
 			});
         </script>
-
-        <script>{{ embed("static/plugin/highlight/highlight.js") | safe }}</script>
-        <script>RevealHighlight.init();</script>
 
         <script>{{ embed("static/js/auditorium.js") | safe }}</script>
 	</body>
