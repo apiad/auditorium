@@ -6,6 +6,7 @@
 [<img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/auditorium/master.svg">](https://travis-ci.org/apiad/auditorium)
 [<img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/auditorium.svg">](https://codecov.io/gh/apiad/auditorium)
 [<img alt="Codacy" src="https://img.shields.io/codacy/grade/44c2e864ab644f3ea6cddefd536f83b5"></img>](https://app.codacy.com/manual/alepiad/auditorium/dashboard)
+[<img alt="Codacy" src="https://img.shields.io/badge/demo-browse-brightgreen"></img>](http://auditorium-demo.apiad.net)
 
 > A Python-powered slideshow creator with steroids.
 
