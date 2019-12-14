@@ -7,6 +7,7 @@ This module includes the `Show` class and the main functionalities of `auditoriu
 import base64
 import io
 import os
+import webbrowser
 
 from jinja2 import Template
 from markdown import markdown
@@ -45,7 +46,13 @@ class Show:
 
     ## Show functions
 
-    def run(self, host, port, *args, **kwargs):
+    def run(self, host, port, launch, *args, **kwargs):
+        if launch:
+            def launch_server():
+                webbrowser.open_new_tab(f"http://{host}:{port}")
+
+            self.app.add_task(launch_server)
+
         self.app.run(host=host, port=port, *args, **kwargs)
 
     @property
@@ -56,19 +63,19 @@ class Show:
 
     def slide(self, func=None, id=None):
         if func is not None:
-            slide_id = id or func.__name__
-            self.slide_ids.append(slide_id)
-            self.slides[slide_id] = func
-            return func
+            return self._wrap(func, id)
 
         elif id is not None:
             def wrapper(func):
-                slide_id = id or func.__name__
-                self.slide_ids.append(slide_id)
-                self.slides[slide_id] = func
-                return func
+                return self._wrap(func, id)
 
             return wrapper
+
+    def _wrap(self, func, id):
+        slide_id = id or func.__name__
+        self.slide_ids.append(slide_id)
+        self.slides[slide_id] = func
+        return func
 
     ## Binding methods
 

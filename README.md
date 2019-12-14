@@ -226,6 +226,10 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
+### v0.4.4
+
+*  Added automatically launching browser on `auditorium run` and `... demo`. Override with `--launch=0`.
+
 ### v0.4.3
 
 *  Improved test coverage a lot.
