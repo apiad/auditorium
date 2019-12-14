@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>{{ show.show_title }}</title>
+
+		<link rel="stylesheet" href="static/css/reset.css">
+		<link rel="stylesheet" href="static/css/reveal.css">
+		<link rel="stylesheet" href="static/css/theme/{{ theme }}.css">
+		<link rel="stylesheet" href="static/css/auditorium.css">
+		<link rel="stylesheet" href="static/css/auditorium-{{ theme }}.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="static/lib/css/monokai.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'static/css/print/pdf.css' : 'static/css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		{{ content | safe }}
+
+        <script src="static/js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				dependencies: [
+					// TODO: Include mathjax in statics
+					// { src: 'static/plugin/math/math.js' },
+					// TODO: Notes don't work with animations
+					// { src: 'static/plugin/notes/notes.js' },
+					{ src: 'static/plugin/highlight/highlight.js' },
+				],
+
+				hash: true,
+			});
+		</script>
+
+		<script src="static/js/auditorium.js"></script>
+	</body>
+</html>
