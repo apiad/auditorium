@@ -6,14 +6,14 @@
 
 		<title>{{ show.show_title }}</title>
 
-		<link rel="stylesheet" href="static/css/reset.css">
-		<link rel="stylesheet" href="static/css/reveal.css">
-		<link rel="stylesheet" href="static/css/theme/{{ theme }}.css">
-		<link rel="stylesheet" href="static/css/auditorium.css">
-		<link rel="stylesheet" href="static/css/auditorium-{{ theme }}.css">
+        <style>{{ embed("static/css/reset.css") | safe }}</style>
+		<style>{{ embed("static/css/reveal.css") | safe }}</style>
+		<style>{{ embed("static/css/theme/" + theme + ".css") | safe }}</style>
+		<style>{{ embed("static/css/auditorium.css") | safe }}</style>
+		<style>{{ embed("static/css/auditorium-" + theme + ".css") | safe }}</style>
 
 		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="static/lib/css/monokai.css">
+		<style>{{ embed("static/lib/css/monokai.css") | safe }}</style>
 
 		<!-- Printing and PDF exports -->
 		<script>
@@ -25,29 +25,9 @@
 		</script>
 	</head>
 	<body>
-		<div class="reveal">
-			<div class="slides">
-				{% for slide in show.slide_ids %}
-				<section>
+		{{ content | safe }}
 
-					<!-- Slide {{ slide }} -->
-					<section id="{{ slide }}">
-						{{ show.do_markup(slide) | safe }}
-					</section>
-
-					{% for vert_slide in show.vertical_slides[slide] %}
-					<!-- Slide {{ vert_slide }} -->
-					<section id="{{ vert_slide }}">
-						{{ show.do_markup(vert_slide) | safe }}
-					</section>
-					{% endfor %}
-
-				</section>
-				{% endfor %}
-			</div>
-		</div>
-
-        <script src="static/js/reveal.js"></script>
+        <script>{{ embed("static/js/reveal.js") | safe }}</script>
 
 		<script>
 			// More info about config & dependencies:
@@ -59,13 +39,16 @@
 					// { src: 'static/plugin/math/math.js' },
 					// TODO: Notes don't work with animations
 					// { src: 'static/plugin/notes/notes.js' },
-					{ src: 'static/plugin/highlight/highlight.js' },
+					// { src: 'static/plugin/highlight/highlight.js' },
 				],
 
 				hash: true,
 			});
-		</script>
+        </script>
 
-		<script src="static/js/auditorium.js"></script>
+        <script>{{ embed("static/plugin/highlight/highlight.js") | safe }}</script>
+        <script>RevealHighlight.init();</script>
+
+        <script>{{ embed("static/js/auditorium.js") | safe }}</script>
 	</body>
 </html>

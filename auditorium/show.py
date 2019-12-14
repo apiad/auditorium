@@ -44,13 +44,19 @@ class Show:
         self._global_values = {}
         self._mode = ShowMode.Edit
 
-        with open(path('templates/index.html')) as fp:
-            self._template = Template(fp.read())
+        with open(path('templates/content.html')) as fp:
+            self._template_content = Template(fp.read())
+
+        with open(path('templates/static.html')) as fp:
+            self._template_static = Template(fp.read())
+
+        with open(path('templates/dynamic.html')) as fp:
+            self._template_dynamic = Template(fp.read())
 
     ## Show functions
 
     def run(self, host, port, launch, *args, **kwargs):
-        self._html = self.render()
+        self._content = self._render_content()
 
         if launch:
             def launch_server():
@@ -237,8 +243,15 @@ class Show:
         item_id = f"{self.current_slide}-{markup}-{self._unique_id - 1}"
         return item_id, f'id="{item_id}" data-slide="{self.current_slide}"'
 
+    def _render_content(self):
+        return self._template_content.render(show=self)
+
+    def _embed(self, src):
+        with open(path(src)) as fp:
+            return fp.read()
+
     def render(self, theme=None):
-        return self._template.render(show=self, theme=theme or self.theme)
+        return self._template_static.render(show=self, content=self._render_content(), embed=self._embed, theme=theme or self.theme)
 
     ## Routes
 
@@ -255,8 +268,4 @@ class Show:
 
     async def _index(self, request):
         theme = request.args.get("theme", self.theme)
-
-        if theme != self.theme:
-            return html(self.render(theme))
-
-        return html(self._html)
+        return html(self._template_dynamic.render(show=self, content=self._content, theme=theme))
