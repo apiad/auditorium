@@ -8,11 +8,13 @@ import base64
 import io
 import os
 import webbrowser
+from collections import OrderedDict
 
 from jinja2 import Template
 from markdown import markdown
 from sanic import Sanic
 from sanic.response import html, json
+
 
 from .components import ShowMode, Animation, Column, Vertical, Fragment, Block
 from .utils import fix_indent
@@ -79,9 +81,9 @@ class Show:
 
         if self._mode == ShowMode.Edit:
             self.slide_ids.append(slide_id)
-            self.vertical_slides[slide_id] = set()
+            self.vertical_slides[slide_id] = OrderedDict()
         elif self._mode == ShowMode.Markup:
-            self.vertical_slides[self.current_slide].add(slide_id)
+            self.vertical_slides[self.current_slide][slide_id] = None
         else:
             return
 
