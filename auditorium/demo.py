@@ -181,30 +181,30 @@ def animation():
         show.markdown("> ### ." + ("." * anim.current))
     """)
 
+@show.slide
+def vertical_slides():
+    """
+    ## Vertical Slides
 
-with show.vertical():
-    @show.slide
-    def vertical_1():
-        """
-        ## Vertical Slides
+    Vertical slides allow you to create "read-more" like
+    features in your slideshow.
+    They can be skipped on shorter presentations and left
+    for more interested audiences.
+    """
 
-        Vertical slides allow you to create "read-more" like
-        features in your slideshow.
-        They can be skipped on shorter presentations and left
-        for more interested audiences.
-        """
-
-        with show.warning():
-            show.markdown('Press `DOWN` instead of `LEFT` or click the down arrow.')
+    with show.warning():
+        show.markdown('Press `DOWN` instead of `LEFT` or click the down arrow.')
 
     @show.slide
-    def vertical_2():
+    def vertical_code():
         """
         ## Vertical Slides: Code
         """
 
         show.code("""
-        with show.vertical():
+        @show.slide
+        def main_slide():
+            # content of main slide
 
             @show.slide
             def vertical_1():
@@ -212,34 +212,44 @@ with show.vertical():
 
             @show.slide
             def vertical_2():
-                # content of second vertical slide
+                # content of first vertical slide
         """)
 
-
-with show.vertical():
     @show.slide
-    def blocks():
+    def vertical_more():
         """
-        ## Blocks
+        ### Vertical Slides: More Info
 
-        Like beamer, pre-styled blocks are available.
+        If you press `SPACE` instead of `LEFT` or `DOWN`
+        the slideshow will cycle through **all** of the slides
+        in order, including vertical slides.
+
+        It will go down and left automatically.
         """
 
-        with show.columns(2) as cl:
+@show.slide
+def blocks():
+    """
+    ## Blocks
 
-            with show.block('Standard block'):
-                show.markdown("And its content...")
+    Like beamer, pre-styled blocks are available.
+    """
 
-            with show.success('Success block'):
-                show.markdown("For happy endings...")
+    with show.columns(2) as cl:
 
-            cl.tab()
+        with show.block('Standard block'):
+            show.markdown("And its content...")
 
-            with show.warning('Warning block'):
-                show.markdown("For hairy stuff...")
+        with show.success('Success block'):
+            show.markdown("For happy endings...")
 
-            with show.error('Error block'):
-                show.markdown("When nothing works...")
+        cl.tab()
+
+        with show.warning('Warning block'):
+            show.markdown("For hairy stuff...")
+
+        with show.error('Error block'):
+            show.markdown("When nothing works...")
 
     @show.slide
     def blocks_code():
@@ -262,24 +272,23 @@ with show.vertical():
         """)
 
 
-with show.vertical():
-    @show.slide
-    def fragments():
-        """
-        ## Fragments
+@show.slide
+def fragments():
+    """
+    ## Fragments
 
-        Fragments allow to animate elements inside a slide.
-        """
+    Fragments allow to animate elements inside a slide.
+    """
 
-        with show.fragment():
-            show.markdown("The can have different animations as well...")
+    with show.fragment():
+        show.markdown("The can have different animations as well...")
 
-        with show.fragment():
-            show.hrule()
-            show.code("""
-            with show.fragment(style='...'): # fade-in, grow, ...
-                # content
-            """)
+    with show.fragment():
+        show.hrule()
+        show.code("""
+        with show.fragment(style='...'): # fade-in, grow, ...
+            # content
+        """)
 
     @show.slide
     def fragment_examples():
@@ -298,37 +307,36 @@ with show.vertical():
                     show.markdown(f'`{style}`')
 
 
-with show.vertical():
-    @show.slide
-    def pyplot():
-        """
-        ## pyplot
+@show.slide
+def pyplot():
+    """
+    ## pyplot
 
-        Dynamically generated graphs with `pyplot` can be added
-        also very easily.
-        """
-        from matplotlib import pyplot as plt
-        import numpy as np
+    Dynamically generated graphs with `pyplot` can be added
+    also very easily.
+    """
+    from matplotlib import pyplot as plt
+    import numpy as np
 
-        xg = np.random.RandomState(0)
-        yg = np.random.RandomState(1)
+    xg = np.random.RandomState(0)
+    yg = np.random.RandomState(1)
 
-        with show.columns(2) as cl:
-            with show.animation(steps=60, time=0.5, loop=True) as anim:
-                x = xg.uniform(size=anim.current * 50)
-                y = yg.uniform(size=anim.current * 50)
-                colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange' for (xi, yi) in zip(x,y)]
-                plt.scatter(x, y, s=3, c=colors)
-                plt.ylim(0, 1)
-                plt.xlim(0, 1)
-                show.pyplot(plt, fmt='png', height=350)
+    with show.columns(2) as cl:
+        with show.animation(steps=60, time=0.5, loop=True) as anim:
+            x = xg.uniform(size=anim.current * 50)
+            y = yg.uniform(size=anim.current * 50)
+            colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange' for (xi, yi) in zip(x,y)]
+            plt.scatter(x, y, s=3, c=colors)
+            plt.ylim(0, 1)
+            plt.xlim(0, 1)
+            show.pyplot(plt, fmt='png', height=350)
 
-                cl.tab()
+            cl.tab()
 
-                with show.block('Monte Carlo Sampling'):
-                    show.markdown(f"Samples: {len(x)}")
-                    show.markdown(f"Inside: {colors.count('green')}")
-                    show.markdown("**Pi = %.3f**" % (4 * colors.count('green') / len(x) if len(x) > 0 else 0))
+            with show.block('Monte Carlo Sampling'):
+                show.markdown(f"Samples: {len(x)}")
+                show.markdown(f"Inside: {colors.count('green')}")
+                show.markdown("**Pi = %.3f**" % (4 * colors.count('green') / len(x) if len(x) > 0 else 0))
 
     @show.slide
     def pyplot_code():
