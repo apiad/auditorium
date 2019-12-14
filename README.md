@@ -252,7 +252,7 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 *  Changed the syntax for vertical slides, thanks to suggestions by [@tialpoy](https://www.reddit.com/user/tialpoy/).
 *  Added automatically launching browser on `auditorium run` and `... demo`. Override with `--launch=0`.
-*  Improved performance, now rendering only occurs at `show.run` or when changing the theme.m
+*  Improved performance, now rendering only occurs at `show.run` or when changing the theme.
 
 ### v0.4.3
 
