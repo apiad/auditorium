@@ -65,7 +65,7 @@ cl.end()
 
 <hr>
 
-~~~markdown
+~~~md
 ```python :run :persist
 text = show.text_input("World")
 ```

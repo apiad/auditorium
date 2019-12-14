@@ -12,8 +12,7 @@
 		<link rel="stylesheet" href="static/css/auditorium.css">
 		<link rel="stylesheet" href="static/css/auditorium-{{ theme }}.css">
 
-		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="static/lib/css/monokai.css">
+		<style>{{ code_style | safe }}</style>
 
 		<!-- Printing and PDF exports -->
 		<script>
@@ -39,7 +38,7 @@
 					// { src: 'static/plugin/math/math.js' },
 					// TODO: Notes don't work with animations
 					// { src: 'static/plugin/notes/notes.js' },
-					{ src: 'static/plugin/highlight/highlight.js' },
+					// { src: 'static/plugin/highlight/highlight.js' },
 				],
 
 				hash: true,

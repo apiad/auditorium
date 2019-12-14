@@ -240,6 +240,10 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
+### v0.5.1
+
+* Added `pygments` for code highlighting, removing `highlight.js` and fixing the error with static rendering.
+
 ### v0.5.0
 
 * Added command `auditorium render` to generate a static HTML that can be displayed without `auditorium`.

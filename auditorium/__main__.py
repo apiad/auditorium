@@ -18,6 +18,7 @@ def load(path, instance_name='show'):
 
     return show
 
+
 class Auditorium:
     @staticmethod
     def run(path, host='localhost', port=6789, debug=False, instance_name='show', launch=True):
