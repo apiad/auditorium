@@ -7,15 +7,13 @@ This module includes the `Show` class and the main functionalities of `auditoriu
 import base64
 import io
 import os
-from enum import Enum
 
-import jinja2
 from jinja2 import Template
 from markdown import markdown
 from sanic import Sanic
 from sanic.response import html, json
 
-from .components import *
+from .components import ShowMode, Animation, Column, Vertical, Fragment, Block
 from .utils import fix_indent
 
 
