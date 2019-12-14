@@ -39,12 +39,15 @@
 					// { src: 'static/plugin/math/math.js' },
 					// TODO: Notes don't work with animations
 					// { src: 'static/plugin/notes/notes.js' },
-					{ src: 'static/plugin/highlight/highlight.js' },
+					// { src: 'static/plugin/highlight/highlight.js' },
 				],
 
 				hash: true,
 			});
-		</script>
+        </script>
+
+        <script>{{ embed("static/plugin/highlight/highlight.js") | safe }}</script>
+        <script>RevealHighlight.init();</script>
 
         <script>{{ embed("static/js/auditorium.js") | safe }}</script>
 	</body>
