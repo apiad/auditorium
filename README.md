@@ -226,6 +226,10 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
+### v0.4.5
+
+*  Fixed random order of vertical slides.
+
 ### v0.4.4
 
 *  Changed the syntax for vertical slides, thanks to suggestions by [@tialpoy](https://www.reddit.com/user/tialpoy/).
