@@ -222,7 +222,7 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
-### v0.4.3-dev
+### v0.4.3
 
 * Improved test coverage a lot.
 
