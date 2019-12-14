@@ -7,6 +7,7 @@ This module includes the `Show` class and the main functionalities of `auditoriu
 import base64
 import io
 import os
+import webbrowser
 
 from jinja2 import Template
 from markdown import markdown
@@ -25,6 +26,7 @@ class Show:
     def __init__(self, title="", theme='white'):
         self.slides = {}
         self.slide_ids = []
+        self.vertical_slides = {}
         self.theme = theme
 
         self.app = Sanic("auditorium")
@@ -32,20 +34,28 @@ class Show:
         self.app.route("/update", methods=['POST'])(self._update)
         self.app.static('static', path('static'))
 
-        self._title = title
         self.current_content = []
         self.current_update = {}
         self.current_slide = None
+        self._title = title
         self._unique_id = 0
         self._global_values = {}
-        self._mode = ShowMode.Markup
+        self._mode = ShowMode.Edit
 
         with open(path('templates/index.html')) as fp:
             self._template = Template(fp.read())
 
     ## Show functions
 
-    def run(self, host, port, *args, **kwargs):
+    def run(self, host, port, launch, *args, **kwargs):
+        self._html = self.render()
+
+        if launch:
+            def launch_server():
+                webbrowser.open_new_tab(f"http://{host}:{port}")
+
+            self.app.add_task(launch_server)
+
         self.app.run(host=host, port=port, *args, **kwargs)
 
     @property
@@ -56,19 +66,27 @@ class Show:
 
     def slide(self, func=None, id=None):
         if func is not None:
-            slide_id = id or func.__name__
-            self.slide_ids.append(slide_id)
-            self.slides[slide_id] = func
-            return func
+            return self._wrap(func, id)
 
         elif id is not None:
             def wrapper(func):
-                slide_id = id or func.__name__
-                self.slide_ids.append(slide_id)
-                self.slides[slide_id] = func
-                return func
+                return self._wrap(func, id)
 
             return wrapper
+
+    def _wrap(self, func, id):
+        slide_id = id or func.__name__
+
+        if self._mode == ShowMode.Edit:
+            self.slide_ids.append(slide_id)
+            self.vertical_slides[slide_id] = set()
+        elif self._mode == ShowMode.Markup:
+            self.vertical_slides[self.current_slide].add(slide_id)
+        else:
+            return
+
+        self.slides[slide_id] = func
+        return func
 
     ## Binding methods
 
@@ -190,12 +208,14 @@ class Show:
         self._mode = ShowMode.Markup
         self.current_content.clear()
         self._run(slide)
+        self._mode = ShowMode.Edit
         return "\n\n".join(self.current_content)
 
     def do_code(self, slide):
         self._mode = ShowMode.Code
         self.current_update.clear()
         self._run(slide)
+        self._mode = ShowMode.Edit
         return self.current_update
 
     ## Utilities
@@ -215,8 +235,8 @@ class Show:
         item_id = f"{self.current_slide}-{markup}-{self._unique_id - 1}"
         return item_id, f'id="{item_id}" data-slide="{self.current_slide}"'
 
-    def render(self, theme='white'):
-        return self._template.render(show=self, theme=theme)
+    def render(self, theme=None):
+        return self._template.render(show=self, theme=theme or self.theme)
 
     ## Routes
 
@@ -233,4 +253,8 @@ class Show:
 
     async def _index(self, request):
         theme = request.args.get("theme", self.theme)
-        return html(self.render(theme))
+
+        if theme != self.theme:
+            return html(self.render(theme))
+
+        return html(self._html)

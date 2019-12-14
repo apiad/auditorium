@@ -9,7 +9,7 @@ from auditorium.markdown import MarkdownLoader
 
 class Auditorium:
     @staticmethod
-    def run(path, host='localhost', port=6789, debug=False, instance_name='show'):
+    def run(path, host='localhost', port=6789, debug=False, instance_name='show', launch=True):
         "Runs a custom Python script as a slideshow."
 
         if path.endswith('.py'):
@@ -19,15 +19,14 @@ class Auditorium:
             loader = MarkdownLoader(path, instance_name=instance_name)
             show = loader.parse()
 
-        show.run(host=host, port=port, debug=debug)
-        # webbrowser.open_new_tab(f"{host}:{port}")
+        show.run(host=host, port=port, debug=debug, launch=launch)
 
     @staticmethod
-    def demo(host='localhost', port=6789, debug=False):
+    def demo(host='localhost', port=6789, debug=False, launch=True):
         "Starts the demo slideshow."
 
         from auditorium.demo import show
-        show.run(host, port, debug=debug)
+        show.run(host, port, debug=debug, launch=launch)
 
 
 def main():

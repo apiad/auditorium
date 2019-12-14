@@ -4,6 +4,7 @@ from enum import IntEnum
 
 
 class ShowMode(IntEnum):
+    Edit = 0
     Markup = 1
     Code = 2
 
