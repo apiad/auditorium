@@ -1,6 +1,8 @@
+/* global Reveal */
+
 var animations = [];
 
-Reveal.addEventListener('slidechanged', function (event) {
+Reveal.addEventListener("slidechanged", function (event) {
     animations.forEach(function (interval) {
         clearInterval(interval);
     });
@@ -13,11 +15,11 @@ Reveal.addEventListener('slidechanged', function (event) {
 
 function setupAnimations(parent) {
     parent.querySelectorAll("animation").forEach(function (el) {
-        var slide = el.attributes['data-slide'].value;
+        var slide = el.attributes["data-slide"].value;
         var currentSlide = Reveal.getCurrentSlide().id;
-        var time = Number(el.attributes['data-time'].value) * 1000;
+        var time = Number(el.attributes["data-time"].value) * 1000;
 
-        interval = setInterval(function () {
+        var interval = setInterval(function () {
             if (slide === currentSlide) {
                 console.log("Executing animation", {
                     slide,
@@ -26,18 +28,18 @@ function setupAnimations(parent) {
                 });
 
                 fetch("/update", {
-                    method: 'POST',
+                    method: "POST",
                     headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        type: 'animation',
+                        type: "animation",
                         slide: slide,
                         id: el.id,
                     })
                 }).then(resp => resp.json()).then(json => {
-                    for (item_id in json) {
+                    for (var item_id in json) {
                         document.querySelector("#" + item_id).innerHTML = json[item_id];
                     }
                 });
@@ -50,14 +52,14 @@ function setupAnimations(parent) {
 
 function setupInput(parent) {
     parent.querySelectorAll("input").forEach(function (el) {
-        event = el.attributes['data-event'].value;
+        event = el.attributes["data-event"].value;
 
         el[event] = function() {
             var newValue = el.value;
-            var slide = el.attributes['data-slide'].value;
+            var slide = el.attributes["data-slide"].value;
             var item_id = el.id;
             var updateInfo = {
-                type: 'input',
+                type: "input",
                 slide: slide,
                 id: item_id,
                 value: newValue,
@@ -65,11 +67,11 @@ function setupInput(parent) {
 
             console.log("Updating", updateInfo);
 
-            fetch('update', {
-                method: 'POST',
+            fetch("update", {
+                method: "POST",
                 headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(updateInfo)
             }).then(resp => resp.json()).then(json => {
@@ -81,7 +83,8 @@ function setupInput(parent) {
     });
 }
 
-Reveal.addEventListener('ready', function () {
+
+Reveal.addEventListener("ready", function () {
     setupAnimations(Reveal.getCurrentSlide());
     setupInput(Reveal.getCurrentSlide());
 });
