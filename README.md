@@ -66,6 +66,8 @@ Then run the show:
 auditorium run <file.py>
 ```
 
+> **Slides are ordered in the same order in which methods are defined in your script.**
+
 Optionally, you can specify `--host` and `--port` as well as `--debug` which activates hot-reload and outputs debug info (powered by Sanic).
 
 Alternatively, you can also directly call `show.run`, although the recommended way is the previous one.
@@ -174,6 +176,16 @@ auditorium run <file.md>
 
 If you want to see an example, check [auditorium/static/md/demo.md](auditorium/static/md/demo.md)
 
+### Going full static
+
+If you only need `auditorium` to generate the HTML, but have no interactive code whatsoever, you can also run:
+
+```bash
+auditorium render <file.[py|md]> > <output.html>
+```
+
+This will render the slideshow in an HTML file with all CSS and JavaScript embedded. Just copy this single HTML file and open it on any browser. You won't need to have `auditorium` installed. However, do keep in mind that all of the backend code will execute only once for the initial rendering, so your animations will be frozen at the starting frame and none of the interaction will work.
+
 ## What's the catch
 
 Auditorium covers a fairly simple use case that I haven't seen solved for a long time.
@@ -225,6 +237,10 @@ Since the backend code runs in your computer, a viewer could inject nasty stuff 
 Staying away from `eval` and `exec` should keep you safe in most scenarios, but the basic suggestion is don't do anything you wouldn't do in a regular web application, since all security issues are the same.
 
 ## History
+
+### v0.5.0
+
+* Added command `auditorium render` to generate a static HTML that can be displayed without `auditorium`.
 
 ### v0.4.5
 
