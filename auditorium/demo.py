@@ -359,6 +359,24 @@ def pyplot():
 
 
 @show.slide
+def static_html():
+    """
+    ## Going full static
+
+    If you only need `auditorium` for the initial rendering of the HTML,
+    and have no animations or interactive code, you can use:
+    """
+
+    show.code('auditorium render [file] > [output.html]', 'bash')
+
+    show.markdown("""
+    This will render the slideshow into a static HTML with all CSS and
+    JavaScript embedded, that you can take away and reproduce in any browser,
+    or host on a static file server (like Github pages).
+    """)
+
+
+@show.slide
 def themes():
     """
     ## Themes
