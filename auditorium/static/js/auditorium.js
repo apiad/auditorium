@@ -2,17 +2,6 @@
 
 var animations = [];
 
-Reveal.addEventListener("slidechanged", function (event) {
-    animations.forEach(function (interval) {
-        clearInterval(interval);
-    });
-
-    animations = [];
-
-    setupAnimations(event.currentSlide);
-    setupInput(event.currentSlide);
-});
-
 function setupAnimations(parent) {
     parent.querySelectorAll("animation").forEach(function (el) {
         var slide = el.attributes["data-slide"].value;
@@ -39,8 +28,8 @@ function setupAnimations(parent) {
                         id: el.id,
                     })
                 }).then(resp => resp.json()).then(json => {
-                    for (var item_id in json) {
-                        document.querySelector("#" + item_id).innerHTML = json[item_id];
+                    for (var itemId in json) {
+                        document.querySelector("#" + itemId).innerHTML = json[itemId];
                     }
                 });
             }
@@ -57,11 +46,11 @@ function setupInput(parent) {
         el[event] = function() {
             var newValue = el.value;
             var slide = el.attributes["data-slide"].value;
-            var item_id = el.id;
+            var itemId = el.id;
             var updateInfo = {
                 type: "input",
-                slide: slide,
-                id: item_id,
+                slide,
+                id: itemId,
                 value: newValue,
             };
 
@@ -75,8 +64,8 @@ function setupInput(parent) {
                 },
                 body: JSON.stringify(updateInfo)
             }).then(resp => resp.json()).then(json => {
-                for (item_id in json) {
-                    document.querySelector("#" + item_id).innerHTML = json[item_id];
+                for (itemId in json) {
+                    document.querySelector("#" + itemId).innerHTML = json[itemId];
                 }
             });
         }
@@ -87,4 +76,16 @@ function setupInput(parent) {
 Reveal.addEventListener("ready", function () {
     setupAnimations(Reveal.getCurrentSlide());
     setupInput(Reveal.getCurrentSlide());
+});
+
+
+Reveal.addEventListener("slidechanged", function (event) {
+    animations.forEach(function (interval) {
+        clearInterval(interval);
+    });
+
+    animations = [];
+
+    setupAnimations(event.currentSlide);
+    setupInput(event.currentSlide);
 });
