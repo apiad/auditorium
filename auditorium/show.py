@@ -200,7 +200,7 @@ class Show:
         self._run(slide)
         return self.current_update
 
-    ## Utils
+    ## Utilities
 
     def _run(self, slide):
         self._unique_id = 0
@@ -217,6 +217,9 @@ class Show:
         item_id = f"{self.current_slide}-{markup}-{self._unique_id - 1}"
         return item_id, f'id="{item_id}" data-slide="{self.current_slide}"'
 
+    def render(self, theme='white'):
+        return self._template.render(show=self, theme=theme)
+
     ## Routes
 
     async def _update(self, request):
@@ -232,4 +235,4 @@ class Show:
 
     async def _index(self, request):
         theme = request.args.get("theme", self.theme)
-        return html(self._template.render(show=self, theme=theme))
+        return html(self.render(theme))

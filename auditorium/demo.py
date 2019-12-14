@@ -116,7 +116,7 @@ def layout():
     """
     ## Custom layout
 
-    More complex layouts can be compossed.
+    More complex layouts can be composed.
     """
 
     show.hrule()
