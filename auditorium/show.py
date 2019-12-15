@@ -289,7 +289,7 @@ class Context:
         if self.mode == ShowMode.Markup:
             self.content.append(f'<div {id_markup}>{code}</div>')
         else:
-            self.update[item_id] = markdown(content)
+            self.update[item_id] = code
 
     def animation(self, steps=10, time=0.1, loop=True) -> Animation:
         item_id, id_markup = self._get_unique_id('animation')
