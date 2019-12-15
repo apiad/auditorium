@@ -80,14 +80,6 @@ class Column(Wrapper):
         self.show.current_content.append('</div>')
 
 
-class Vertical(Wrapper):
-    def begin(self):
-        self.show.slide_ids.append("show::start-section")
-
-    def end(self):
-        self.show.slide_ids.append("show::end-section")
-
-
 class Block(Wrapper):
     def __init__(self, show, title, style):
         self.title = title
