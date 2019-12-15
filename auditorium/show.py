@@ -6,34 +6,31 @@ This module includes the `Show` class and the main functionalities of `auditoriu
 
 import base64
 import io
-import os
+import runpy
 import webbrowser
 from collections import OrderedDict
 
 from jinja2 import Template
 from markdown import markdown
+from pygments import highlight
+from pygments.formatters.html import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
+from pygments.styles import get_style_by_name
 from sanic import Sanic
 from sanic.response import html, json
 
-from pygments import highlight
-from pygments.lexers import get_lexer_by_name
-from pygments.formatters.html import HtmlFormatter
-from pygments.styles import get_style_by_name
-
-from .components import ShowMode, Animation, Column, Vertical, Fragment, Block
-from .utils import fix_indent
-
-
-def path(p):
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), p)
+from .components import Animation, Block, Column, Fragment, ShowMode
+from .utils import fix_indent, path
 
 
 class Show:
     def __init__(self, title="", theme='white', code_style='monokai'):
-        self.slides = {}
-        self.slide_ids = []
-        self.vertical_slides = {}
         self.theme = theme
+
+        self._slides = {}
+        self._slide_ids = []
+        self._vertical_slides = {}
+        self._tail = []
 
         self.app = Sanic("auditorium")
         self.app.route("/")(self._index)
@@ -75,6 +72,54 @@ class Show:
     def show_title(self):
         return self._title
 
+    def append(self, show, instance_name='show'):
+        if isinstance(show, str):
+            show = Show.load(show, instance_name)
+
+        self._tail.append(show)
+
+    @staticmethod
+    def load(path, instance_name='show'):
+        from .markdown import MarkdownLoader
+
+        if path.endswith('.py'):
+            ns = runpy.run_path(path)
+            show = ns[instance_name]
+        elif path.endswith('.md'):
+            loader = MarkdownLoader(path, instance_name=instance_name)
+            show = loader.parse()
+        else:
+            raise ValueError("Invalid path %r" % path)
+
+        return show
+
+    @property
+    def slides(self):
+        slides = dict(**self._slides)
+
+        for show in self._tail:
+            slides.update(show.slides)
+
+        return slides
+
+    @property
+    def slide_ids(self):
+        slides = list(self._slide_ids)
+
+        for show in self._tail:
+            slides.extend(show.slide_ids)
+
+        return slides
+
+    @property
+    def vertical_slides(self):
+        slides = dict(**self._vertical_slides)
+
+        for show in self._tail:
+            slides.update(show.vertical_slides)
+
+        return slides
+
     ## @slide decorator
 
     def slide(self, func=None, id=None):
@@ -91,14 +136,14 @@ class Show:
         slide_id = id or func.__name__
 
         if self._mode == ShowMode.Edit:
-            self.slide_ids.append(slide_id)
-            self.vertical_slides[slide_id] = OrderedDict()
+            self._slide_ids.append(slide_id)
+            self._vertical_slides[slide_id] = OrderedDict()
         elif self._mode == ShowMode.Markup:
-            self.vertical_slides[self.current_slide][slide_id] = None
+            self._vertical_slides[self.current_slide][slide_id] = None
         else:
             return
 
-        self.slides[slide_id] = func
+        self._slides[slide_id] = func
         return func
 
     ## Binding methods
@@ -188,7 +233,7 @@ class Show:
         # else:
         #     self.current_update[item_id] = markdown(content)
 
-    def animation(self, steps=10, time=0.1, loop=True):
+    def animation(self, steps=10, time=0.1, loop=True) -> Animation:
         item_id, id_markup = self._get_unique_id('animation')
 
         if self._mode == ShowMode.Markup:
@@ -197,41 +242,44 @@ class Show:
 
         return self._global_values[item_id]
 
-    def columns(self, *widths):
+    def columns(self, *widths) -> Column:
         return Column(self, *widths)
 
-    def vertical(self):
-        return Vertical(self)
-
-    def fragment(self, style='fade-in'):
+    def fragment(self, style='fade-in') -> Fragment:
         return Fragment(self, style)
 
-    def block(self, title="", style='default'):
+    def block(self, title="", style='default') -> Block:
         return Block(self, title, style)
 
-    def success(self, title=""):
+    def success(self, title="") -> Block:
         return self.block(title, 'success')
 
-    def warning(self, title=""):
+    def warning(self, title="") -> Block:
         return self.block(title, 'warning')
 
-    def error(self, title=""):
+    def error(self, title="") -> Block:
         return self.block(title, 'error')
 
     ## Internal API
 
+    def set_mode(self, mode):
+        self._mode = mode
+
+        for show in self._tail:
+            show.set_mode(mode)
+
     def do_markup(self, slide):
-        self._mode = ShowMode.Markup
+        self.set_mode(ShowMode.Markup)
         self.current_content.clear()
         self._run(slide)
-        self._mode = ShowMode.Edit
+        self.set_mode(ShowMode.Edit)
         return "\n\n".join(self.current_content)
 
     def do_code(self, slide):
-        self._mode = ShowMode.Code
+        self.set_mode(ShowMode.Code)
         self.current_update.clear()
         self._run(slide)
-        self._mode = ShowMode.Edit
+        self.set_mode(ShowMode.Edit)
         return self.current_update
 
     ## Utilities
