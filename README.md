@@ -115,7 +115,7 @@ Combining this with drawing logic from, for example, `matplotlib` allows for ver
 
 ```python
 @show.slide
-def pyplot():
+def pyplot(ctx):
     with ctx.animation(steps=50, time=0.33, loop=True) as anim:
         # Every 0.33 seconds the graph will move
         step = anim.current * 2 * math.pi / 50
