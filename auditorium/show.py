@@ -174,12 +174,7 @@ class Show:
     async def _update(self, request):
         data = request.json
         values = {}
-
-        if data['type'] == 'input':
-            values[data['id']] = data['value']
-        elif data['type'] == 'animation':
-            values[data['id']].next()
-
+        values[data['id']] = data['value']
         update = self.do_code(data['slide'], values)
         return json(update)
 
@@ -301,9 +296,9 @@ class Context:
 
         if self.mode == ShowMode.Markup:
             self.content.append(f'<animation {id_markup} data-steps="{steps}" data-time="{time}" data-loop="{loop}"></animation>')
-            return Animation(steps, time, loop)
+            return Animation(steps, time, loop, 0)
 
-        return self.values[item_id]
+        return Animation(steps, time, loop, self.values[item_id])
 
     def columns(self, *widths) -> Column:
         return Column(self, *widths)
