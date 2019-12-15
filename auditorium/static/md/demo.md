@@ -15,13 +15,13 @@ If you need interaction or advanced features,
 add a code section with tag [`python :run`].
 
 ```python :echo :run
-with show.columns(2) as cl:
-    text = show.text_input("World")
+with ctx.columns(2) as cl:
+    text = ctx.text_input("World")
     cl.tab()
-    show.markdown(f"Hello {text}")
+    ctx.markdown(f"Hello {text}")
 ```
 
-An instance named `show` will be magically available.
+An instance named `ctx` will be magically available.
 
 ## Context
 
@@ -30,14 +30,14 @@ block are **not** persisted. If you want to change this,
 use `:persist`.
 
 ```python :echo :run :persist
-cl = show.columns(2)
-text = show.text_input("World")
+cl = ctx.columns(2)
+text = ctx.text_input("World")
 # cl and text persist
 ```
 
 ```python :run :echo
 cl.tab()
-show.markdown(f"Hello {text}")
+ctx.markdown(f"Hello {text}")
 # don't forget cl.end()
 ```
 
@@ -52,8 +52,8 @@ into Markdown and can be interpolated inside the content.
 
 
 ```python :run :persist
-cl = show.columns(2)
-text = show.text_input("World")
+cl = ctx.columns(2)
+text = ctx.text_input("World")
 cl.tab()
 ```
 
@@ -67,7 +67,7 @@ cl.end()
 
 ~~~md
 ```python :run :persist
-text = show.text_input("World")
+text = ctx.text_input("World")
 ```
 
 Hello {text}. This is is written in Markdown.

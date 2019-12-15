@@ -3,21 +3,31 @@
 from auditorium import Show
 
 
-def test_show():
-    show = Show()
-
-    assert show.current_slide is None
-
-
 def test_one_slide():
     show = Show()
 
     @show.slide
-    def slide_one():
+    def slide_one(ctx):
         "## Title"
 
-    assert show.slide_ids == ['slide_one']
-    assert show.slides['slide_one'] == slide_one
+    assert 'slide_one' in show.slides
+    assert len(show.sections) == 1
+
+
+def test_vertical_slide():
+    show = Show()
+
+    @show.slide
+    def main(ctx):
+
+        @show.slide
+        def second(ctx):
+            pass
+
+    show.render()
+
+    assert len(show.slides) == 2
+    assert len(show.sections) == 1
 
 
 def test_demo():

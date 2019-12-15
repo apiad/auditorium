@@ -4,7 +4,7 @@ from auditorium import Show
 
 
 class MarkdownLoader:
-    def __init__(self, path, instance_name='show'):
+    def __init__(self, path, instance_name='ctx'):
         self.path = path
         self.instance_name = instance_name
 
@@ -73,11 +73,11 @@ class MarkdownSlide:
             else:
                 raise ValueError("Didn't closed a code line...")
 
-    def __call__(self):
-        global_context = dict(show=self.show)
+    def __call__(self, ctx):
+        global_context = dict(ctx=ctx)
 
         for content in self.content:
-            content(self.show, global_context)
+            content(ctx, global_context)
 
 
 class MarkdownContent:
