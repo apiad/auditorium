@@ -10,24 +10,15 @@ class ShowMode(IntEnum):
 
 
 class Animation:
-    def __init__(self, steps, time, loop):
+    def __init__(self, steps, time, loop, current):
         self.steps = steps
         self.time = time
         self.loop = loop
-        self._current = 0
+        self._current = current
 
     @property
     def current(self):
         return self._current
-
-    def next(self):
-        self._current += 1
-
-        if self._current >= self.steps:
-            if self.loop:
-                self._current = 0
-            else:
-                self._current = self.steps - 1
 
     def __enter__(self):
         return self
@@ -37,8 +28,8 @@ class Animation:
 
 
 class Wrapper:
-    def __init__(self, show):
-        self.show = show
+    def __init__(self, ctx):
+        self.ctx = ctx
         self.begin()
 
     def __enter__(self):
@@ -55,7 +46,7 @@ class Wrapper:
 
 
 class Column(Wrapper):
-    def __init__(self, show, *widths):
+    def __init__(self, ctx, *widths):
         if len(widths) == 1:
             widths = [1.0/widths[0] for _ in range(widths[0])]
 
@@ -63,51 +54,43 @@ class Column(Wrapper):
         widths = [w/total_width for w in widths]
 
         self.widths = list(widths)
-        super(Column, self).__init__(show)
+        super(Column, self).__init__(ctx)
 
     def begin(self):
-        self.show.current_content.append(f'<div class="columns">')
-        self.show.current_content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
+        self.ctx.content.append(f'<div class="columns">')
+        self.ctx.content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
         self.widths.pop(0)
 
     def tab(self):
-        self.show.current_content.append(f'</div>')
-        self.show.current_content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
+        self.ctx.content.append(f'</div>')
+        self.ctx.content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
         self.widths.pop(0)
 
     def end(self):
-        self.show.current_content.append('</div>')
-        self.show.current_content.append('</div>')
-
-
-class Vertical(Wrapper):
-    def begin(self):
-        self.show.slide_ids.append("show::start-section")
-
-    def end(self):
-        self.show.slide_ids.append("show::end-section")
+        self.ctx.content.append('</div>')
+        self.ctx.content.append('</div>')
 
 
 class Block(Wrapper):
-    def __init__(self, show, title, style):
+    def __init__(self, ctx, title, style):
         self.title = title
         self.style = style
-        super(Block, self).__init__(show)
+        super(Block, self).__init__(ctx)
 
     def begin(self):
-        self.show.current_content.append(f'<div class="block block-{self.style}"><h1 class="block-title">{self.title}</h1><div class="block-content">')
+        self.ctx.content.append(f'<div class="block block-{self.style}"><h1 class="block-title">{self.title}</h1><div class="block-content">')
 
     def end(self):
-        self.show.current_content.append('</div></div>')
+        self.ctx.content.append('</div></div>')
 
 
 class Fragment(Wrapper):
-    def __init__(self, show, style):
+    def __init__(self, ctx, style):
         self.style = style
-        super(Fragment, self).__init__(show)
+        super(Fragment, self).__init__(ctx)
 
     def begin(self):
-        self.show.current_content.append(f'<div class="fragment {self.style}">')
+        self.ctx.content.append(f'<div class="fragment {self.style}">')
 
     def end(self, *args):
-        self.show.current_content.append('</div>')
+        self.ctx.content.append('</div>')

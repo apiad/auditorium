@@ -7,13 +7,28 @@ function setupAnimations(parent) {
         var slide = el.attributes["data-slide"].value;
         var currentSlide = Reveal.getCurrentSlide().id;
         var time = Number(el.attributes["data-time"].value) * 1000;
+        var step = 0;
+        var steps = Number(el.attributes["data-steps"].value);
+        var loop = el.attributes["data-loop"].value == "True";
 
         var interval = setInterval(function () {
             if (slide === currentSlide) {
+                step += 1;
+
+                if (step >= steps) {
+                    if (loop) {
+                        step = 0;
+                    }
+                    else {
+                        step = steps - 1;
+                    }
+                }
+
                 console.log("Executing animation", {
                     slide,
                     time,
                     id: el.id,
+                    value: step
                 });
 
                 fetch("/update", {
@@ -24,8 +39,9 @@ function setupAnimations(parent) {
                     },
                     body: JSON.stringify({
                         type: "animation",
-                        slide: slide,
+                        slide,
                         id: el.id,
+                        value: step
                     })
                 }).then(resp => resp.json()).then(json => {
                     for (var itemId in json) {

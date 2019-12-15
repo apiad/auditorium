@@ -4,7 +4,7 @@ from auditorium import Show
 
 
 class MarkdownLoader:
-    def __init__(self, path, instance_name='show'):
+    def __init__(self, path, instance_name='ctx'):
         self.path = path
         self.instance_name = instance_name
 
@@ -60,7 +60,7 @@ class MarkdownSlide:
             elif state == 'code':
                 if line == code_start:
                     if split:
-                        self.content.append(PythonContent(split, language, tags))
+                        self.content.append(CodeContent(split, language, tags))
 
                     split = []
                     state = 'markdown'
@@ -71,13 +71,13 @@ class MarkdownSlide:
             if state == 'markdown':
                 self.content.append(MarkdownContent(split))
             else:
-                raise ValueError("Didn't closed a Python line...")
+                raise ValueError("Didn't closed a code line...")
 
-    def __call__(self):
-        global_context = dict(show=self.show)
+    def __call__(self, ctx):
+        global_context = dict(ctx=ctx)
 
         for content in self.content:
-            content(self.show, global_context)
+            content(ctx, global_context)
 
 
 class MarkdownContent:
@@ -88,7 +88,7 @@ class MarkdownContent:
         show.markdown(self.lines.format(**global_context))
 
 
-class PythonContent:
+class CodeContent:
     def __init__(self, lines, language, tags):
         self.lines = "\n".join(lines)
         self.tags = tags

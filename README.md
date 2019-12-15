@@ -53,10 +53,12 @@ show = Show("My Show")
 
 Every slide in your show is a Python method that renders the content and powers the backend logic.
 Slides are decorated with the `@show.slide` decorator.
+Every slide receives a `ctx` parameter, of type `Context`, which provides the functionalities
+that add content, both static and reactive.
 
 ```python
 @show.slide
-def one_slide():
+def one_slide(ctx):
     # content
 ```
 
@@ -77,11 +79,12 @@ show.run('localhost', 6789)
 ```
 
 The simplest possible form of content is static Markdown.
-You can add it with `show.markdown` and/or directly as the docstring of the corresponding slide function:
+You can add it directly as the docstring of the corresponding slide function,
+or calling `ctx.markdown`.
 
 ```python
 @show.slide
-def static_content():
+def static_content(ctx):
     """
     ## Static content
 
@@ -91,36 +94,36 @@ def static_content():
     * Calling `show.markdown`
     """
 
-    show.markdown("> Like this")
+    ctx.markdown("> Like this")
 ```
 
 There are several components in `auditorium` to style and layout your presentation, including reactive components that respond to user input.
 
 ```python
 @show.slide
-def interactive():
-    show.markdown("Enter your name")
-    name = show.text_input(default="World")
-    show.markdown(f"> Hello {name}")
+def interactive(ctx):
+    ctx.markdown("Enter your name")
+    name = ctx.text_input(default="World")
+    ctx.markdown(f"> Hello {name}")
 ```
 
 The slide code is considered stateless, and will be executed every time the input changes.
 You should design your slides with this in mind to, for example, provide sensible default values that will work when your presentation first opens.
 
-Simple stateless animations can be created with `show.animation`, which execute the backend code for every frame.
+Simple stateless animations can be created with `ctx.animation`, which execute the backend code for every frame.
 Combining this with drawing logic from, for example, `matplotlib` allows for very simple animated graphs and visualizations:
 
 ```python
 @show.slide
 def pyplot():
-    with show.animation(steps=50, time=0.33, loop=True) as anim:
+    with ctx.animation(steps=50, time=0.33, loop=True) as anim:
         # Every 0.33 seconds the graph will move
         step = anim.current * 2 * math.pi / 50
         x = np.linspace(0, 2 * math.pi, 100)
         y = np.sin(x + step) + np.cos(x + step)
         plt.plot(x, y)
         plt.ylim(-2,2)
-        show.pyplot(plt, fmt='png', height=350)
+        ctx.pyplot(plt, fmt='png', height=350)
 ```
 
 ## Quick Start - Markdown First
@@ -145,28 +148,28 @@ If you need interaction or advanced `auditorium` features,
 simply add a code section.
 
 ```python :run
-with show.columns(2) as cl:
-    text = show.text_input("World")
+with ctx.columns(2) as cl:
+    text = ctx.text_input("World")
 
     cl.tab()
 
-    with show.success("Message"):
-        show.markdown(f"Hello {text}")
+    with ctx.success("Message"):
+        ctx.markdown(f"Hello {text}")
 ```
 ~~~
 
-An instance named `show` will be magically available in every Python code section. Beware that **local variables are not persisted** between different code sections. This is a by-design decision to save you a bunch of headaches, believe me.
+An instance named `ctx` will be magically available in every Python code section. Beware that **local variables are not persisted** between different code sections. This is a by-design decision to save you a bunch of headaches, believe me.
 If you want variables to persist accross code sections, add `:persist` in the code declaration section. This also let's you interpolate Python variables directly inside the Markdown content.
 
 ~~~markdown
 ```python  :run :persist
-text = show.text_input("World")
+text = ctx.text_input("World")
 ```
 
 Hello {text}. This is pure Markdown.
 ~~~
 
-You need to add `:run` to the code section declaration for it to be executed, otherwise `auditorium` will consider it just Markdown code and simply print it. If you want **both** to run and print the code, then add `:run :echo` to the code declaration part.
+You need to add `:run` to the code section declaration for it to be executed, otherwise `auditorium` will consider it just Markdown code and simply print it. If you want **both** to run and print the code, then add `:run` and `:echo` to the code declaration part.
 
 Once you finished authoring you slideshow, simply run it just like before:
 
@@ -185,8 +188,6 @@ auditorium render <file.[py|md]> > <output.html>
 ```
 
 This will render the slideshow in an HTML file with all CSS and JavaScript embedded. Just copy this single HTML file and open it on any browser. You won't need to have `auditorium` installed. However, do keep in mind that all of the backend code will execute only once for the initial rendering, so your animations will be frozen at the starting frame and none of the interaction will work.
-
-> **Known Issue:** `reveal-js` plugins are not loaded in this static HTML, so, for example, there is no syntax highlighting available yet.
 
 ## What's the catch
 
@@ -224,11 +225,14 @@ For now, on the first load all slides are going to be run, which might increase 
 At some point, if I run into the problem, I may add a "lazy" loading option so that only the first few slides are executed.
 If this is an issue for a lot of people it might become a priority.
 
-### The show state is global
+### Slides have to be stateless
 
-Right now there is a single `Show` instance running the show, so several people looking at the same slideshow will share the values for the interactive inputs and animation steps.
-This might create weird scenarios in which you are typing into an input text box and you see a different result because another viewer is typing on a different browser.
-I don't know right now the extent to which this is an important issue, so I might fix it in the future if necessary.
+The code that runs inside a slide should not depend on anything outside of `ctx`, since you have no guarantee when will it be executed.
+Right now, slide's code is executed once before any rendering in order to discover vertical slides, then again during the
+initial rendering to layout and then everytime an interaction or animation forces the slide to render again.
+However, this might be changed at any time, so make no assumptions as to when is that code executed.
+The easiest way to do this, is making sure that every slide function is a pure function and all state is handled through
+`ctx` interactive items, such as `ctx.text_input`.
 
 ### Watch out for code injection!
 
@@ -239,6 +243,10 @@ Since the backend code runs in your computer, a viewer could inject nasty stuff 
 Staying away from `eval` and `exec` should keep you safe in most scenarios, but the basic suggestion is don't do anything you wouldn't do in a regular web application, since all security issues are the same.
 
 ## History
+
+### v0.6.0
+
+* Completely redesigned API. Now slide functions receive a `ctx: Context` instance on which to call all the layout options. This detaches the `Show` instance from the slides code, which makes `Show` a stateless object and all slide functions side-effects are contained for each client.
 
 ### v0.5.1
 
