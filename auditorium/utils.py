@@ -1,5 +1,11 @@
 # coding: utf8
 
+import os
+
+
+def path(p):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), p)
+
 
 def fix_indent(content, tab_size=0):
     lines = content.split("\n")
