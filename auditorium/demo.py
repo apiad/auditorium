@@ -68,7 +68,7 @@ def the_basics():
 
     show.markdown("Finally run the show.")
 
-    show.code("auditorium run my_show.py", 'bash')
+    show.code("auditorium run [file.py]", 'bash')
 
 
 @show.slide
@@ -389,3 +389,6 @@ def themes():
 
     with show.block():
         show.anchor("/?theme=black#/themes")
+
+
+# show.append("auditorium/static/md/demo.md")
