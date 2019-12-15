@@ -60,7 +60,7 @@ class MarkdownSlide:
             elif state == 'code':
                 if line == code_start:
                     if split:
-                        self.content.append(PythonContent(split, language, tags))
+                        self.content.append(CodeContent(split, language, tags))
 
                     split = []
                     state = 'markdown'
@@ -71,7 +71,7 @@ class MarkdownSlide:
             if state == 'markdown':
                 self.content.append(MarkdownContent(split))
             else:
-                raise ValueError("Didn't closed a Python line...")
+                raise ValueError("Didn't closed a code line...")
 
     def __call__(self):
         global_context = dict(show=self.show)
@@ -88,7 +88,7 @@ class MarkdownContent:
         show.markdown(self.lines.format(**global_context))
 
 
-class PythonContent:
+class CodeContent:
     def __init__(self, lines, language, tags):
         self.lines = "\n".join(lines)
         self.tags = tags
