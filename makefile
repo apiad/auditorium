@@ -10,7 +10,7 @@ clean:
 	git clean -fxd
 
 install:
-	curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+	pip install poetry
 	poetry install
 
 test:
