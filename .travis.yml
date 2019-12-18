@@ -12,10 +12,12 @@ after_success: make cov
 notifications:
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
 
+before_deploy:
+  - poetry config http-basic.pypi $PYPI_USER $PYPI_PASSWORD
+  - poetry build
+
 deploy:
-  - provider: pypi
-    user: $PYPI_USER
-    password: $PYPI_PASSWORD
-    distributions: "sdist bdist_wheel"
+  - provider: script
+    script: poetry publish
     on:
       tags: true
