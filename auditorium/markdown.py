@@ -4,7 +4,7 @@ from auditorium import Show
 
 
 class MarkdownLoader:
-    def __init__(self, path, instance_name='ctx'):
+    def __init__(self, path, instance_name="ctx"):
         self.path = path
         self.instance_name = instance_name
 
@@ -28,7 +28,7 @@ class MarkdownLoader:
         show = Show()
 
         for i, slide in enumerate(slides):
-            show.slide(func=MarkdownSlide(show, slide), id='slide-%i' % (i+1))
+            show.slide(func=MarkdownSlide(show, slide), id="slide-%i" % (i + 1))
 
         return show
 
@@ -38,37 +38,37 @@ class MarkdownSlide:
         self.show = show
         self.content = []
 
-        state = 'markdown' # or 'code'
-        language = ''
-        code_start = ''
+        state = "markdown"  # or 'code'
+        language = ""
+        code_start = ""
         split = []
 
         for line in content:
-            if state == 'markdown':
-                if line.startswith('```') or line.startswith('~~~'):
+            if state == "markdown":
+                if line.startswith("```") or line.startswith("~~~"):
                     if split:
                         self.content.append(MarkdownContent(split))
 
                     split = []
-                    state = 'code'
+                    state = "code"
                     code_start = line[:3]
                     language = line[3:].split()[0]
                     tags = line[3:].split()[1:]
                 else:
                     split.append(line)
 
-            elif state == 'code':
+            elif state == "code":
                 if line == code_start:
                     if split:
                         self.content.append(CodeContent(split, language, tags))
 
                     split = []
-                    state = 'markdown'
+                    state = "markdown"
                 else:
                     split.append(line)
 
         if split:
-            if state == 'markdown':
+            if state == "markdown":
                 self.content.append(MarkdownContent(split))
             else:
                 raise ValueError("Didn't closed a code line...")
@@ -95,9 +95,9 @@ class CodeContent:
         self.language = language
 
     def __call__(self, show, global_context):
-        run = ':run' in self.tags
-        echo = not run or ':echo' in self.tags
-        persist = ':persist' in self.tags
+        run = ":run" in self.tags
+        echo = not run or ":echo" in self.tags
+        persist = ":persist" in self.tags
 
         local_context = dict()
 

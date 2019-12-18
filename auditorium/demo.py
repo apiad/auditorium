@@ -54,21 +54,26 @@ def the_basics(ctx):
     ctx.markdown("## The basics")
     ctx.markdown("Start by declaring a `Show` instance.")
 
-    ctx.code("""
-    from auditorium import Show
-    show = Show("Auditorium Demo")""")
+    ctx.code(
+        """
+        from auditorium import Show
+        show = Show("Auditorium Demo")
+        """
+    )
 
     ctx.markdown("Add a method for every slide, decorated with `@show.slide`.")
 
-    ctx.code("""
-    @show.slide
-    def my_slide(ctx):
-        # slide content
-    """)
+    ctx.code(
+        """
+        @show.slide
+        def my_slide(ctx):
+            # slide content
+        """
+    )
 
     ctx.markdown("Finally run the show.")
 
-    ctx.code("auditorium run [file.py]", 'bash')
+    ctx.code("auditorium run [file.py]", "bash")
 
 
 @show.slide
@@ -79,13 +84,15 @@ def examples(ctx):
 
     ctx.hrule()
 
-    ctx.code("""
-    @show.slide
-    def example(ctx):
-        ctx.header("Some examples")
-        ctx.markdown("Slide content is added with _markdown_.")
-        ctx.markup("Or <strong>directly</strong> as HTML.")
-    """)
+    ctx.code(
+        """
+        @show.slide
+        def example(ctx):
+            ctx.header("Some examples")
+            ctx.markdown("Slide content is added with _markdown_.")
+            ctx.markup("Or <strong>directly</strong> as HTML.")
+        """
+    )
 
 
 @show.slide
@@ -99,16 +106,18 @@ def static_content(ctx):
 
     ctx.hrule()
 
-    ctx.code("""
-    @show.slide
-    def static_content(ctx):
-        \"\"\"
-        ## Static Content
+    ctx.code(
+        """
+        @show.slide
+        def static_content(ctx):
+            \"\"\"
+            ## Static Content
 
-        Static content can also be added directly as markdown in
-        the `docstring` of the corresponding method.
-        \"\"\"
-    """)
+            Static content can also be added directly as markdown in
+            the `docstring` of the corresponding method.
+            \"\"\"
+        """
+    )
 
 
 @show.slide
@@ -126,14 +135,16 @@ def layout(ctx):
         ctx.markdown("You can put custom content in any column...")
 
         cl.tab()
-        ctx.code("""
-        with ctx.columns(2, 3) as cl:
-            ctx.markdown("#### Content")
-            ctx.markdown("...")
+        ctx.code(
+            """
+            with ctx.columns(2, 3) as cl:
+                ctx.markdown("#### Content")
+                ctx.markdown("...")
 
-            cl.tab()
-            ctx.code("...")
-        """)
+                cl.tab()
+                ctx.code("...")
+            """
+        )
 
 
 @show.slide
@@ -153,14 +164,16 @@ def data_binding(ctx):
 
     ctx.hrule()
 
-    ctx.code("""
-    @show.slide
-    def data_binding(ctx):
-        # ...
-        text = ctx.text_input("dlrow")
-        text = "".join(reversed(text)).title()
-        ctx.markdown(f"Hello {text}!!")
-    """)
+    ctx.code(
+        """
+        @show.slide
+        def data_binding(ctx):
+            # ...
+            text = ctx.text_input("dlrow")
+            text = "".join(reversed(text)).title()
+            ctx.markdown(f"Hello {text}!!")
+        """
+    )
 
 
 @show.slide
@@ -176,10 +189,13 @@ def animation(ctx):
 
     ctx.hrule()
 
-    ctx.code("""
-    with ctx.animation(steps=10, time=0.33, loop=True) as anim:
-        ctx.markdown("> ### ." + ("." * anim.current))
-    """)
+    ctx.code(
+        """
+        with ctx.animation(steps=10, time=0.33, loop=True) as anim:
+            ctx.markdown("> ### ." + ("." * anim.current))
+        """
+    )
+
 
 @show.slide
 def vertical_slides(ctx):
@@ -193,7 +209,7 @@ def vertical_slides(ctx):
     """
 
     with ctx.warning(ctx):
-        ctx.markdown('Press `DOWN` instead of `LEFT` or click the down arrow.')
+        ctx.markdown("Press `DOWN` instead of `LEFT` or click the down arrow.")
 
     @show.slide
     def vertical_code(ctx):
@@ -201,19 +217,21 @@ def vertical_slides(ctx):
         ## Vertical Slides: Code
         """
 
-        ctx.code("""
-        @show.slide
-        def main_slide(ctx):
-            # content of main slide
-
+        ctx.code(
+            """
             @show.slide
-            def vertical_1(ctx):
-                # content of first vertical slide
+            def main_slide(ctx):
+                # content of main slide
 
-            @show.slide
-            def vertical_2(ctx):
-                # content of first vertical slide
-        """)
+                @show.slide
+                def vertical_1(ctx):
+                    # content of first vertical slide
+
+                @show.slide
+                def vertical_2(ctx):
+                    # content of first vertical slide
+            """
+        )
 
     @show.slide
     def vertical_more(ctx):
@@ -227,6 +245,7 @@ def vertical_slides(ctx):
         Show will go down and left automatically as necessary.
         """
 
+
 @show.slide
 def blocks(ctx):
     """
@@ -237,18 +256,18 @@ def blocks(ctx):
 
     with ctx.columns(2) as cl:
 
-        with ctx.block('Standard block'):
+        with ctx.block("Standard block"):
             ctx.markdown("And its content...")
 
-        with ctx.success('Success block'):
+        with ctx.success("Success block"):
             ctx.markdown("For happy endings...")
 
         cl.tab()
 
-        with ctx.warning('Warning block'):
+        with ctx.warning("Warning block"):
             ctx.markdown("For hairy stuff...")
 
-        with ctx.error('Error block'):
+        with ctx.error("Error block"):
             ctx.markdown("When nothing works...")
 
     @show.slide
@@ -257,19 +276,21 @@ def blocks(ctx):
         ## Blocks: Code
         """
 
-        ctx.code("""
-        with ctx.block('Standard block'):
-            ctx.markdown("And its content...")
+        ctx.code(
+            """
+            with ctx.block('Standard block'):
+                ctx.markdown("And its content...")
 
-        with ctx.success('Success block'):
-            ctx.markdown("For happy endings...")
+            with ctx.success('Success block'):
+                ctx.markdown("For happy endings...")
 
-        with ctx.warning('Warning block'):
-            ctx.markdown("For hairy stuff...")
+            with ctx.warning('Warning block'):
+                ctx.markdown("For hairy stuff...")
 
-        with ctx.error('Error block'):
-            ctx.markdown("When nothing works...")
-        """)
+            with ctx.error('Error block'):
+                ctx.markdown("When nothing works...")
+            """
+        )
 
 
 @show.slide
@@ -285,10 +306,12 @@ def fragments(ctx):
 
     with ctx.fragment(ctx):
         ctx.hrule()
-        ctx.code("""
-        with ctx.fragment(style='...'): # fade-in, grow, ...
-            # content
-        """)
+        ctx.code(
+            """
+            with ctx.fragment(style='...'): # fade-in, grow, ...
+                # content
+            """
+        )
 
     @show.slide
     def fragment_examples(ctx):
@@ -299,12 +322,15 @@ def fragments(ctx):
         """
 
         with ctx.columns(3) as cl:
-            for i, style in enumerate('grow shrink fade-in fade-out fade-up fade-down fade-left fade-right highlight-blue highlight-red highlight-green'.split()):
+            for i, style in enumerate(
+                "grow shrink fade-in fade-out fade-up fade-down fade-left \
+                 fade-right highlight-blue highlight-red highlight-green".split()
+            ):
                 if i > 0 and i % 4 == 0:
                     cl.tab()
 
                 with ctx.fragment(style):
-                    ctx.markdown(f'`{style}`')
+                    ctx.markdown(f"`{style}`")
 
 
 @show.slide
@@ -325,37 +351,44 @@ def pyplot(ctx):
         with ctx.animation(steps=60, time=0.5, loop=True) as anim:
             x = xg.uniform(size=anim.current * 50)
             y = yg.uniform(size=anim.current * 50)
-            colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange' for (xi, yi) in zip(x,y)]
+            colors = [
+                "green" if xi ** 2 + yi ** 2 < 1 else "orange" for (xi, yi) in zip(x, y)
+            ]
             plt.scatter(x, y, s=3, c=colors)
             plt.ylim(0, 1)
             plt.xlim(0, 1)
-            ctx.pyplot(plt, fmt='png', height=350)
+            ctx.pyplot(plt, fmt="png", height=350)
 
             cl.tab()
 
-            with ctx.block('Monte Carlo Sampling'):
+            with ctx.block("Monte Carlo Sampling"):
                 ctx.markdown(f"Samples: {len(x)}")
                 ctx.markdown(f"Inside: {colors.count('green')}")
-                ctx.markdown("**Pi = %.3f**" % (4 * colors.count('green') / len(x) if len(x) > 0 else 0))
+                ctx.markdown(
+                    "**Pi = %.3f**"
+                    % (4 * colors.count("green") / len(x) if len(x) > 0 else 0)
+                )
 
     @show.slide
     def pyplot_code(ctx):
         """### Pyplot: Code"""
 
-        ctx.code("""
-        xg = np.random.RandomState(0)
-        yg = np.random.RandomState(1)
+        ctx.code(
+            """
+            xg = np.random.RandomState(0)
+            yg = np.random.RandomState(1)
 
-        with ctx.animation(steps=60, time=0.5, loop=True) as anim:
-            x = xg.uniform(size=anim.current * 50)
-            y = yg.uniform(size=anim.current * 50)
-            colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange'
-                       for (xi, yi) in zip(x,y)]
-            plt.scatter(x, y, s=3, c=colors)
-            plt.ylim(0, 1)
-            plt.xlim(0, 1)
-            ctx.pyplot(plt, fmt='png', height=350)
-        """)
+            with ctx.animation(steps=60, time=0.5, loop=True) as anim:
+                x = xg.uniform(size=anim.current * 50)
+                y = yg.uniform(size=anim.current * 50)
+                colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange'
+                        for (xi, yi) in zip(x,y)]
+                plt.scatter(x, y, s=3, c=colors)
+                plt.ylim(0, 1)
+                plt.xlim(0, 1)
+                ctx.pyplot(plt, fmt='png', height=350)
+            """
+        )
 
 
 @show.slide
@@ -367,13 +400,15 @@ def static_html(ctx):
     and have no animations or interactive code, you can use:
     """
 
-    ctx.code('auditorium render [file] > [output.html]', 'bash')
+    ctx.code("auditorium render [file] > [output.html]", "bash")
 
-    ctx.markdown("""
-    This will render the slideshow into a static HTML with all CSS and
-    JavaScript embedded, that you can take away and reproduce in any browser,
-    or host on a static file server (like Github pages).
-    """)
+    ctx.markdown(
+        """
+        This will render the slideshow into a static HTML with all CSS and
+        JavaScript embedded, that you can take away and reproduce in any browser,
+        or host on a static file server (like Github pages).
+        """
+    )
 
 
 @show.slide
@@ -389,6 +424,3 @@ def themes(ctx):
 
     with ctx.block(ctx):
         ctx.anchor("/?theme=black#/themes")
-
-
-# show.append("auditorium/static/md/demo.md")
