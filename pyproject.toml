@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "auditorium"
-version = "0.6.0"
+version = "0.6.1"
 description = "A Python-powered slideshow maker with steroids."
 authors = ["Alejandro Piad <alepiad@gmail.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.6"
