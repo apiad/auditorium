@@ -14,6 +14,7 @@ install:
 	poetry install
 
 test:
+	poetry run mypy -p auditorium --ignore-missing-imports && \
 	poetry run pytest --doctest-modules --cov=$(PROJECT) --cov-report=xml -v
 
 lint:
