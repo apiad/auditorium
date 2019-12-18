@@ -244,6 +244,10 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
+### v0.6.1
+
+* Changed package manager to `poetry`.
+
 ### v0.6.0
 
 * Completely redesigned API. Now slide functions receive a `ctx: Context` instance on which to call all the layout options. This detaches the `Show` instance from the slides code, which makes `Show` a stateless object and all slide functions side-effects are contained for each client.
