@@ -48,27 +48,31 @@ class Wrapper:
 class Column(Wrapper):
     def __init__(self, ctx, *widths):
         if len(widths) == 1:
-            widths = [1.0/widths[0] for _ in range(widths[0])]
+            widths = [1.0 / widths[0] for _ in range(widths[0])]
 
         total_width = sum(widths) + 0.01
-        widths = [w/total_width for w in widths]
+        widths = [w / total_width for w in widths]
 
         self.widths = list(widths)
         super(Column, self).__init__(ctx)
 
     def begin(self):
         self.ctx.content.append(f'<div class="columns">')
-        self.ctx.content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
+        self.ctx.content.append(
+            f'<div class="column" style="width: {self.widths[0] * 100}%;">'
+        )
         self.widths.pop(0)
 
     def tab(self):
-        self.ctx.content.append(f'</div>')
-        self.ctx.content.append(f'<div class="column" style="width: {self.widths[0] * 100}%;">')
+        self.ctx.content.append(f"</div>")
+        self.ctx.content.append(
+            f'<div class="column" style="width: {self.widths[0] * 100}%;">'
+        )
         self.widths.pop(0)
 
     def end(self):
-        self.ctx.content.append('</div>')
-        self.ctx.content.append('</div>')
+        self.ctx.content.append("</div>")
+        self.ctx.content.append("</div>")
 
 
 class Block(Wrapper):
@@ -78,10 +82,12 @@ class Block(Wrapper):
         super(Block, self).__init__(ctx)
 
     def begin(self):
-        self.ctx.content.append(f'<div class="block block-{self.style}"><h1 class="block-title">{self.title}</h1><div class="block-content">')
+        self.ctx.content.append(
+            f'<div class="block block-{self.style}"><h1 class="block-title">{self.title}</h1><div class="block-content">'
+        )
 
     def end(self):
-        self.ctx.content.append('</div></div>')
+        self.ctx.content.append("</div></div>")
 
 
 class Fragment(Wrapper):
@@ -93,4 +99,4 @@ class Fragment(Wrapper):
         self.ctx.content.append(f'<div class="fragment {self.style}">')
 
     def end(self, *args):
-        self.ctx.content.append('</div>')
+        self.ctx.content.append("</div>")

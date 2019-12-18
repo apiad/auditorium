@@ -24,7 +24,7 @@ from .utils import fix_indent, path
 
 
 class Show:
-    def __init__(self, title="", theme='white', code_style='monokai'):
+    def __init__(self, title="", theme="white", code_style="monokai"):
         self.theme = theme
         self.formatter = HtmlFormatter(style=get_style_by_name(code_style))
 
@@ -33,20 +33,20 @@ class Show:
 
         self.app = Sanic("auditorium")
         self.app.route("/")(self._index)
-        self.app.route("/update", methods=['POST'])(self._update)
-        self.app.static('static', path('static'))
+        self.app.route("/update", methods=["POST"])(self._update)
+        self.app.static("static", path("static"))
 
         self._title = title
         self._current_section = None
         self._rendering = False
 
-        with open(path('templates/content.html')) as fp:
+        with open(path("templates/content.html")) as fp:
             self._template_content = Template(fp.read())
 
-        with open(path('templates/static.html')) as fp:
+        with open(path("templates/static.html")) as fp:
             self._template_static = Template(fp.read())
 
-        with open(path('templates/dynamic.html')) as fp:
+        with open(path("templates/dynamic.html")) as fp:
             self._template_dynamic = Template(fp.read())
 
     ## Show functions
@@ -55,6 +55,7 @@ class Show:
         self._content = self._render_content()
 
         if launch:
+
             def launch_server():
                 webbrowser.open_new_tab(f"http://{host}:{port}")
 
@@ -66,20 +67,20 @@ class Show:
     def show_title(self):
         return self._title
 
-    def append(self, show, instance_name='show'):
+    def append(self, show, instance_name="show"):
         if isinstance(show, str):
             show = Show.load(show, instance_name)
 
         self._tail.append(show)
 
     @staticmethod
-    def load(path, instance_name='show'):
+    def load(path, instance_name="show"):
         from .markdown import MarkdownLoader
 
-        if path.endswith('.py'):
+        if path.endswith(".py"):
             ns = runpy.run_path(path)
             show = ns[instance_name]
-        elif path.endswith('.md'):
+        elif path.endswith(".md"):
             loader = MarkdownLoader(path, instance_name=instance_name)
             show = loader.parse()
         else:
@@ -102,6 +103,7 @@ class Show:
             return self._wrap(func, id)
 
         elif id is not None:
+
             def wrapper(func):
                 return self._wrap(func, id)
 
@@ -153,7 +155,7 @@ class Show:
             content=self._render_content(),
             code_style=self._code_style(),
             embed=self._embed,
-            theme=theme or self.theme
+            theme=theme or self.theme,
         )
 
     ## Utilities
@@ -167,25 +169,27 @@ class Show:
             return fp.read()
 
     def _code_style(self):
-        return self.formatter.get_style_defs('.highlight')
+        return self.formatter.get_style_defs(".highlight")
 
     ## Routes
 
     async def _update(self, request):
         data = request.json
         values = {}
-        values[data['id']] = data['value']
-        update = self.do_code(data['slide'], values)
+        values[data["id"]] = data["value"]
+        update = self.do_code(data["slide"], values)
         return json(update)
 
     async def _index(self, request):
         theme = request.args.get("theme", self.theme)
-        return html(self._template_dynamic.render(
-            show=self,
-            content=self._content,
-            code_style=self._code_style(),
-            theme=theme
-        ))
+        return html(
+            self._template_dynamic.render(
+                show=self,
+                content=self._content,
+                code_style=self._code_style(),
+                theme=theme,
+            )
+        )
 
 
 class Context:
@@ -220,7 +224,7 @@ class Context:
         item_id, id_markup = self._get_unique_id("markup")
 
         if self.mode == ShowMode.Markup:
-            self.content.append(f'<div {id_markup}>{fix_indent(content)}</div>')
+            self.content.append(f"<div {id_markup}>{fix_indent(content)}</div>")
         else:
             self.update[item_id] = fix_indent(content)
 
@@ -228,7 +232,9 @@ class Context:
         item_id, id_markup = self._get_unique_id("markdown")
 
         if self.mode == ShowMode.Markup:
-            self.content.append(f'<div {id_markup}>{markdown(fix_indent(content))}</div>')
+            self.content.append(
+                f"<div {id_markup}>{markdown(fix_indent(content))}</div>"
+            )
         else:
             self.update[item_id] = markdown(fix_indent(content))
 
@@ -238,12 +244,14 @@ class Context:
         event = "onkeyup" if track_keys else "onchange"
 
         if self.mode == ShowMode.Markup:
-            self.content.append(f'<input {id_markup} data-event="{event}" type="text" class="text" value="{default}"></input>')
+            self.content.append(
+                f'<input {id_markup} data-event="{event}" type="text" class="text" value="{default}"></input>'
+            )
             return default
         else:
             return self.values[item_id]
 
-    def pyplot(self, plt, height=400, aspect=4/3, fmt="png"):
+    def pyplot(self, plt, height=400, aspect=4 / 3, fmt="png"):
         item_id, id_markup = self._get_unique_id("pyplot")
         plt.tight_layout()
         buffer = io.BytesIO()
@@ -251,14 +259,16 @@ class Context:
         plt.clf()
         buffer.seek(0)
 
-        if fmt == 'png':
-            code = base64.b64encode(buffer.read(-1)).decode('ascii')
+        if fmt == "png":
+            code = base64.b64encode(buffer.read(-1)).decode("ascii")
             markup = f'<img width="{aspect * height}px" height="{height}px" class="pyplot" src="data:image/png;base64, {code}"></img>'
-        elif fmt == 'svg':
-            code = buffer.read(-1).decode('ascii')
+        elif fmt == "svg":
+            code = buffer.read(-1).decode("ascii")
             markup = code
         else:
-            raise ValueError("Invalid value for parameter `fmt`, must be 'png' or 'svg'.")
+            raise ValueError(
+                "Invalid value for parameter `fmt`, must be 'png' or 'svg'."
+            )
 
         if self.mode == ShowMode.Markup:
             self.content.append(f"<div {id_markup}>{markup}</div>")
@@ -269,7 +279,7 @@ class Context:
         item_id, id_markup = self._get_unique_id("anchor")
 
         if self.mode == ShowMode.Markup:
-            if hasattr(slide_or_href, '__name__'):
+            if hasattr(slide_or_href, "__name__"):
                 slide_or_href = "#/" + slide_or_href.__name__
 
             if text is None:
@@ -279,7 +289,7 @@ class Context:
         else:
             self.update[item_id] = text
 
-    def code(self, text, language='python'):
+    def code(self, text, language="python"):
         item_id, id_markup = self._get_unique_id("code")
         content = fix_indent(text)
 
@@ -287,15 +297,17 @@ class Context:
         code = highlight(content, lexer, self.show.formatter)
 
         if self.mode == ShowMode.Markup:
-            self.content.append(f'<div {id_markup}>{code}</div>')
+            self.content.append(f"<div {id_markup}>{code}</div>")
         else:
             self.update[item_id] = code
 
     def animation(self, steps=10, time=0.1, loop=True) -> Animation:
-        item_id, id_markup = self._get_unique_id('animation')
+        item_id, id_markup = self._get_unique_id("animation")
 
         if self.mode == ShowMode.Markup:
-            self.content.append(f'<animation {id_markup} data-steps="{steps}" data-time="{time}" data-loop="{loop}"></animation>')
+            self.content.append(
+                f'<animation {id_markup} data-steps="{steps}" data-time="{time}" data-loop="{loop}"></animation>'
+            )
             return Animation(steps, time, loop, 0)
 
         return Animation(steps, time, loop, self.values[item_id])
@@ -303,20 +315,20 @@ class Context:
     def columns(self, *widths) -> Column:
         return Column(self, *widths)
 
-    def fragment(self, style='fade-in') -> Fragment:
+    def fragment(self, style="fade-in") -> Fragment:
         return Fragment(self, style)
 
-    def block(self, title="", style='default') -> Block:
+    def block(self, title="", style="default") -> Block:
         return Block(self, title, style)
 
     def success(self, title="") -> Block:
-        return self.block(title, 'success')
+        return self.block(title, "success")
 
     def warning(self, title="") -> Block:
-        return self.block(title, 'warning')
+        return self.block(title, "warning")
 
     def error(self, title="") -> Block:
-        return self.block(title, 'error')
+        return self.block(title, "error")
 
 
 class Section:

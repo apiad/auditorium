@@ -4,20 +4,20 @@
 PROJECT=auditorium
 
 build:
-	pipenv run python setup.py sdist bdist_wheel
+	poetry build
 
 clean:
 	git clean -fxd
 
 install:
-	pip install pipenv
-	pipenv install --dev --skip-lock
+	pip install poetry
+	poetry install
 
 test:
-	make lint && pipenv run pytest --doctest-modules --cov=$(PROJECT) --cov-report=xml -v
+	poetry run pytest --doctest-modules --cov=$(PROJECT) --cov-report=xml -v
 
 lint:
-	# pipenv run pylint $(PROJECT)
+	poetry run pylint $(PROJECT)
 
 cov:
-	pipenv run codecov
+	poetry run codecov

@@ -1,3 +1,0 @@
-include Pipfile
-recursive-include auditorium/static *
-recursive-include auditorium/templates *
