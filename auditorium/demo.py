@@ -424,3 +424,6 @@ def themes(ctx):
 
     with ctx.block(ctx):
         ctx.anchor("/?theme=black#/themes")
+
+
+show.append("auditorium/static/md/demo.md")

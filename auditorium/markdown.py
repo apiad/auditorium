@@ -1,6 +1,7 @@
 # coding: utf8
 
 from auditorium import Show
+from typing import List
 
 
 class MarkdownLoader:
@@ -36,12 +37,12 @@ class MarkdownLoader:
 class MarkdownSlide:
     def __init__(self, show: Show, content):
         self.show = show
-        self.content = []
+        self.content: List[Content] = []
 
         state = "markdown"  # or 'code'
         language = ""
         code_start = ""
-        split = []
+        split: List[str] = []
 
         for line in content:
             if state == "markdown":
@@ -80,21 +81,26 @@ class MarkdownSlide:
             content(ctx, global_context)
 
 
-class MarkdownContent:
+class Content:
+    def __call__(self, show, global_context):
+        self._call(show, global_context)
+
+
+class MarkdownContent(Content):
     def __init__(self, lines):
         self.lines = "\n".join(lines)
 
-    def __call__(self, show, global_context):
+    def _call(self, show, global_context):
         show.markdown(self.lines.format(**global_context))
 
 
-class CodeContent:
+class CodeContent(Content):
     def __init__(self, lines, language, tags):
         self.lines = "\n".join(lines)
         self.tags = tags
         self.language = language
 
-    def __call__(self, show, global_context):
+    def _call(self, show, global_context):
         run = ":run" in self.tags
         echo = not run or ":echo" in self.tags
         persist = ":persist" in self.tags

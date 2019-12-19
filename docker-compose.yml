@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+    auditorium:
+        image: docker.pkg.github.com/apiad/auditorium/auditorium:latest
+        build: "."
+        volumes:
+            - "./:/root/auditorium"
+        ports:
+            - "6789:6789"

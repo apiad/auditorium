@@ -30,6 +30,7 @@ class Show:
 
         self._slides = {}
         self._sections = []
+        self._tail = []
 
         self.app = Sanic("auditorium")
         self.app.route("/")(self._index)
@@ -51,7 +52,7 @@ class Show:
 
     ## Show functions
 
-    def run(self, host, port, launch, *args, **kwargs):
+    def run(self, host: str, port: int, launch: bool, *args, **kwargs) -> None:
         self._content = self._render_content()
 
         if launch:
@@ -64,7 +65,7 @@ class Show:
         self.app.run(host=host, port=port, *args, **kwargs)
 
     @property
-    def show_title(self):
+    def show_title(self) -> str:
         return self._title
 
     def append(self, show, instance_name="show"):
@@ -72,6 +73,7 @@ class Show:
             show = Show.load(show, instance_name)
 
         self._tail.append(show)
+        return self
 
     @staticmethod
     def load(path, instance_name="show"):

@@ -3,11 +3,11 @@
 import os
 
 
-def path(p):
+def path(p: str) -> str:
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), p)
 
 
-def fix_indent(content, tab_size=0):
+def fix_indent(content: str, tab_size: int = 0) -> str:
     lines = content.split("\n")
     min_indent = 1000
 

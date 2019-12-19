@@ -5,7 +5,7 @@ cache: pip
 python:
   - 3.6
 
-install: make install
+install: make install-bare
 script: make test
 after_success: make cov
 
