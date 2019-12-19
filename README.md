@@ -243,6 +243,12 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
+### v0.6.3
+
+* Add `Show.append` to append existing `show` instances or direct paths.
+* Fix error with absolute path for the Markdown demo.
+* Append Markdown demo to the Python demo.
+
 ### v0.6.2
 
 * Added `mypy` for some static type checking. Will slowly add as many type hints as possible.
