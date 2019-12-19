@@ -34,7 +34,7 @@
 }
 
 .reveal section div.block {
-    width: 90%;
+    width: 95%;
     margin: auto;
     box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
     margin-bottom: 20px;
@@ -87,4 +87,10 @@
 
 .reveal section div.block-error .block-content {
     color: darkred;
+}
+
+.reveal section div.highlight {
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+    width: 95%;
+    margin: auto;
 }

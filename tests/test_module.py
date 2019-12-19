@@ -11,7 +11,7 @@ def test_one_slide():
         "## Title"
 
     assert "slide_one" in show.slides
-    assert len(show.sections) == 1
+    assert len(list(show.sections)) == 1
 
 
 def test_vertical_slide():
@@ -25,8 +25,8 @@ def test_vertical_slide():
 
     show.render()
 
-    assert len(show.slides) == 2
-    assert len(show.sections) == 1
+    assert len(list(show.slides)) == 2
+    assert len(list(show.sections)) == 1
 
 
 def test_demo():

@@ -426,4 +426,44 @@ def themes(ctx):
         ctx.anchor("/?theme=black#/themes")
 
 
-show.append("auditorium/static/md/demo.md")
+@show.slide
+def markdown_first(ctx):
+    """
+    ## Markdown First
+
+    If your Python code is short and you prefer to author directly
+    in Markdown, you can do **almost everything** in a Markdown file
+    and insert Python here and there.
+
+    Run your slideshow with:
+    """
+
+    ctx.code("auditorium run [file.md]")
+
+
+@show.slide
+def append(ctx):
+    """
+    ## Appendix
+
+    You can append one `show` instance right after another, _ad-infinitum_,
+    to compose larger slideshows from shorter ones.
+    """
+
+    ctx.code(
+        """
+        show_1 = Show("...")
+        # content
+        show_2 = Show("...")
+        # content
+        show_1.append(show_2)
+        """
+    )
+
+    ctx.markdown("It also works directly with file paths, both Python and Markdown.")
+    ctx.code("show.append('auditorium/static/md/demo.md')")
+
+
+from .utils import path
+
+show.append(path("./static/md/demo.md"))
