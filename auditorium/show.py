@@ -90,13 +90,31 @@ class Show:
 
         return show
 
+    def get_slide(self, slide_id):
+        if slide_id in self._slides:
+            return self._slides[slide_id]
+
+        for show in self._tail:
+            try:
+                return show.get_slide(slide_id)
+            except:
+                pass
+
+        raise ValueError(f"Invalid slide id: {slide_id}")
+
     @property
     def slides(self):
-        return self._slides
+        yield from self._slides
+
+        for show in self._tail:
+            yield from show.slides
 
     @property
     def sections(self):
-        return self._sections
+        yield from self._sections
+
+        for show in self._tail:
+            yield from show.sections
 
     ## @slide decorator
 
@@ -142,12 +160,12 @@ class Show:
     ## Internal API
 
     def do_markup(self, slide):
-        slide = self._slides[slide]
+        slide = self.get_slide(slide)
         ctx = slide.run(ShowMode.Markup)
         return "\n\n".join(ctx.content)
 
     def do_code(self, slide, values):
-        slide = self._slides[slide]
+        slide = self.get_slide(slide)
         ctx = slide.run(ShowMode.Code, values)
         return ctx.update
 

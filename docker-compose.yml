@@ -6,5 +6,6 @@ services:
         build: "."
         volumes:
             - "./:/code"
-        ports:
-            - "6789:6789"
+        network_mode: host
+        command: auditorium demo
+        working_dir: "/"
