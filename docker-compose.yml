@@ -8,5 +8,3 @@ services:
             - "./:/root/auditorium"
         ports:
             - "6789:6789"
-        expose:
-            - "6789"
