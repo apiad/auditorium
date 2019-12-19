@@ -5,7 +5,6 @@
 [<img alt="PyPI" src="https://img.shields.io/pypi/v/auditorium.svg">](https://pypi.org/project/auditorium/)
 [<img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/auditorium/master.svg">](https://travis-ci.org/apiad/auditorium)
 [<img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/auditorium.svg">](https://codecov.io/gh/apiad/auditorium)
-[<img alt="Codacy" src="https://img.shields.io/codacy/grade/44c2e864ab644f3ea6cddefd536f83b5"></img>](https://app.codacy.com/manual/alepiad/auditorium/dashboard?bid=15648223)
 [<img alt="Codacy" src="https://img.shields.io/badge/demo-browse-brightgreen"></img>](http://auditorium-demo.apiad.net)
 
 > A Python-powered slideshow creator with steroids.
@@ -247,6 +246,7 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 ### v0.6.2
 
 * Added `mypy` for some static type checking. Will slowly add as many type hints as possible.
+* Fixed dependency bugs when porting to `poetry`.
 
 ### v0.6.1
 
