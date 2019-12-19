@@ -426,4 +426,5 @@ def themes(ctx):
         ctx.anchor("/?theme=black#/themes")
 
 
-show.append("auditorium/static/md/demo.md")
+from .utils import path
+show.append(path("./static/md/demo.md"))
