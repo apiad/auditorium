@@ -11,7 +11,7 @@ class Auditorium:
     @staticmethod
     def run(
         path,
-        host="localhost",
+        host="127.0.0.1",
         port=6789,
         debug=False,
         instance_name="show",
@@ -23,7 +23,7 @@ class Auditorium:
         show.run(host=host, port=port, debug=debug, launch=launch)
 
     @staticmethod
-    def demo(host="localhost", port=6789, debug=False, launch=True):
+    def demo(host="127.0.0.1", port=6789, debug=False, launch=True):
         "Starts the demo slideshow."
 
         from auditorium.demo import show
@@ -36,6 +36,10 @@ class Auditorium:
 
         show = load(path, instance_name)
         print(show.render(theme))
+
+    @staticmethod
+    def test():
+        return "It's OK!"
 
 
 def main():
