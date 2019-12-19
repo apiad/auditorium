@@ -244,6 +244,10 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
+### v0.6.2
+
+* Added `mypy` for some static type checking. Will slowly add as many type hints as possible.
+
 ### v0.6.1
 
 * Changed package manager to `poetry`.
