@@ -12,6 +12,8 @@
 
 See the demo at [auditorium-demo.apiad.net](http://auditorium-demo.apiad.net) (sorry, no HTTPS yet).
 
+<iframe src="http://auditorium-demo.apiad.net"></iframe>
+
 ## What's this about
 
 Auditorium is a Python-powered slideshow generator.
