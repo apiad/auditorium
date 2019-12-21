@@ -6,6 +6,4 @@ services:
         build: "."
         volumes:
             - "./:/code"
-        network_mode: host
-        command: auditorium demo
-        working_dir: "/"
+        command: make test
