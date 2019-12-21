@@ -6,7 +6,7 @@ python:
   - 3.6
 
 install: make dev-install
-script: make dev-test-full
+script: make dev-test-single
 after_success: make dev-cov
 
 notifications:
