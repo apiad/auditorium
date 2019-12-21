@@ -22,7 +22,7 @@ test-full:
 
 dev-ensure:
 	# Check if you are inside a development environment
-	echo ${AUDITORIUM_ENVIRONMENT} | grep "development" >> /dev/null
+	echo ${BUILD_ENVIRONMENT} | grep "development" >> /dev/null
 
 dev-build: dev-ensure
 	poetry build
