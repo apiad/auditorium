@@ -3,10 +3,10 @@ FROM python:3.6
 WORKDIR /code
 COPY pyproject.toml poetry.lock makefile /code/
 
+ENV AUDITORIUM_ENVIRONMENT_DEV="true"
 ENV XDG_CACHE_HOME="/opt/venv/cache"
-ENV POETRY_VIRTUALENVS_PATH="/opt/venv"
 
-RUN make install-bare
+RUN make install
 
 COPY . /code
 

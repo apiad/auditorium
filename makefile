@@ -1,32 +1,26 @@
-.PHONY: build clean install test lint cov
+.PHONY: build clean install test lint cov environment
 
-# TODO: Update your project folder
-PROJECT=auditorium
+is-dev:
+	echo ${AUDITORIUM_ENVIRONMENT} | grep "development" >> /dev/null
 
-build:
+build: is-dev
 	poetry build
 
 clean:
 	git clean -fxd
 
-install-base:
+install: is-dev
 	pip install -U pip
 	pip install poetry
-
-install-bare: install-base
+	pip install tox
 	poetry config virtualenvs.create false
 	poetry install
 
-install: install-base
-	poetry install
+test: is-dev
+	tox
 
-test:
-	poetry run auditorium test && \
-	poetry run mypy -p auditorium --ignore-missing-imports && \
-	poetry run pytest --doctest-modules --cov=$(PROJECT) --cov-report=xml -v
+lint: is-dev
+	poetry run pylint auditorium
 
-lint:
-	poetry run pylint $(PROJECT)
-
-cov:
+cov: is-dev
 	poetry run codecov
