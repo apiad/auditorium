@@ -9,8 +9,11 @@ test-fast:
 shell:
 	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester bash
 
+lock:
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester poetry lock
+
 build:
-	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester make dev-build
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester poetry build
 
 clean:
 	git clean -fxd
@@ -35,9 +38,6 @@ docker-push:
 dev-ensure:
 	# Check if you are inside a development environment
 	echo ${BUILD_ENVIRONMENT} | grep "development" >> /dev/null
-
-dev-build: dev-ensure
-	poetry build
 
 dev-install: dev-ensure
 	pip install poetry
