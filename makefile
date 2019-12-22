@@ -1,6 +1,6 @@
 .PHONY: clean lint test-fast test-full shell
 
-BASE_VERSION := 3.6
+BASE_VERSION := 3.8
 ALL_VERSIONS := 3.6 3.7 3.8
 
 test-fast:
