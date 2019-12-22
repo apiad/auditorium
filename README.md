@@ -244,10 +244,15 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## History
 
+### v0.6.4
+
+* New development environment completely based on Docker.
+* Added compatibility with Python 3.7 and 3.8.
+
 ### v0.6.3
 
-* Add `Show.append` to append existing `show` instances or direct paths.
-* Fix error with absolute path for the Markdown demo.
+* Added `Show.append` to append existing `show` instances or direct paths.
+* Fixed error with absolute path for the Markdown demo.
 * Append Markdown demo to the Python demo.
 
 ### v0.6.2
