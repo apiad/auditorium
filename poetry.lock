@@ -295,7 +295,7 @@ description = "multidict implementation"
 name = "multidict"
 optional = false
 python-versions = ">=3.5"
-version = "4.7.1"
+version = "4.7.2"
 
 [[package]]
 category = "dev"
@@ -614,8 +614,8 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "0bf20f273ad5ab11feca26e3666362255d4fbf735db90c15f7c739ef05205720"
-python-versions = "~3.6"
+content-hash = "31994f3e5d3c8f3f7e6ed0b3922cfa47e8a3d48ac610f0e96a7683b5653cd618"
+python-versions = "^3.6"
 
 [metadata.files]
 aiofiles = [
@@ -844,23 +844,23 @@ more-itertools = [
     {file = "more_itertools-8.0.2-py3-none-any.whl", hash = "sha256:c833ef592a0324bcc6a60e48440da07645063c453880c9477ceb22490aec1564"},
 ]
 multidict = [
-    {file = "multidict-4.7.1-cp35-cp35m-macosx_10_13_x86_64.whl", hash = "sha256:258660e9d6b52de1a75097944e12718d3aa59adc611b703361e3577d69167aaf"},
-    {file = "multidict-4.7.1-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:c42362750a51a15dc905cb891658f822ee5021bfbea898c03aa1ed833e2248a5"},
-    {file = "multidict-4.7.1-cp35-cp35m-win32.whl", hash = "sha256:09c19f642e055550c9319d5123221b7e07fc79bda58122aa93910e52f2ab2f29"},
-    {file = "multidict-4.7.1-cp35-cp35m-win_amd64.whl", hash = "sha256:ec804fc5f68695d91c24d716020278fcffd50890492690a7e1fef2e741f7172c"},
-    {file = "multidict-4.7.1-cp36-cp36m-macosx_10_13_x86_64.whl", hash = "sha256:725496dde5730f4ad0a627e1a58e2620c1bde0ad1c8080aae15d583eb23344ce"},
-    {file = "multidict-4.7.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:e53b205f8afd76fc6c942ef39e8ee7c519c775d336291d32874082a87802c67c"},
-    {file = "multidict-4.7.1-cp36-cp36m-win32.whl", hash = "sha256:cf14aaf2ab067ca10bca0b14d5cbd751dd249e65d371734bc0e47ddd8fafc175"},
-    {file = "multidict-4.7.1-cp36-cp36m-win_amd64.whl", hash = "sha256:3374a23e707848f27b3438500db0c69eca82929337656fce556bd70031fbda74"},
-    {file = "multidict-4.7.1-cp37-cp37m-macosx_10_13_x86_64.whl", hash = "sha256:503b7fce0054c73aa631cc910a470052df33d599f3401f3b77e54d31182525d5"},
-    {file = "multidict-4.7.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:ba566518550f81daca649eded8b5c7dd09210a854637c82351410aa15c49324a"},
-    {file = "multidict-4.7.1-cp37-cp37m-win32.whl", hash = "sha256:a3721078beff247d0cd4fb19d915c2c25f90907cf8d6cd49d0413a24915577c6"},
-    {file = "multidict-4.7.1-cp37-cp37m-win_amd64.whl", hash = "sha256:e27e13b9ff0a914a6b8fb7e4947d4ac6be8e4f61ede17edffabd088817df9e26"},
-    {file = "multidict-4.7.1-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:12f22980e7ed0972a969520fb1e55682c9fca89a68b21b49ec43132e680be812"},
-    {file = "multidict-4.7.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:0c1a5d5f7aa7189f7b83c4411c2af8f1d38d69c4360d5de3eea129c65d8d7ce2"},
-    {file = "multidict-4.7.1-cp38-cp38-win32.whl", hash = "sha256:6ce55f2c45ffc90239aab625bb1b4864eef33f73ea88487ef968291fbf09fb3f"},
-    {file = "multidict-4.7.1-cp38-cp38-win_amd64.whl", hash = "sha256:cf24e15986762f0e75a622eb19cfe39a042e952b8afba3e7408835b9af2be4fb"},
-    {file = "multidict-4.7.1.tar.gz", hash = "sha256:d7b6da08538302c5245cd3103f333655ba7f274915f1f5121c4f4b5fbdb3febe"},
+    {file = "multidict-4.7.2-cp35-cp35m-macosx_10_13_x86_64.whl", hash = "sha256:8f30ead697c2e37147d82ba8019952b5ea99bd3d1052f1f1ebff951eaa953209"},
+    {file = "multidict-4.7.2-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:824716bba5a4efd74ddd36a3830efb9e49860149514ef7c41aac0144757ebb5d"},
+    {file = "multidict-4.7.2-cp35-cp35m-win32.whl", hash = "sha256:63d9a3d93a514549760cb68c82864966bddb6ab53a3326931c8db9ad29414603"},
+    {file = "multidict-4.7.2-cp35-cp35m-win_amd64.whl", hash = "sha256:a03efe8b7591c77d9ad4b9d81dcfb9c96e538ae25eb114385f35f4d7ffa3bac2"},
+    {file = "multidict-4.7.2-cp36-cp36m-macosx_10_13_x86_64.whl", hash = "sha256:7dd6f6a51b64d0a6473bc30c53e1d73fcb461c437f43662b7d6d701bd90db253"},
+    {file = "multidict-4.7.2-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:77264002c184538df5dcb4fc1de5df6803587fa30bbe12203a7a3436b8aafc0f"},
+    {file = "multidict-4.7.2-cp36-cp36m-win32.whl", hash = "sha256:b86e8e33a0a24240b293e7fad233a7e886bae6e51ca6923d39f4e313dd1d5578"},
+    {file = "multidict-4.7.2-cp36-cp36m-win_amd64.whl", hash = "sha256:daf6d89e47418e38af98e1f2beb3fe0c8aa34806f681d04df314c0f131dcf01d"},
+    {file = "multidict-4.7.2-cp37-cp37m-macosx_10_13_x86_64.whl", hash = "sha256:7f4e591ec80619e74c50b7800f9db9b0e01d2099094767050dfe2e78e1c41839"},
+    {file = "multidict-4.7.2-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:335344a3c3b19845c73a7826f359c51c4a12a1ccd2392b5f572a63b452bfc771"},
+    {file = "multidict-4.7.2-cp37-cp37m-win32.whl", hash = "sha256:615a282acd530a1bc1b01f069a8c5874cb7c2780c287a2895ad5ab7407540e9d"},
+    {file = "multidict-4.7.2-cp37-cp37m-win_amd64.whl", hash = "sha256:20081b14c923d2c5122c13e060d0ee334e078e1802c36006b20c8d7a59ee6a52"},
+    {file = "multidict-4.7.2-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:49e80c53659c7ac50ec1c4b5fa50f045b67fffeb5b735dccb6205e4ff122e8b6"},
+    {file = "multidict-4.7.2-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:ff53a434890a16356bc45c0b90557efd89d0e5a820dbab37015d7ee630c6707a"},
+    {file = "multidict-4.7.2-cp38-cp38-win32.whl", hash = "sha256:c1c64c93b8754a5cebd495d136f47a5ca93cbfceba532e306a768c27a0c1292b"},
+    {file = "multidict-4.7.2-cp38-cp38-win_amd64.whl", hash = "sha256:e03b7addca96b9eb24d6eabbdc3041e8f71fd47b316e0f3c0fa993fc7b99002c"},
+    {file = "multidict-4.7.2.tar.gz", hash = "sha256:d4dafdcfbf0ac80fc5f00603f0ce43e487c654ae34a656e4749f175d9832b1b5"},
 ]
 mypy = [
     {file = "mypy-0.760-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:ec6eaf98a57624d96d9916352a5bad2d73959f6358fabf43838f7d1a4d2f8389"},

@@ -1,14 +1,27 @@
-FROM python:3.6
+# =====================
+# Generic build system
+# ---------------------
+
+ARG PYTHON_VERSION
+
+FROM python:${PYTHON_VERSION}
+
+RUN echo Building image for Python:${PYTHON_VERSION}
+
+# ==========================================
+# Project-specific installation instruction
+# ------------------------------------------
 
 WORKDIR /code
 COPY pyproject.toml poetry.lock makefile /code/
 
 ENV BUILD_ENVIRONMENT="development"
-ENV XDG_CACHE_HOME="/opt/venv/cache"
+ENV XDG_CACHE_HOME="/opt/dev/cache"
 
+# Use system's Python for installing dev tools
 RUN make dev-install
 
 COPY . /code
 
-VOLUME [ "/opt/venv" ]
-CMD bash
+VOLUME [ "/opt/dev" ]
+CMD [ "bash" ]
