@@ -342,6 +342,24 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## Collaboration
 
+This project uses a novel methodology for development, in which you only need [Docker installed](https://docs.docker.com/install/).
+Fork the project, clone, and you'll find a `dockerfile` and `docker-compose.yml` files in the project root.
+We provided [packaged testing environments](https://github.com/apiad/auditorium/packages) (in the form of Docker images) for all the Python versions we target.
+There is also a `makefile` with all the necessary commands.
+
+The workflow is something like this:
+* Fork, clone, and make some changes.
+* Run `make` to run the local, fast tests. The first time this will download the corresponding image.
+* Fix errors (if any) and watch the testing coverage. Make sure to at least cover the newly added features.
+* Run `make test-full` to run the local but long tests. This will download all the remaining images for each Python environment.
+* If all worked, push and pull-request.
+
+If you need to tinker with the dev environment, `make shell` will open a shell inside the latest Python environment where you can run and test commands.
+
+This project uses [poetry](https://python-poetry.org/) for package management. If you need to install new dependencies, run `make shell` and then `poetry add ...` inside the dockerized environment. Finally, don't forget to `poetry lock` and commit the changes to `pyproject.toml` and `poetry.lock` files.
+
+## License
+
 License is MIT, so you know the drill: fork, develop, add tests, pull request, rinse and repeat.
 
 > MIT License
