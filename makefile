@@ -1,4 +1,7 @@
-.PHONY: clean lint test test-full
+.PHONY: clean lint test test-full shell
+
+shell:
+	docker-compose run auditorium bash
 
 build:
 	docker-compose run auditorium make dev-build
@@ -28,23 +31,24 @@ dev-build: dev-ensure
 	poetry build
 
 dev-install: dev-ensure
-	pip install -U pip
 	pip install poetry
 	pip install tox
 	poetry config virtualenvs.create false
+
+dev-install-deps: dev-ensure
 	poetry install
 
 dev-test-full: dev-ensure
 	tox
 
 dev-test-simple: dev-ensure
-	poetry run mypy -p auditorium --ignore-missing-imports
-	poetry run pytest --doctest-modules --cov=auditorium --cov-report=term-missing -v
+	python -m mypy -p auditorium --ignore-missing-imports
+	python -m pytest --doctest-modules --cov=auditorium --cov-report=term-missing -v
 
 dev-test-single: dev-ensure
-	poetry run auditorium test
-	poetry run mypy -p auditorium --ignore-missing-imports
-	poetry run pytest --doctest-modules --cov=auditorium --cov-report=xml
+	python -m auditorium test
+	python -m mypy -p auditorium --ignore-missing-imports
+	python -m pytest --doctest-modules --cov=auditorium --cov-report=xml
 
 dev-cov: dev-ensure
-	poetry run codecov
+	python -m codecov
