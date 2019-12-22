@@ -1,11 +1,13 @@
 version: "3"
 
 services:
-    auditorium:
-        image: docker.pkg.github.com/apiad/auditorium/auditorium:latest
-        build: "."
-        volumes:
-            - "./:/code"
-        network_mode: host
-        command: auditorium demo
-        working_dir: "/"
+  auditorium-tester:
+    container_name: auditorium-tester-${PYTHON_VERSION}
+    image: docker.pkg.github.com/apiad/auditorium/auditorium:${PYTHON_VERSION}
+    build:
+      context: "."
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION}
+    volumes:
+      - "./:/code"
+    command: make dev-test-full

@@ -4,10 +4,15 @@ cache: pip
 
 python:
   - 3.6
+  - 3.7
+  - 3.8
+env:
+  global:
+    - BUILD_ENVIRONMENT=development
 
-install: make install-bare
-script: make test
-after_success: make cov
+install: make dev-install
+script: make dev-test-full
+after_success: make dev-cov
 
 notifications:
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
