@@ -10,4 +10,5 @@ services:
         PYTHON_VERSION: ${PYTHON_VERSION}
     volumes:
       - "./:/code"
+      - "~/.ssh/id_rsa:/root/.ssh/id_rsa"
     command: make dev-test-full
