@@ -3,10 +3,7 @@
 # ---------------------
 
 ARG PYTHON_VERSION
-
 FROM python:${PYTHON_VERSION}
-
-RUN echo Building image for Python:${PYTHON_VERSION}
 
 # ==========================================
 # Project-specific installation instruction
