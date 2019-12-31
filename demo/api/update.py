@@ -465,6 +465,6 @@ def append(ctx):
     ctx.code("show.append('auditorium/static/md/demo.md')")
 
 
-# from auditorium.markdown import load_markdown_demo
+from auditorium.markdown import load_markdown_demo
 
-# show.append(load_markdown_demo())
+show.append(load_markdown_demo())

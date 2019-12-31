@@ -1,3 +1,3 @@
-auditorium==0.6.4
+auditorium==0.6.5
 sanic==19.9.0
 matplotlib==3.1.2
