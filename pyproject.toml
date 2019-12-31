@@ -4,7 +4,7 @@ version = "0.6.5"
 description = "A Python-powered slideshow maker with steroids."
 authors = ["Alejandro Piad <alepiad@gmail.com>"]
 license = "MIT"
-readme = "README.md"
+readme = "Readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.6"
