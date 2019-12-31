@@ -2,6 +2,11 @@
 
 from auditorium import Show
 from typing import List
+from auditorium.utils import path
+
+
+def load_markdown_demo():
+    return Show.load(path("./static/md/demo.md"))
 
 
 class MarkdownLoader:

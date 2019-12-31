@@ -1,4 +1,4 @@
-.PHONY: clean lint test-fast test-full shell docs
+.PHONY: clean lint test-fast test-full shell docs docker-build docker-push
 
 BASE_VERSION := 3.8
 ALL_VERSIONS := 3.6 3.7 3.8

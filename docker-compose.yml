@@ -13,3 +13,5 @@ services:
       - "~/.ssh/id_rsa:/root/.ssh/id_rsa"
     command: make dev-test-full
     network_mode: host
+    environment:
+      - "NOW_TOKEN=${NOW_TOKEN}"
