@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "auditorium"
-version = "0.6.4"
+version = "0.6.5"
 description = "A Python-powered slideshow maker with steroids."
 authors = ["Alejandro Piad <alepiad@gmail.com>"]
 license = "MIT"
