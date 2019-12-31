@@ -157,3 +157,4 @@ dmypy.json
 *.zip
 *.tar.gz
 reveal.js-3.8.0/*
+.now

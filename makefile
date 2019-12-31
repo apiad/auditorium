@@ -1,10 +1,13 @@
-.PHONY: clean lint test-fast test-full shell
+.PHONY: clean lint test-fast test-full shell docs docker-build docker-push
 
 BASE_VERSION := 3.8
 ALL_VERSIONS := 3.6 3.7 3.8
 
 test-fast:
 	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester make dev-test-fast
+
+docs:
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester mkdocs serve
 
 shell:
 	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester bash

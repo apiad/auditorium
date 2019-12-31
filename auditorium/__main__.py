@@ -34,7 +34,7 @@ class Auditorium:
     def render(path, theme="white", instance_name="show"):
         "Renders a slideshow into a single HTML with all resources embedded."
 
-        show = load(path, instance_name)
+        show = Show.load(path, instance_name)
         print(show.render(theme))
 
     @staticmethod

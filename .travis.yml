@@ -22,3 +22,4 @@ deploy:
   script: poetry publish --build --username $PYPI_USER --password $PYPI_PASSWORD
   on:
     tags: true
+    python: "3.8"

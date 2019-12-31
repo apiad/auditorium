@@ -55,12 +55,11 @@ class Show:
     def run(self, host: str, port: int, launch: bool, *args, **kwargs) -> None:
         self._content = self._render_content()
 
-        if launch:
+        # if launch:
+        #     def launch_server():
+        #         webbrowser.open_new_tab(f"http://{host}:{port}")
 
-            def launch_server():
-                webbrowser.open_new_tab(f"http://{host}:{port}")
-
-            self.app.add_task(launch_server)
+        #     self.app.add_task(launch_server)
 
         self.app.run(host=host, port=port, *args, **kwargs)
 

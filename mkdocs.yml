@@ -1,0 +1,6 @@
+site_name: Auditorium
+theme: readthedocs
+nav:
+    - Home: index.md
+    - Contributing: contributing.md
+    - History: history.md
