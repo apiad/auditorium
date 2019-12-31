@@ -6,11 +6,11 @@
 [<img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/auditorium/master.svg">](https://travis-ci.org/apiad/auditorium)
 [<img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/auditorium.svg">](https://codecov.io/gh/apiad/auditorium)
 [<img alt="Gitter" src="https://img.shields.io/gitter/room/apiad/auditorium">](https://gitter.im/auditorium-slides/community)
-[<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](https://auditorium-demo.now.sh)
+[<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](https://auditorium-demo.apiad.net)
 
 > A Python-powered slideshow creator with steroids.
 
-See the demo at [auditorium-demo.now.sh](https://auditorium-demo.now.sh).
+See the demo at [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
 
 ## What's this about
 
@@ -247,7 +247,7 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 ### v0.6.5
 
 * Improved compatibility for [Now](https://now.sh) static deployments.
-* The demo has now been moved to [auditorium-demo.now.sh](https://auditorium-demo.now.sh).
+* The demo has now been moved to [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
 
 ### v0.6.4
 
