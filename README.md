@@ -6,11 +6,11 @@
 [<img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/auditorium/master.svg">](https://travis-ci.org/apiad/auditorium)
 [<img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/auditorium.svg">](https://codecov.io/gh/apiad/auditorium)
 [<img alt="Gitter" src="https://img.shields.io/gitter/room/apiad/auditorium">](https://gitter.im/auditorium-slides/community)
-[<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](http://auditorium-demo.apiad.net)
+[<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](https://auditorium-demo.now.sh)
 
 > A Python-powered slideshow creator with steroids.
 
-See the demo at [auditorium-demo.apiad.net](http://auditorium-demo.apiad.net) (sorry, no HTTPS yet).
+See the demo at [auditorium-demo.now.sh](https://auditorium-demo.now.sh).
 
 ## What's this about
 
@@ -243,6 +243,11 @@ Since the backend code runs in your computer, a viewer could inject nasty stuff 
 Staying away from `eval` and `exec` should keep you safe in most scenarios, but the basic suggestion is don't do anything you wouldn't do in a regular web application, since all security issues are the same.
 
 ## History
+
+### v0.6.5
+
+* Improved compatibility for [Now](https://now.sh) static deployments.
+* The demo has now been moved to [auditorium-demo.now.sh](https://auditorium-demo.now.sh).
 
 ### v0.6.4
 
