@@ -19,9 +19,11 @@ def test_vertical_slide():
 
     @show.slide
     def main(ctx):
-        @show.slide
-        def second(ctx):
-            pass
+        pass
+
+    @main.slide
+    def second(ctx):
+        pass
 
     show.render()
 

@@ -146,7 +146,26 @@ class Show(FastAPI):
 
             return wrapper
 
-    def _wrap(self, func, id):
+    @staticmethod
+    def _vertical_slide_wrapper(show, section):
+        class _VerticalWrapper:
+            def __init__(self, section):
+                self.section = section
+
+            def slide(self, func=None, id=None):
+                if func is not None:
+                    return show._wrap(func, id, self.section)
+
+                elif id is not None:
+
+                    def wrapper(func):
+                        return show._wrap(func, id, self.section)
+
+                    return wrapper
+
+        return _VerticalWrapper(section)
+
+    def _wrap(self, func, id, section=None):
         if self._rendering:
             return func
 
@@ -154,22 +173,13 @@ class Show(FastAPI):
         slide = Slide(slide_id, func, self)
         self._slides[slide_id] = slide
 
-        if self._current_section is None:
-            # We are at the top level, this a regular slide
+        if section is None:
             section = Section()
             section.add_slide(slide)
-
             self._sections.append(section)
-            self._current_section = section
-
-            # recursively build this slide (just once)
-            # to reach the vertical slides
-            slide.run(ShowMode.Markup)
-
-            self._current_section = None
+            wrapper = Show._vertical_slide_wrapper(self, section)
+            func.slide = wrapper.slide
         else:
-            # We are inside a slide, this a vertical slide
-            section = self._current_section
             section.add_slide(slide)
 
         return func

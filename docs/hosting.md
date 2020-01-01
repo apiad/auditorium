@@ -1,10 +1,10 @@
-# Hosting options
+# Hosting Options
 
 ## Hosting a slideshow at `now.sh`
 
-[<img alt="Made with Auditorium" src="https://img.shields.io/badge/made--with-auditorium-blue"></img>](https://apiad.net/auditorium)
-
-This folder shows the layout you need to comply with for hosting a slideshow at [now.sh](https://now.sh), such that the backend logic works as well. If you don't know what [now.sh](https://now.sh) is, go and [read about it](https://zeit.co/docs) first.
+Another option is to host the static presentation and backend at [now.sh](https://now.sh).
+If you don't know what [now.sh](https://now.sh) is, go and [read about it](https://zeit.co/docs) first.
+The [demo](https://github.com/apiad/auditorium/tree/master/demo) folder folder shows the layout you need to comply with for hosting a slideshow at [now.sh](https://now.sh), such that the backend logic works as well.
 
 In short, these are the basic steps:
 
@@ -17,7 +17,7 @@ show = Show("My Awesome Show")
 app = show.app # <--- This line
 ```
 
-This will allow `now.sh` serverless functions to find your slideshow's underlying `sanic` application, and automagically make the backend logic work.
+This will allow `now.sh` serverless functions to find your slideshow's underlying `fastapi` application, and automagically make the backend logic work.
 
 2. Make a folder for uploading to `now.sh`, let's call it `my-show` and an `api` folder inside.
 
@@ -56,4 +56,4 @@ auditorium # This is basically mandatory :)
 matplotlib # Stuff you use in your slides
 ```
 
-7. [Install](https://zeit.co/docs#install-now-cli) and run `now` inside the `my-show` folder.
+7. [Install](https://zeit.co/docs#install-now-cli) and run `now` inside the `my-show` folder. If you are using the [development docker images](https://hub.docker.com/r/auditorium/auditorium-dev), `now` is already installed for you.

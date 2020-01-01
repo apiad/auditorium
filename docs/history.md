@@ -1,5 +1,9 @@
 # History
 
+### v19.1.3
+
+* Changed vertical slides API, now slides don't need to be run the first time the slideshow is loaded, since the entire slideshow is flat.
+
 ### v19.1.2
 
 * Switched to [FastAPI](https://fastapi.tiangolo.com) 🤓🤓 !!
