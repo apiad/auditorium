@@ -6,11 +6,11 @@
 [<img alt="Travis (.org)" src="https://img.shields.io/travis/apiad/auditorium/master.svg">](https://travis-ci.org/apiad/auditorium)
 [<img alt="Codecov" src="https://img.shields.io/codecov/c/github/apiad/auditorium.svg">](https://codecov.io/gh/apiad/auditorium)
 [<img alt="Gitter" src="https://img.shields.io/gitter/room/apiad/auditorium">](https://gitter.im/auditorium-slides/community)
-[<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](https://auditorium-demo.now.sh)
+[<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](https://auditorium-demo.apiad.net)
 
 > A Python-powered slideshow creator with steroids.
 
-See the demo at [auditorium-demo.now.sh](https://auditorium-demo.now.sh).
+See the demo at [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
 
 ## What's this about
 
@@ -242,12 +242,34 @@ However, beware when hosting presentations online.
 Since the backend code runs in your computer, a viewer could inject nasty stuff such as importing `os` and deleting your home folder! In the future I might add a `--safe` option that only allows for animations and other interactive behaviors that don't use input directly from the user.
 Staying away from `eval` and `exec` should keep you safe in most scenarios, but the basic suggestion is don't do anything you wouldn't do in a regular web application, since all security issues are the same.
 
+## Made with Auditorium
+
+* [Auditorium Demo](https://auditorium-demo.apiad.net) - a slideshow showcasing the most important features from `auditorium`.
+
+### Your Contributions Here
+
+If you have a slideshow to showcase here, feel free to [edit this Readme](https://github.com/apiad/auditorium/edit/master/README.md) and send a pull request. Add your website, Github repository, and any other information.
+
+If you feel like sending some support please consider adding a badge somewhere in your website or repository:
+
+```html
+<a href="https://apiad.net/auditorium"><img alt="Made with Auditorium" src="https://img.shields.io/badge/made--with-auditorium-blue"></img></a>
+```
+
+It looks like this:
+
+<a href="https://apiad.net/auditorium"><img alt="Made with Auditorium" src="https://img.shields.io/badge/made--with-auditorium-blue"></img></a>
+
 ## History
+
+### v19.1.1
+
+* To celebrate the new year we are switching to [calver](https://calver.org/) versioning for good!
 
 ### v0.6.5
 
 * Improved compatibility for [Now](https://now.sh) static deployments.
-* The demo has now been moved to [auditorium-demo.now.sh](https://auditorium-demo.now.sh).
+* The demo has now been moved to [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
 
 ### v0.6.4
 

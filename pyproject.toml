@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "auditorium"
-version = "0.6.5"
+version = "19.1.1"
 description = "A Python-powered slideshow maker with steroids."
 authors = ["Alejandro Piad <alepiad@gmail.com>"]
 license = "MIT"
-readme = "README.md"
+readme = "Readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.6"
@@ -24,7 +24,7 @@ mkdocs = "^1.0.4"
 
 [tool.poetry.scripts]
 auditorium = "auditorium.__main__:main"
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
