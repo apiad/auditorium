@@ -1,2 +1,2 @@
-auditorium==0.6.5
+auditorium==19.1.2
 matplotlib==3.1.2

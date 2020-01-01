@@ -1,11 +1,12 @@
 version: "3"
 
 services:
-  auditorium-tester:
-    container_name: auditorium-tester-${PYTHON_VERSION}
-    image: docker.pkg.github.com/apiad/auditorium/auditorium:${PYTHON_VERSION}
+  auditorium-dev:
+    container_name: auditorium-dev-${PYTHON_VERSION}
+    image: auditorium/auditorium-dev:${PYTHON_VERSION}
     build:
       context: "."
+      dockerfile: "docker/dev.dockerfile"
       args:
         PYTHON_VERSION: ${PYTHON_VERSION}
     volumes:
@@ -15,3 +16,23 @@ services:
     network_mode: host
     environment:
       - "NOW_TOKEN=${NOW_TOKEN}"
+
+  auditorium:
+    container_name: auditorium
+    image: auditorium/auditorium:${AUDITORIUM_VERSION}
+    build:
+      context: "."
+      dockerfile: "docker/dockerfile"
+      args:
+        AUDITORIUM_VERSION: ${AUDITORIUM_VERSION}
+    network_mode: host
+
+  auditorium-serverless:
+    container_name: auditorium-serverless
+    image: auditorium/auditorium-serverless:${AUDITORIUM_VERSION}
+    build:
+      context: "."
+      dockerfile: "docker/serverless.dockerfile"
+      args:
+        AUDITORIUM_VERSION: ${AUDITORIUM_VERSION}
+    network_mode: host

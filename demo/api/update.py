@@ -342,8 +342,16 @@ def pyplot(ctx):
     Dynamically generated graphs with `pyplot` can be added
     also very easily.
     """
-    from matplotlib import pyplot as plt
-    import numpy as np
+
+    try:
+        from matplotlib import pyplot as plt
+        import numpy as np
+    except ImportError:
+        with ctx.error("Dependencies missing"):
+            ctx.markdown("You need `matplotlib` installed to make this slide work. Make sure to run:")
+
+        ctx.code("pip install matplotlib", "bash")
+        return
 
     xg = np.random.RandomState(0)
     yg = np.random.RandomState(1)
