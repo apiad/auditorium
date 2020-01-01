@@ -91,6 +91,6 @@ def run_server(*, host="0.0.0.0", port=9876):
         uvicorn.run(server, host=host, port=port)
     except ImportError:
         warnings.warn(
-            "You need `uvicorn` installed in order to run the auditorium server"
+            "(!) You need `uvicorn` installed in order to call `server`."
         )
         exit(1)

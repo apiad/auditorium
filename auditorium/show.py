@@ -74,7 +74,7 @@ class Show(FastAPI):
 
             uvicorn.run(self.app, host=host, port=port, debug=debug)
         except ImportError:
-            warnings.warn("In order to call `run` you need `uvicorn` installed.")
+            warnings.warn("(!) You need `uvicorn` installed in order to call `run`.")
             exit(1)
 
     def run_server(self, server: str, name: str):
