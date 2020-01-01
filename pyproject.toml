@@ -10,9 +10,15 @@ readme = "Readme.md"
 python = "^3.6"
 markdown = "^3.1.1"
 fire = "^0.2.1"
-sanic = "^19.9.0"
 jinja2 = "^2.10.3"
 pygments = "^2.5.2"
+fastapi = "^0.45.0"
+aiofiles = "^0.4.0"
+# uvicorn is required *only* for calling `auditorium run`
+uvicorn = { version = "^0.11.1", optional = true }
+
+[tool.poetry.extras]
+server = ["uvicorn"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.3.2"

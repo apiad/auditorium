@@ -7,6 +7,7 @@ This module includes the `Show` class and the main functionalities of `auditoriu
 import base64
 import io
 import runpy
+import warnings
 import webbrowser
 from collections import OrderedDict
 
@@ -16,14 +17,25 @@ from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.lexers import get_lexer_by_name
 from pygments.styles import get_style_by_name
-from sanic import Sanic
-from sanic.response import html, json
+
+from fastapi import FastAPI
+from starlette.staticfiles import StaticFiles
+from starlette.responses import HTMLResponse
+from pydantic import BaseModel
+from typing import Union
 
 from .components import Animation, Block, Column, Fragment, ShowMode
 from .utils import fix_indent, path
 
 
-class Show:
+class UpdateData(BaseModel):
+    type: str
+    id: str
+    slide: str
+    value: Union[int, str]
+
+
+class Show(FastAPI):
     def __init__(self, title="", theme="white", code_style="monokai"):
         self.theme = theme
         self.formatter = HtmlFormatter(style=get_style_by_name(code_style))
@@ -32,10 +44,10 @@ class Show:
         self._sections = []
         self._tail = []
 
-        self.app = Sanic("auditorium")
-        self.app.route("/")(self._index)
-        self.app.route("/update", methods=["POST"])(self._update)
-        self.app.static("static", path("static"))
+        self.app = FastAPI()
+        self.app.get("/")(self._index)
+        self.app.post("/update")(self._update)
+        self.app.mount("/static", StaticFiles(directory=path("static")))
 
         self._title = title
         self._current_section = None
@@ -61,7 +73,13 @@ class Show:
 
         #     self.app.add_task(launch_server)
 
-        self.app.run(host=host, port=port, *args, **kwargs)
+        try:
+            import uvicorn
+
+            uvicorn.run(self.app, host=host, port=port, *args, **kwargs)
+        except ImportError:
+            warnings.warn("In order to call `run` you need `uvicorn` installed.")
+            exit(1)
 
     @property
     def show_title(self) -> str:
@@ -192,16 +210,14 @@ class Show:
 
     ## Routes
 
-    async def _update(self, request):
-        data = request.json
+    async def _update(self, data: UpdateData):
         values = {}
-        values[data["id"]] = data["value"]
-        update = self.do_code(data["slide"], values)
-        return json(update)
+        values[data.id] = data.value
+        update = self.do_code(data.slide, values)
+        return update
 
-    async def _index(self, request):
-        theme = request.args.get("theme", self.theme)
-        return html(
+    async def _index(self, theme: str = "white"):
+        return HTMLResponse(
             self._template_dynamic.render(
                 show=self,
                 content=self._content,

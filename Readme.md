@@ -8,6 +8,8 @@
 [<img alt="Gitter" src="https://img.shields.io/gitter/room/apiad/auditorium">](https://gitter.im/auditorium-slides/community)
 [<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](https://auditorium-demo.apiad.net)
 
+<img src="auditorium/static/img/logo.png"></img>
+
 > A Python-powered slideshow creator with steroids.
 
 See the demo at [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
@@ -253,7 +255,11 @@ If you have a slideshow to showcase here, feel free to [edit this Readme](https:
 If you feel like sending some support please consider adding a badge somewhere in your website or repository:
 
 ```html
-<a href="https://apiad.net/auditorium"><img alt="Made with Auditorium" src="https://img.shields.io/badge/made--with-auditorium-blue"></img></a>
+<a href="https://apiad.net/auditorium">
+    <img alt="Made with Auditorium"
+         src="https://img.shields.io/badge/made--with-auditorium-blue">
+    </img>
+</a>
 ```
 
 It looks like this:

@@ -4,31 +4,31 @@ BASE_VERSION := 3.8
 ALL_VERSIONS := 3.6 3.7 3.8
 
 test-fast:
-	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester make dev-test-fast
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev make dev-test-fast
 
 docs:
-	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester mkdocs serve
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev mkdocs serve
 
 shell:
-	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester bash
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev bash
 
 lock:
-	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester poetry lock
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev poetry lock
 
 build:
-	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester poetry build
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev poetry build
 
 clean:
 	git clean -fxd
 
 lint:
-	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-tester poetry run pylint auditorium
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev poetry run pylint auditorium
 
 test-full:
 	$(foreach VERSION, $(ALL_VERSIONS), PYTHON_VERSION=${VERSION} docker-compose up;)
 
 docker-build:
-	$(foreach VERSION, $(ALL_VERSIONS), PYTHON_VERSION=${VERSION} docker-compose build;)
+	$(foreach VERSION, $(ALL_VERSIONS), PYTHON_VERSION=${VERSION} docker-compose build auditorium-dev;)
 
 docker-push:
 	$(foreach VERSION, $(ALL_VERSIONS), PYTHON_VERSION=${VERSION} docker-compose push;)
@@ -45,7 +45,7 @@ dev-ensure:
 dev-install: dev-ensure
 	pip install poetry
 	poetry config virtualenvs.create false
-	poetry install
+	poetry install -E server
 
 dev-test-fast: dev-ensure
 	python -m mypy -p auditorium --ignore-missing-imports
