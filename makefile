@@ -6,8 +6,11 @@ ALL_VERSIONS := 3.6 3.7 3.8
 test-fast:
 	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev make dev-test-fast
 
-docs:
+docs-serve:
 	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev mkdocs serve
+
+docs-deploy:
+	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev mkdocs gh-deploy && cp docs/index.md Readme.md
 
 shell:
 	PYTHON_VERSION=${BASE_VERSION} docker-compose run auditorium-dev bash

@@ -2,7 +2,7 @@
 
 This project uses a novel methodology for development, in which you only need [Docker installed](https://docs.docker.com/install/).
 Fork the project, clone, and you'll find a `dockerfile` and `docker-compose.yml` files in the project root.
-We provided [packaged testing environments](https://github.com/apiad/auditorium/packages) (in the form of Docker images) for all the Python versions we target.
+We provided [packaged testing environments](https://hub.docker.com/orgs/auditorium) (in the form of Docker images) for all the Python versions we target.
 There is also a `makefile` with all the necessary commands.
 
 The workflow is something like this:
