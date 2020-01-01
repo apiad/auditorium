@@ -8,7 +8,6 @@
 [<img alt="Gitter" src="https://img.shields.io/gitter/room/apiad/auditorium">](https://gitter.im/auditorium-slides/community)
 [<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](https://auditorium-demo.apiad.net)
 
-<img src="assets/logo.png"></img>
 
 > A Python-powered slideshow creator with steroids.
 
