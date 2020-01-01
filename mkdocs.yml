@@ -2,5 +2,7 @@ site_name: Auditorium
 theme: readthedocs
 nav:
     - Home: index.md
+    - Hosting: hosting.md
+    - Important Considerations: consider.md
     - Contributing: contributing.md
     - History: history.md

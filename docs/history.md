@@ -1,5 +1,13 @@
 # History
 
+### v19.1.2
+
+* Switched to [FastAPI](https://fastapi.tiangolo.com) 🤓🤓 !!
+
+### v19.1.1
+
+* To celebrate the new year we are switching to [calver](https://calver.org/) versioning for good!
+
 ### v0.6.4
 
 * New development environment completely based on Docker.
