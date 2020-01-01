@@ -75,7 +75,7 @@ It looks like this:
 
 ## History
 
-See [the docs](https://apiad.net/auditorium/history)
+See [the docs](https://apiad.net/auditorium/history).
 
 ## Collaboration and License
 
