@@ -212,39 +212,41 @@ def vertical_slides(ctx):
     with ctx.warning(ctx):
         ctx.markdown("Press `DOWN` instead of `LEFT` or click the down arrow.")
 
-    @show.slide
-    def vertical_code(ctx):
+
+@vertical_slides.slide
+def vertical_code(ctx):
+    """
+    ## Vertical Slides: Code
+    """
+
+    ctx.code(
         """
-        ## Vertical Slides: Code
+        @show.slide
+        def main_slide(ctx):
+            # content of main slide
+
+        @main_slide.slide
+        def vertical_1(ctx):
+            # content of first vertical slide
+
+        @main_slide.slide
+        def vertical_2(ctx):
+            # content of first vertical slide
         """
+    )
 
-        ctx.code(
-            """
-            @show.slide
-            def main_slide(ctx):
-                # content of main slide
 
-                @show.slide
-                def vertical_1(ctx):
-                    # content of first vertical slide
+@vertical_slides.slide
+def vertical_more(ctx):
+    """
+    ### Vertical Slides: More Info
 
-                @show.slide
-                def vertical_2(ctx):
-                    # content of first vertical slide
-            """
-        )
+    If you press `SPACE` instead of `LEFT` or `DOWN`
+    the slideshow will cycle through **all** of the slides
+    in order, including vertical slides.
 
-    @show.slide
-    def vertical_more(ctx):
-        """
-        ### Vertical Slides: More Info
-
-        If you press `SPACE` instead of `LEFT` or `DOWN`
-        the slideshow will cycle through **all** of the slides
-        in order, including vertical slides.
-
-        Show will go down and left automatically as necessary.
-        """
+    Show will go down and left automatically as necessary.
+    """
 
 
 @show.slide
@@ -271,27 +273,28 @@ def blocks(ctx):
         with ctx.error("Error block"):
             ctx.markdown("When nothing works...")
 
-    @show.slide
-    def blocks_code(ctx):
+
+@blocks.slide
+def blocks_code(ctx):
+    """
+    ## Blocks: Code
+    """
+
+    ctx.code(
         """
-        ## Blocks: Code
+        with ctx.block('Standard block'):
+            ctx.markdown("And its content...")
+
+        with ctx.success('Success block'):
+            ctx.markdown("For happy endings...")
+
+        with ctx.warning('Warning block'):
+            ctx.markdown("For hairy stuff...")
+
+        with ctx.error('Error block'):
+            ctx.markdown("When nothing works...")
         """
-
-        ctx.code(
-            """
-            with ctx.block('Standard block'):
-                ctx.markdown("And its content...")
-
-            with ctx.success('Success block'):
-                ctx.markdown("For happy endings...")
-
-            with ctx.warning('Warning block'):
-                ctx.markdown("For hairy stuff...")
-
-            with ctx.error('Error block'):
-                ctx.markdown("When nothing works...")
-            """
-        )
+    )
 
 
 @show.slide
@@ -314,24 +317,25 @@ def fragments(ctx):
             """
         )
 
-    @show.slide
-    def fragment_examples(ctx):
-        """
-        ## Fragment examples
 
-        Here are some of the possible fragment animations.
-        """
+@fragments.slide
+def fragment_examples(ctx):
+    """
+    ## Fragment examples
 
-        with ctx.columns(3) as cl:
-            for i, style in enumerate(
-                "grow shrink fade-in fade-out fade-up fade-down fade-left \
-                 fade-right highlight-blue highlight-red highlight-green".split()
-            ):
-                if i > 0 and i % 4 == 0:
-                    cl.tab()
+    Here are some of the possible fragment animations.
+    """
 
-                with ctx.fragment(style):
-                    ctx.markdown(f"`{style}`")
+    with ctx.columns(3) as cl:
+        for i, style in enumerate(
+            "grow shrink fade-in fade-out fade-up fade-down fade-left \
+                fade-right highlight-blue highlight-red highlight-green".split()
+        ):
+            if i > 0 and i % 4 == 0:
+                cl.tab()
+
+            with ctx.fragment(style):
+                ctx.markdown(f"`{style}`")
 
 
 @show.slide
@@ -378,26 +382,26 @@ def pyplot(ctx):
                     % (4 * colors.count("green") / len(x) if len(x) > 0 else 0)
                 )
 
-    @show.slide
-    def pyplot_code(ctx):
-        """### Pyplot: Code"""
+@pyplot.slide
+def pyplot_code(ctx):
+    """### Pyplot: Code"""
 
-        ctx.code(
-            """
-            xg = np.random.RandomState(0)
-            yg = np.random.RandomState(1)
+    ctx.code(
+        """
+        xg = np.random.RandomState(0)
+        yg = np.random.RandomState(1)
 
-            with ctx.animation(steps=60, time=0.5, loop=True) as anim:
-                x = xg.uniform(size=anim.current * 50)
-                y = yg.uniform(size=anim.current * 50)
-                colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange'
-                        for (xi, yi) in zip(x,y)]
-                plt.scatter(x, y, s=3, c=colors)
-                plt.ylim(0, 1)
-                plt.xlim(0, 1)
-                ctx.pyplot(plt, fmt='png', height=350)
-            """
-        )
+        with ctx.animation(steps=60, time=0.5, loop=True) as anim:
+            x = xg.uniform(size=anim.current * 50)
+            y = yg.uniform(size=anim.current * 50)
+            colors = ['green' if xi ** 2 + yi ** 2 < 1 else 'orange'
+                    for (xi, yi) in zip(x,y)]
+            plt.scatter(x, y, s=3, c=colors)
+            plt.ylim(0, 1)
+            plt.xlim(0, 1)
+            ctx.pyplot(plt, fmt='png', height=350)
+        """
+    )
 
 
 @show.slide
