@@ -3,7 +3,8 @@
 ### v19.1.4
 
 * Added command `auditorium server` that allows to proxy a slideshow through a public server.
-* Opened service at [auditorium.apiad.net](https://auditorium.apiad.net).
+* Added command `auditorium publish` for authors to publish their slides.
+* Opened service at [auditorium.apiad.net](http://auditorium.apiad.net) (sorry, no HTTPS yet).
 
 ### v19.1.3
 
