@@ -31,7 +31,7 @@ function setupAnimations(parent) {
                     value: step
                 });
 
-                fetch("/update", {
+                fetch("update", {
                     method: "POST",
                     headers: {
                         "Accept": "application/json",

@@ -1,5 +1,11 @@
 # History
 
+### v19.1.4
+
+* Added command `auditorium server` that allows to proxy a slideshow through a public server.
+* Added command `auditorium publish` for authors to publish their slides.
+* Opened service at [auditorium.apiad.net](http://auditorium.apiad.net) (sorry, no HTTPS yet).
+
 ### v19.1.3
 
 * Changed vertical slides API, now slides don't need to be run the first time the slideshow is loaded, since the entire slideshow is flat.

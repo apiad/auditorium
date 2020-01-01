@@ -11,24 +11,35 @@ class Auditorium:
     @staticmethod
     def run(
         path,
-        host="127.0.0.1",
-        port=6789,
-        debug=False,
-        instance_name="show",
-        launch=True,
+        *,
+        host: str = "127.0.0.1",
+        port: int = 6789,
+        debug: bool = False,
+        instance_name: str = "show",
     ):
         "Runs a custom Python script as a slideshow."
 
         show = Show.load(path, instance_name)
-        show.run(host=host, port=port, debug=debug, launch=launch)
+        show.run(host=host, port=port, debug=debug)
 
     @staticmethod
-    def demo(host="127.0.0.1", port=6789, debug=False, launch=True):
+    def publish(
+        path: str,
+        name: str,
+        *,
+        server: str = "wss://auditorium.apiad.net",
+        instance_name: str = "show"
+    ):
+        show = Show.load(path, instance_name)
+        show.publish(server=server, name=name)
+
+    @staticmethod
+    def demo(host: str = "127.0.0.1", port: int = 6789, debug: bool = False):
         "Starts the demo slideshow."
 
         from auditorium.demo import show
 
-        show.run(host, port, debug=debug, launch=launch)
+        show.run(host=host, port=port, debug=debug)
 
     @staticmethod
     def render(path, theme="white", instance_name="show"):
@@ -36,6 +47,12 @@ class Auditorium:
 
         show = Show.load(path, instance_name)
         print(show.render(theme))
+
+    @staticmethod
+    def server(host: str = "0.0.0.0", port: int = 9876):
+        from auditorium.server import run_server
+
+        run_server(host=host, port=port)
 
     @staticmethod
     def test():
