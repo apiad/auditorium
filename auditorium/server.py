@@ -3,7 +3,7 @@
 import warnings
 import websockets
 
-from typing import Mapping, Tuple
+from typing import Dict, Tuple
 from fastapi import FastAPI, HTTPException
 from starlette.responses import HTMLResponse
 from starlette.websockets import WebSocket
@@ -13,7 +13,7 @@ from .show import UpdateData
 
 server = FastAPI()
 
-SERVERS: Mapping[str, Tuple[asyncio.Queue, asyncio.Queue]] = {}
+SERVERS: Dict[str, Tuple[asyncio.Queue, asyncio.Queue]] = {}
 
 
 @server.get("/")
@@ -58,7 +58,8 @@ async def ws(websocket: WebSocket):
     name = await websocket.receive_text()
     print("Registering new server: ", name)
 
-    queue_in, queue_out = asyncio.Queue(), asyncio.Queue()
+    queue_in: asyncio.Queue = asyncio.Queue()
+    queue_out: asyncio.Queue = asyncio.Queue()
     SERVERS[name] = (queue_in, queue_out)
 
     try:
