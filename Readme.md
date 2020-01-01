@@ -268,6 +268,10 @@ It looks like this:
 
 ## History
 
+### v19.1.2
+
+* Switched to [FastAPI](https://fastapi.tiangolo.com) 🤓🤓 !!
+
 ### v19.1.1
 
 * To celebrate the new year we are switching to [calver](https://calver.org/) versioning for good!
