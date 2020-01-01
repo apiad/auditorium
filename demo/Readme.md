@@ -14,6 +14,8 @@ See the demo at [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
 
 ## Hosting a slideshow at `now.sh`
 
+[<img alt="Made with Auditorium" src="https://img.shields.io/badge/made--with-auditorium-blue"></img>](https://apiad.net/auditorium)
+
 This folder shows the layout you need to comply with for hosting a slideshow at [now.sh](https://now.sh), such that the backend logic works as well. If you don't know what [now.sh](https://now.sh) is, go and [read about it](https://zeit.co/docs) first.
 
 In short, these are the basic steps:

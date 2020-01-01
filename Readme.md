@@ -242,7 +242,25 @@ However, beware when hosting presentations online.
 Since the backend code runs in your computer, a viewer could inject nasty stuff such as importing `os` and deleting your home folder! In the future I might add a `--safe` option that only allows for animations and other interactive behaviors that don't use input directly from the user.
 Staying away from `eval` and `exec` should keep you safe in most scenarios, but the basic suggestion is don't do anything you wouldn't do in a regular web application, since all security issues are the same.
 
+## Made with Auditorium
+
+If you have a slideshow to showcase here, feel free to [edit this Readme](https://github.com/apiad/auditorium/edit/master/README.md) and send a pull request. Add your website, Github repository, and any other information.
+
+If you feel like sending some support please consider adding a badge somewhere in your website or repository:
+
+```html
+<a href="https://apiad.net/auditorium"><img alt="Made with Auditorium" src="https://img.shields.io/badge/made--with-auditorium-blue"></img></a>
+```
+
+It looks like this:
+
+<a href="https://apiad.net/auditorium"><img alt="Made with Auditorium" src="https://img.shields.io/badge/made--with-auditorium-blue"></img></a>
+
 ## History
+
+### v19.1.1
+
+* To celebrate the new year we are switching to [calver](https://calver.org/) versioning for good!
 
 ### v0.6.5
 
