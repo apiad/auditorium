@@ -8,6 +8,7 @@
 [<img alt="Gitter" src="https://img.shields.io/gitter/room/apiad/auditorium">](https://gitter.im/auditorium-slides/community)
 [<img alt="Demo" src="https://img.shields.io/badge/demo-browse-blueviolet"></img>](https://auditorium-demo.apiad.net)
 
+<img src="https://apiad.net/auditorium/assets/logo.png"></img>
 
 > A Python-powered slideshow creator with steroids.
 
@@ -42,6 +43,9 @@ To see a quick demo run:
 And point your browser at [localhost:6789](http://localhost:6789).
 
 ## Quick Start and Tutorials
+
+If you want to quickly grok `auditorium`, the best option is to [look at the demo online](https://auditorium-demo.apiad.net) and then
+[read the source code](https://github.com/apiad/auditorium/blob/master/auditorium/demo.py). This way you will both see the end result and what effort it takes to get there.
 
 * [Authoring a slideshow with Python](https://apiad.net/auditorium/quickstart/#python-first)
 * [Authoring a slideshow with Markdown](https://apiad.net/auditorium/quickstart/#markdown-first)
