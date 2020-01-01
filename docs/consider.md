@@ -22,22 +22,16 @@ That being said, there are some known deficiencies that I might fix, and some ot
 ## Slides need to be fast
 
 A slide's code is executed completely every time that slide needs to be rendered.
-That is, once during loading and then when inputs change or animations tick.
+That is, once during the initial rendering and then when inputs change or animations tick.
 Hence, you slide logic should be fairly fast.
 This is particularly true for animations, so don't expect to be able to train a neural network in real time.
-The slide logic is meant to be simple, the kind of one-liners you can run every keystroke, like less than 1 second fast.
+The slide logic is meant to be simple, the kind of one-liners you can run every keystroke, in the order of a couple hundred miliseconds at most.
 If you need to interactively draw the loss value of a neural network, either is gonna take a while or you will have to fake it, i.e., compute it offline and then simply animate it.
-
-## All slides are executed on load
-
-For now, on the first load all slides are going to be run, which might increase significantly your loading time if you have complex logic in each slide.
-At some point, if I run into the problem, I may add a "lazy" loading option so that only the first few slides are executed.
-If this is an issue for a lot of people it might become a priority.
 
 ## Slides have to be stateless
 
 The code that runs inside a slide should not depend on anything outside of `ctx`, since you have no guarantee when will it be executed.
-Right now, slide's code is executed once before any rendering in order to discover vertical slides, then again during the
+Right now, slide's code is executed once during the
 initial rendering to layout and then everytime an interaction or animation forces the slide to render again.
 However, this might be changed at any time, so make no assumptions as to when is that code executed.
 The easiest way to do this, is making sure that every slide function is a pure function and all state is handled through
