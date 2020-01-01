@@ -64,8 +64,8 @@ cp /path/to/slideshow.py /path/to/my-show/api/update.py
 6. Add a `requirements.txt` file with your requirements. This one works for the demo:
 
 ```ini
-auditorium==0.6.5 # This is basically mandatory :)
-matplotlib==3.1.2 # Stuff you use in your slides
+auditorium # This is basically mandatory :)
+matplotlib # Stuff you use in your slides
 ```
 
 7. [Install](https://zeit.co/docs#install-now-cli) and run `now` inside the `my-show` folder.
