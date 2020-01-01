@@ -4,25 +4,27 @@
 This module includes the `Show` class and the main functionalities of `auditorium`.
 """
 
+import asyncio
 import base64
 import io
+import json
 import runpy
 import warnings
 import webbrowser
 from collections import OrderedDict
+from typing import Union
 
+import websockets
+from fastapi import FastAPI
 from jinja2 import Template
 from markdown import markdown
+from pydantic import BaseModel
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.lexers import get_lexer_by_name
 from pygments.styles import get_style_by_name
-
-from fastapi import FastAPI
-from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import Union
+from starlette.staticfiles import StaticFiles
 
 from .components import Animation, Block, Column, Fragment, ShowMode
 from .utils import fix_indent, path
@@ -64,22 +66,55 @@ class Show(FastAPI):
 
     ## Show functions
 
-    def run(self, host: str, port: int, launch: bool, *args, **kwargs) -> None:
+    def run(self, *, host: str, port: int, debug: bool = False) -> None:
         self._content = self._render_content()
-
-        # if launch:
-        #     def launch_server():
-        #         webbrowser.open_new_tab(f"http://{host}:{port}")
-
-        #     self.app.add_task(launch_server)
 
         try:
             import uvicorn
 
-            uvicorn.run(self.app, host=host, port=port, *args, **kwargs)
+            uvicorn.run(self.app, host=host, port=port, debug=debug)
         except ImportError:
             warnings.warn("In order to call `run` you need `uvicorn` installed.")
             exit(1)
+
+    def run_server(self, server: str, name: str):
+        url = "{}/ws".format(server)
+        asyncio.get_event_loop().run_until_complete(self._ws(url, name))
+
+    async def _ws(self, url: str, name: str):
+        try:
+            async with websockets.connect(url) as websocket:
+                print("Connected to server")
+                await websocket.send(name)
+                print("Starting command loop.")
+
+                while True:
+                    command = await websocket.recv()
+                    command = json.loads(command)
+
+                    response = self._do_ws_command(command)
+                    response = json.dumps(response)
+                    await websocket.send(response)
+        except ConnectionRefusedError:
+            print("(!) Could not connect to %s. Make sure server is up." % url)
+            exit(1)
+        except websockets.exceptions.ConnectionClosedError:
+            print("(!) Connection to %s closed by server." % url)
+            exit(1)
+
+
+    def _do_ws_command(self, command):
+        if command["type"] == "render":
+            print("Rendering content")
+            return dict(content=self.render())
+        else:
+            print("Executing slide %s" % command["slide"])
+            values = {}
+            values[command["id"]] = command["value"]
+            update = self.do_code(command["slide"], values)
+            return update
+
+        raise ValueError("Unknown command: %s", command["type"])
 
     @property
     def show_title(self) -> str:

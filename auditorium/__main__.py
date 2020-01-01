@@ -11,24 +11,33 @@ class Auditorium:
     @staticmethod
     def run(
         path,
-        host="127.0.0.1",
-        port=6789,
-        debug=False,
-        instance_name="show",
-        launch=True,
+        host: str = "127.0.0.1",
+        port: int = 6789,
+        debug: bool = False,
+        instance_name: str = "show",
+        server: str = None,
+        name: str = None,
     ):
         "Runs a custom Python script as a slideshow."
 
         show = Show.load(path, instance_name)
-        show.run(host=host, port=port, debug=debug, launch=launch)
+
+        if server is None:
+            show.run(host=host, port=port, debug=debug)
+        else:
+            if name is None:
+                print("Error: must supply --name when using --server")
+                exit(1)
+
+            show.run_server(server=server, name=name)
 
     @staticmethod
-    def demo(host="127.0.0.1", port=6789, debug=False, launch=True):
+    def demo(host: str = "127.0.0.1", port: int = 6789, debug: bool = False):
         "Starts the demo slideshow."
 
         from auditorium.demo import show
 
-        show.run(host, port, debug=debug, launch=launch)
+        show.run(host=host, port=port, debug=debug)
 
     @staticmethod
     def render(path, theme="white", instance_name="show"):
@@ -36,6 +45,12 @@ class Auditorium:
 
         show = Show.load(path, instance_name)
         print(show.render(theme))
+
+    @staticmethod
+    def server(host: str = "0.0.0.0", port: int = 9876):
+        from auditorium.server import run_server
+
+        run_server(host=host, port=port)
 
     @staticmethod
     def test():
