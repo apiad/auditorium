@@ -77,7 +77,7 @@ class Show(FastAPI):
             warnings.warn("(!) You need `uvicorn` installed in order to call `run`.")
             exit(1)
 
-    def run_server(self, server: str, name: str):
+    def publish(self, server: str, name: str):
         url = "{}/ws".format(server)
         asyncio.get_event_loop().run_until_complete(self._ws(url, name))
 

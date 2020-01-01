@@ -11,25 +11,27 @@ class Auditorium:
     @staticmethod
     def run(
         path,
+        *,
         host: str = "127.0.0.1",
         port: int = 6789,
         debug: bool = False,
         instance_name: str = "show",
-        server: str = None,
-        name: str = None,
     ):
         "Runs a custom Python script as a slideshow."
 
         show = Show.load(path, instance_name)
+        show.run(host=host, port=port, debug=debug)
 
-        if server is None:
-            show.run(host=host, port=port, debug=debug)
-        else:
-            if name is None:
-                print("Error: must supply --name when using --server")
-                exit(1)
-
-            show.run_server(server=server, name=name)
+    @staticmethod
+    def publish(
+        path: str,
+        name: str,
+        *,
+        server: str = "wss://auditorium.apiad.net",
+        instance_name: str = "show"
+    ):
+        show = Show.load(path, instance_name)
+        show.publish(server=server, name=name)
 
     @staticmethod
     def demo(host: str = "127.0.0.1", port: int = 6789, debug: bool = False):
