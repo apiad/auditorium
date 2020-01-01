@@ -244,6 +244,10 @@ Staying away from `eval` and `exec` should keep you safe in most scenarios, but 
 
 ## Made with Auditorium
 
+* [Auditorium Demo](https://auditorium-demo.apiad.net) - a slideshow showcasing the most important features from `auditorium`.
+
+### Your Contributions Here
+
 If you have a slideshow to showcase here, feel free to [edit this Readme](https://github.com/apiad/auditorium/edit/master/README.md) and send a pull request. Add your website, Github repository, and any other information.
 
 If you feel like sending some support please consider adding a badge somewhere in your website or repository:
