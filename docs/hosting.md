@@ -16,9 +16,48 @@ auditorium run [file] --host=0.0.0.0
 ```
 Then give them your public IP address. In Linux, run `ip addr` to see it.
 
+## Hosting freely with `auditorium publish`
+
+If your audience cannot reach you on the local network, or the computer
+where the slideshow runs is not the one where you will be presenting, then
+you need a way to proxy your slideshow to a public URL.
+
+Enter `auditorium publish`, a command (and related service) that will relay
+your slideshow to [auditorium.apiad.net](http://auditorium.apiad.net).
+The slideshow still runs on your computer, but it is connected through websockets
+with a server that renders the slide and proxies all incoming requests back to your machine.
+
+To use it, simple run:
+
+```bash
+auditorium publish [file] --name [your-slideshow-name]
+```
+
+Then head over to `http://auditorium.apiad.net/your-slideshow-name/` and enjoy!
+
+> **NOTE:** This service is provided as-is with no guarantees whatsoever. The service runs
+> on a development server that is restarted often (at least twice a day), so slideshows are **not** guaranteed to stay
+> up for a long time. Don't use this service in mission critical presentations.
+
+If you need finer control then you can host the server yourself on your own infrastructure
+and thus ensure that it's online when you need it. Just run:
+
+```bash
+auditorium server [--host HOST] [--port PORT]
+```
+
+Make sure the server is publicly accessible. You'll probably use some kind of web server,
+or `--host 0.0.0.0` and `--port 80` which you can totally do since `auditorium` ships
+with `uvicorn` which is a fully fledged production web server.
+Then publish to your own address with:
+
+```bash
+auditorium publish [file] --name [name] --server [ws://your-server:port] # or wss://
+```
+
 ## Hosting temporarily through `ngrok`
 
-The second best option is to use [`ngrok`](https://ngrok.com/).
+Another option is to use [`ngrok`](https://ngrok.com/).
 It creates a tunnel between your computer and ngrok's servers, and gives you a public, secure (HTTPS)
 and free URL that back-tunnels to your `localhost:port`.
 
