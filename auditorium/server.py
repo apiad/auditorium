@@ -56,15 +56,29 @@ async def update(name: str, data: UpdateData):
     return response
 
 
+async def ping(name):
+    try:
+        queue_in, queue_out = SERVERS[name]
+        await queue_in.put(dict(type="ping"))
+        response = await queue_out.get()
+        assert response['msg'] == 'pong'
+        return True
+    except:
+        return False
+
+
 @server.websocket("/ws")
 async def ws(websocket: WebSocket):
     await websocket.accept()
     name = await websocket.receive_text()
 
     if name in SERVERS:
-        await websocket.send_json(dict(type="error", msg="Name is already taken."))
-        await websocket.close()
-        return
+        alive = await ping(name)
+
+        if alive:
+            await websocket.send_json(dict(type="error", msg="Name is already taken."))
+            await websocket.close()
+            return
 
     print("Registering new server: ", name)
 
