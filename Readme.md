@@ -50,6 +50,7 @@ If you want to quickly grok `auditorium`, the best option is to [look at the dem
 * [Authoring a slideshow with Python](https://apiad.net/auditorium/quickstart/#python-first)
 * [Authoring a slideshow with Markdown](https://apiad.net/auditorium/quickstart/#markdown-first)
 * [Rendering a slideshow as purely static HTML](https://apiad.net/auditorium/quickstart/#going-full-static)
+* [Hosting a slideshow online for free](https://apiad.net/auditorium/hosting/#hosting-freely-with-auditorium-publish)
 
 ## Made with Auditorium
 
