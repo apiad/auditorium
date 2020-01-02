@@ -1,5 +1,9 @@
 # History
 
+### v19.1.6
+
+* Fixed bug where `auditorium server` would keep an unused slideshow name forever.
+
 ### v19.1.5
 
 * Fixed automatic server address for `auditorium publish`.
