@@ -1,0 +1,44 @@
+body {
+    font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    padding: 0px;
+    margin: 0px;
+
+    font-size: x-large;
+}
+
+div.main {
+    color: white;
+    background-image: url("/static/img/banner.jpg");
+    background-size: cover;
+    text-align: center;
+    margin: 0px;
+}
+
+div.hero {
+    background-color: rgba(0, 10, 20, 0.8);
+    padding-top: 250px;
+    padding-bottom: 250px;
+}
+
+div.section {
+    width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+div.footer {
+    padding: 20px;
+    text-align: center;
+    color: white;
+    background-color: rgba(0, 10, 20, 0.8);
+}
+
+div.footer a {
+    color: white;
+}
+
+a.fork-me {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+}

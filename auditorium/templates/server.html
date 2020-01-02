@@ -5,17 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Auditorium</title>
+
+    <link href="https://fonts.googleapis.com/css?family=DM+Sans:300,400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/server.css">
 </head>
 <body>
-    <h1>Welcome to Auditorium</h1>
 
-    <h3>The following slideshows have been registered:</h3>
-    <ul>
-        {% for name in servers_list %}
-        <li>
-            <a href="/{{ name }}/">{{ name }}</a>
-        </li>
-        {% endfor %}
-    </ul>
+    <a class="fork-me" href="https://github.com/apiad/auditorium"><img width="149" height="149" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_white_ffffff.png?resize=149%2C149" class="attachment-full size-full" alt="Fork me on GitHub" data-recalc-dims="1"></a>
+
+    <div class="main">
+        <div class="hero">
+
+            <h1>Auditorium</h1>
+            <h2>A Python-powered slideshow generator with steroids</h2>
+
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>The following slideshows have been registered:</h3>
+        <ul>
+            {% for name in servers_list %}
+            <li>
+                <a href="/{{ name }}/">{{ name }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="footer">
+        Copyright 2020 - <a href="http://auditorium.apiad.net">auditorium.apiad.net</a>
+    </div>
 </body>
 </html>

@@ -107,6 +107,9 @@ class Show(FastAPI):
         if command["type"] == "render":
             print("Rendering content")
             return dict(content=self.render())
+        if command["type"] == "ping":
+            print("Saying hello")
+            return dict(msg="pong")
         elif command["type"] == "error":
             print("(!) %s" % command['msg'])
             raise websockets.exceptions.ConnectionClosedError(1006, command['msg'])

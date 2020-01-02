@@ -7,6 +7,7 @@ from typing import Dict, Tuple
 from fastapi import FastAPI, HTTPException
 from starlette.responses import HTMLResponse
 from starlette.websockets import WebSocket
+from starlette.staticfiles import StaticFiles
 import asyncio
 from jinja2 import Template
 
@@ -14,15 +15,16 @@ from .utils import path
 from .show import UpdateData
 
 server = FastAPI()
+server.mount("/static", StaticFiles(directory=path("static")))
 
 SERVERS: Dict[str, Tuple[asyncio.Queue, asyncio.Queue]] = {}
-
-with open(path('templates/server.html')) as fp:
-    TEMPLATE = Template(fp.read())
 
 
 @server.get("/")
 async def index():
+    with open(path('templates/server.html')) as fp:
+        TEMPLATE = Template(fp.read())
+
     return HTMLResponse(TEMPLATE.render(servers_list=list(SERVERS)))
 
 
@@ -56,15 +58,29 @@ async def update(name: str, data: UpdateData):
     return response
 
 
+async def ping(name):
+    try:
+        queue_in, queue_out = SERVERS[name]
+        await queue_in.put(dict(type="ping"))
+        response = await queue_out.get()
+        assert response['msg'] == 'pong'
+        return True
+    except:
+        return False
+
+
 @server.websocket("/ws")
 async def ws(websocket: WebSocket):
     await websocket.accept()
     name = await websocket.receive_text()
 
     if name in SERVERS:
-        await websocket.send_json(dict(type="error", msg="Name is already taken."))
-        await websocket.close()
-        return
+        alive = await ping(name)
+
+        if alive:
+            await websocket.send_json(dict(type="error", msg="Name is already taken."))
+            await websocket.close()
+            return
 
     print("Registering new server: ", name)
 

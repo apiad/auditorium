@@ -1,5 +1,9 @@
 # History
 
+### v19.1.5
+
+* Fixed automatic server address for `auditorium publish`.
+
 ### v19.1.4
 
 * Added command `auditorium server` that allows to proxy a slideshow through a public server.

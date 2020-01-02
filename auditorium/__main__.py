@@ -27,7 +27,7 @@ class Auditorium:
         path: str,
         name: str,
         *,
-        server: str = "wss://auditorium.apiad.net",
+        server: str = "ws://auditorium.apiad.net",
         instance_name: str = "show"
     ):
         show = Show.load(path, instance_name)
