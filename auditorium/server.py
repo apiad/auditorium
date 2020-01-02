@@ -7,6 +7,7 @@ from typing import Dict, Tuple
 from fastapi import FastAPI, HTTPException
 from starlette.responses import HTMLResponse
 from starlette.websockets import WebSocket
+from starlette.staticfiles import StaticFiles
 import asyncio
 from jinja2 import Template
 
@@ -14,15 +15,16 @@ from .utils import path
 from .show import UpdateData
 
 server = FastAPI()
+server.mount("/static", StaticFiles(directory=path("static")))
 
 SERVERS: Dict[str, Tuple[asyncio.Queue, asyncio.Queue]] = {}
-
-with open(path('templates/server.html')) as fp:
-    TEMPLATE = Template(fp.read())
 
 
 @server.get("/")
 async def index():
+    with open(path('templates/server.html')) as fp:
+        TEMPLATE = Template(fp.read())
+
     return HTMLResponse(TEMPLATE.render(servers_list=list(SERVERS)))
 
 
