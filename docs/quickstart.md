@@ -1,5 +1,8 @@
 # Quick Start
 
+This section provides quick hints for starting using `auditorium` right now. However,
+the best way to grok it is looking at the [demo](https://auditorium-demo.apiad.net).
+
 ## Python First
 
 In `auditorium` you create a presentation via the `Show` class:
@@ -148,3 +151,7 @@ auditorium render <file.[py|md]> > <output.html>
 ```
 
 This will render the slideshow in an HTML file with all CSS and JavaScript embedded. Just copy this single HTML file and open it on any browser. You won't need to have `auditorium` installed. However, do keep in mind that all of the backend code will execute only once for the initial rendering, so your animations will be frozen at the starting frame and none of the interaction will work.
+
+## Read on
+
+The [API docs](/api/show/) have a more in-depth explanation about all topics covered here.

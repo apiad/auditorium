@@ -1,5 +1,18 @@
 site_name: Auditorium
-theme: readthedocs
+repo_name: 'apiad/auditorium'
+repo_url: 'https://github.com/apiad/auditorium'
+
+theme:
+    name: material
+    feature:
+        tabs: true
+
+markdown_extensions:
+    - codehilite
+    - toc:
+        permalink: true
+    - admonition
+
 nav:
     - Home: index.md
     - Quick Start: quickstart.md
@@ -7,3 +20,8 @@ nav:
     - Important Considerations: consider.md
     - Contributing: contributing.md
     - History: history.md
+
+    - API:
+        - Show: api/show.md
+        - Context: api/context.md
+        - CLI: api/cli.md

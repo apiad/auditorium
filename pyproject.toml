@@ -1,19 +1,21 @@
 [tool.poetry]
 name = "auditorium"
-version = "19.1.6"
+version = "20.2.1"
 description = "A Python-powered slideshow maker with steroids."
 authors = ["Alejandro Piad <alepiad@gmail.com>"]
 license = "MIT"
 readme = "Readme.md"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.6.1"
 markdown = "^3.1.1"
 fire = "^0.2.1"
 jinja2 = "^2.10.3"
 pygments = "^2.5.2"
 fastapi = "^0.45.0"
 aiofiles = "^0.4.0"
+websockets = "^8.1"
+
 # uvicorn is required *only* for calling `auditorium run`
 uvicorn = { version = "^0.11.1", optional = true }
 
@@ -27,6 +29,7 @@ pylint = "^2.4.4"
 matplotlib = "^3.1.2"
 mypy = "^0.760"
 mkdocs = "^1.0.4"
+mkdocs-material = "^4.6.0"
 
 [tool.poetry.scripts]
 auditorium = "auditorium.__main__:main"

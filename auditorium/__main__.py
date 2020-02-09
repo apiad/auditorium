@@ -5,6 +5,7 @@ import runpy
 import webbrowser
 
 from auditorium import Show
+from auditorium.watcher import Watcher
 
 
 class Auditorium:
@@ -14,13 +15,17 @@ class Auditorium:
         *,
         host: str = "127.0.0.1",
         port: int = 6789,
-        debug: bool = False,
+        reload: bool = False,
         instance_name: str = "show",
     ):
         "Runs a custom Python script as a slideshow."
 
         show = Show.load(path, instance_name)
-        show.run(host=host, port=port, debug=debug)
+
+        if reload:
+           show = Watcher(path, instance_name)
+
+        show.run(host=host, port=port, debug=reload)
 
     @staticmethod
     def publish(
