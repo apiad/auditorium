@@ -14,9 +14,10 @@ jinja2 = "^2.10.3"
 pygments = "^2.5.2"
 fastapi = "^0.45.0"
 aiofiles = "^0.4.0"
+websockets = "^8.1"
+
 # uvicorn is required *only* for calling `auditorium run`
 uvicorn = { version = "^0.11.1", optional = true }
-websockets = "^8.1"
 
 [tool.poetry.extras]
 server = ["uvicorn"]
