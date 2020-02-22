@@ -38,7 +38,7 @@ class UpdateData(BaseModel):
 
 
 class Show(FastAPI):
-    def __init__(self, title="", theme="white", code_style="monokai", metadata=None):
+    def __init__(self, title="", theme="white", code_style="monokai", metadata=None, context_class=None):
         self.theme = theme
         self.formatter = HtmlFormatter(style=get_style_by_name(code_style))
 
@@ -46,6 +46,7 @@ class Show(FastAPI):
         self._sections = []
         self._tail = []
         self._metadata = metadata or {}
+        self._context_class = context_class or Context
 
         self.app = FastAPI()
         self.app.get("/")(self._index)
@@ -448,7 +449,7 @@ class Slide:
         return self._slide_id
 
     def run(self, mode, values=None) -> Context:
-        ctx = Context(self.slide_id, mode, self._show, values, self._show._metadata.get(self.slide_id))
+        ctx = self._show._context_class(self.slide_id, mode, self._show, values, self._show._metadata.get(self.slide_id))
 
         if self._func.__doc__:
             ctx.markdown(self._func.__doc__)
