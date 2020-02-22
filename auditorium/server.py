@@ -26,6 +26,15 @@ async def index():
         return HTMLResponse(fp.read())
 
 
+@server.get("/_list/")
+async def list_servers():
+    return dict(
+        slides=[dict(
+            name=s
+        ) for s in SERVERS]
+    )
+
+
 @server.get("/{name}/")
 async def render(name: str):
     try:
