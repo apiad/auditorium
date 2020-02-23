@@ -45,14 +45,15 @@
                 renders and serves a beautiful HTML slideshow.
             </p>
 
-            <h3 class="px-4 py-8 text-xl text-blue-900">Check the following presentations</h3>
+            <h3 class="px-4 py-8 text-xl text-blue-900">The following slides are currently running:</h3>
 
             <div class="flex flex-wrap w-full justify-center px-4">
-                <a :href="slide.name"
-                    class="relative p-2 rounded-lg shadow-md hover:shadow-lg cursor-pointer w-48 h-32 m-2 flex-shrink-0"
+                <button
+                    class="relative p-2 border text-blue-800 bg-white hover:shadow-lg hover:text-gray-100 hover:bg-blue-600 cursor-pointer w-72 h-48 m-2 flex-shrink-0"
                     v-for="slide in slides">
-                    <span class="px-2 mx-auto">{{ slide.name }}</span>
-                </a>
+                    <iframe class="mb-1" :src="slide.name" frameborder="0"></iframe>
+                    <span class="mx-auto font-semibold">{{ slide.name }}</span>
+                </button>
             </div>
         </div>
 
@@ -91,6 +92,10 @@
 <style>
     .github-corner:hover .octo-arm {
         animation: octocat-wave 560ms ease-in-out
+    }
+
+    iframe {
+        pointer-events: none;
     }
 
     @keyframes octocat-wave {
