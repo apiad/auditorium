@@ -48,7 +48,7 @@
             <h3 class="px-4 py-8 text-xl text-blue-900">The following slides are currently running:</h3>
 
             <div class="flex flex-wrap w-full justify-center px-4">
-                <button
+                <button @click="goto(slide)"
                     class="relative p-2 border text-blue-800 bg-white hover:shadow-lg hover:text-gray-100 hover:bg-blue-600 cursor-pointer w-72 h-48 m-2 flex-shrink-0"
                     v-for="slide in slides">
                     <iframe class="mb-1" :src="slide.name" frameborder="0"></iframe>
@@ -77,6 +77,11 @@
         data: {
             slides: []
         },
+        methods: {
+            goto(slide) {
+                window.location = slide.name;
+            }
+        }
     });
 
     setInterval(() => {
