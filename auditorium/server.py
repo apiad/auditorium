@@ -23,9 +23,16 @@ SERVERS: Dict[str, Tuple[asyncio.Queue, asyncio.Queue]] = {}
 @server.get("/")
 async def index():
     with open(path('templates/server.html')) as fp:
-        TEMPLATE = Template(fp.read())
+        return HTMLResponse(fp.read())
 
-    return HTMLResponse(TEMPLATE.render(servers_list=list(SERVERS)))
+
+@server.get("/_list/")
+async def list_servers():
+    return dict(
+        slides=[dict(
+            name=s
+        ) for s in SERVERS]
+    )
 
 
 @server.get("/{name}/")

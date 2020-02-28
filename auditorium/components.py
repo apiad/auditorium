@@ -64,11 +64,12 @@ class Column(Wrapper):
         self.widths.pop(0)
 
     def tab(self):
-        self.ctx.content.append(f"</div>")
-        self.ctx.content.append(
-            f'<div class="column" style="width: {self.widths[0] * 100}%;">'
-        )
-        self.widths.pop(0)
+        if self.widths:
+            self.ctx.content.append(f"</div>")
+            self.ctx.content.append(
+                f'<div class="column" style="width: {self.widths[0] * 100}%;">'
+            )
+            self.widths.pop(0)
 
     def end(self):
         self.ctx.content.append("</div>")
