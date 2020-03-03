@@ -6,6 +6,7 @@ We provided [packaged testing environments](https://hub.docker.com/orgs/auditori
 There is also a `makefile` with all the necessary commands.
 
 The workflow is something like this:
+
 * Fork, clone, and make some changes.
 * Run `make` to run the local, fast tests. The first time this will download the corresponding image.
 * Fix errors (if any) and watch the testing coverage. Make sure to at least cover the newly added features.
