@@ -405,6 +405,39 @@ def pyplot_code(ctx):
 
 
 @show.slide
+def latex(ctx):
+    """
+    ## LaTex
+
+    Mathematical formula can be added also very easily
+    """
+    ctx.markdown(
+        f"""
+        The probability of getting {ctx.latex('k','inline')}
+        heads when flipping {ctx.latex('n','inline')} coins is
+        """
+    )
+    ctx.latex(r"""P(E)   = {n \choose k} p^k (1-p)^{ n-k}""")
+
+
+@latex.slide
+def latex_code(ctx):
+    """### LaTex: Code"""
+
+    ctx.code(
+        """
+        ctx.markdown(
+            f\"""
+            The probability of getting {ctx.latex('k','inline')}
+            heads when flipping {ctx.latex('n','inline')} coins is
+            \"""
+        )
+        ctx.latex(r\"""P(E)   = {n \choose k} p^k (1-p)^{ n-k}\""")
+        """
+    )
+
+
+@show.slide
 def static_html(ctx):
     """
     ## Going full static
