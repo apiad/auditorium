@@ -26,15 +26,23 @@
 	<body>
 		{{ content | safe }}
 
-        <script src="static/js/reveal.js"></script>
+		<script src="static/js/reveal.js"></script>
 
 		<script>
 			// More info about config & dependencies:
 			// - https://github.com/hakimel/reveal.js#configuration
 			// - https://github.com/hakimel/reveal.js#dependencies
 			Reveal.initialize({
+				// math plugin config
+				math3: {
+					// mathajax docs: https://docs.mathjax.org
+					mathjax: 'static/js/mathjax/tex-chtml.js',
+				},
+
 				dependencies: [
 					// TODO: Include mathjax in statics
+					// this is a fix of the math original pluging for use mathjax 3.x.x
+					{ src: 'static/plugin/math3/math3.js', async: true },
 					// { src: 'static/plugin/math/math.js' },
 					// TODO: Notes don't work with animations
 					// { src: 'static/plugin/notes/notes.js' },

@@ -27,7 +27,7 @@ from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 
 from .components import Animation, Block, Column, Fragment, ShowMode
-from .utils import fix_indent, path
+from .utils import fix_indent, path, fix_latex
 
 
 class UpdateData(BaseModel):
@@ -418,6 +418,26 @@ class Context:
 
     def error(self, title="") -> Block:
         return self.block(title, "error")
+
+    def latex(self, text, math_type="display"):
+        """
+        math_type: str
+        only accept "display" or "inline"
+        this expres the kind of enviroment used
+        """
+        assert math_type in ("display","inline")
+        content = fix_latex(fix_indent(text))
+        delimiters = (r'\[',r'\]') if math_type=='display' else (r'$$$',r'$$$')
+        print(content)
+        if math_type == "inline":
+            return f"{delimiters[0]}{content}{delimiters[1]}"
+
+        item_id, id_markup = self._get_unique_id("latex")
+
+        if self.mode == ShowMode.Markup:
+            self.content.append(f"<div {id_markup}>{delimiters[0]}{content}{delimiters[1]}</div>")
+        else:
+            self.update[item_id] = code
 
 
 class Section:

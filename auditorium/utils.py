@@ -32,3 +32,22 @@ def fix_indent(content: str, tab_size: int = 0) -> str:
         lines.pop(0)
 
     return "\n".join(lines)
+
+def fix_latex(content: str):
+    def fix_ampersand(content: str):
+        idx = content.find('&')
+        no_scape_amp = lambda : True if idx==0 else content[idx-1]!='\\'
+        while idx!=-1:
+            if content.find('&amp;', idx, idx+6)==-1 and no_scape_amp():
+                content=content[:idx]+' &amp; '+content[idx+1:]
+            idx = content.find('&', idx+2)
+        return content
+
+    scape_char = {
+        '&': fix_ampersand,
+        '<': lambda x: x.replace('<',' &lt; '),
+        '>': lambda x: x.replace('<',' &gt; '),
+    }
+    for fix in scape_char.values():
+        content = fix(content)
+    return content
