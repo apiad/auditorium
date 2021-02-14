@@ -273,7 +273,7 @@ def blocks(ctx):
             ctx.markdown("When nothing works...")
 
 
-@blocks.slide
+@blocks.slide(autoslide=5000)
 def blocks_code(ctx):
     """
     ## Blocks: Code
