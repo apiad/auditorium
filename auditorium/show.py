@@ -163,6 +163,10 @@ class Show(FastAPI):
         raise ValueError(f"Invalid slide id: {slide_id}")
 
     @property
+    def all_slides(self):
+        return self._slides
+
+    @property
     def slides(self):
         yield from self._slides
 
@@ -178,14 +182,13 @@ class Show(FastAPI):
 
     ## @slide decorator
 
-    def slide(self, func=None, id=None):
+    def slide(self, func=None, id=None, autoslide=0):
         if func is not None:
-            return self._wrap(func, id)
+            return self._wrap(func=func, id=id, autoslide=autoslide)
 
-        elif id is not None:
-
+        else:
             def wrapper(func):
-                return self._wrap(func, id)
+                return self._wrap(func=func, id=id, autoslide=autoslide)
 
             return wrapper
 
@@ -195,25 +198,24 @@ class Show(FastAPI):
             def __init__(self, section):
                 self.section = section
 
-            def slide(self, func=None, id=None):
+            def slide(self, func=None, id=None, autoslide=0):
                 if func is not None:
-                    return show._wrap(func, id, self.section)
+                    return show._wrap(func=func, id=id, section=self.section, autoslide=autoslide)
 
-                elif id is not None:
-
+                else:
                     def wrapper(func):
-                        return show._wrap(func, id, self.section)
+                        return show._wrap(func=func, id=id, section=self.section, autoslide=autoslide)
 
                     return wrapper
 
         return _VerticalWrapper(section)
 
-    def _wrap(self, func, id, section=None):
+    def _wrap(self, func, id, section=None, autoslide=0):
         if self._rendering:
             return func
 
         slide_id = id or func.__name__
-        slide = Slide(slide_id, func, self)
+        slide = Slide(slide_id, func=func, show=self, autoslide=autoslide)
         self._slides[slide_id] = slide
 
         if section is None:
@@ -439,17 +441,23 @@ class Section:
 
 
 class Slide:
-    def __init__(self, slide_id: str, func, show):
+    def __init__(self, slide_id: str, func, show, autoslide: int = 0):
         self._slide_id = slide_id
         self._func = func
         self._show = show
+        self._autoslide = autoslide
 
     @property
     def slide_id(self) -> str:
         return self._slide_id
 
+    @property
+    def autoslide(self) -> str:
+        return str(self._autoslide)
+
     def run(self, mode, values=None) -> Context:
-        ctx = self._show._context_class(self.slide_id, mode, self._show, values, self._show._metadata.get(self.slide_id))
+        ctx = self._show._context_class(self.slide_id, mode, self._show, values,
+                                        self._show._metadata.get(self.slide_id))
 
         if self._func.__doc__:
             ctx.markdown(self._func.__doc__)

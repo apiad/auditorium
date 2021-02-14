@@ -5,7 +5,7 @@
 
             {% for slide in section.slides %}
             <!-- Slide {{ slide }} -->
-            <section id="{{ slide }}">
+            <section id="{{ slide }}" data-autoslide="{{ show.all_slides.get(slide,0).autoslide }}" >
                 {{ show.do_markup(slide) | safe }}
             </section>
             {% endfor %}

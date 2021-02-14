@@ -10,7 +10,7 @@ show = Show("Auditorium Demo")
 app = show.app
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def intro(ctx):
     """
     # Auditorium
@@ -18,7 +18,7 @@ def intro(ctx):
     """
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def what_is_this(ctx):
     """
     ## What is Auditorium
@@ -33,7 +33,7 @@ def what_is_this(ctx):
     """
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def how_it_works(ctx):
     """
     ## How it works
@@ -50,7 +50,7 @@ def how_it_works(ctx):
     """
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def the_basics(ctx):
     ctx.markdown("## The basics")
     ctx.markdown("Start by declaring a `Show` instance.")
@@ -77,7 +77,7 @@ def the_basics(ctx):
     ctx.code("auditorium run [file.py]", "bash")
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def examples(ctx):
     ctx.header("Some examples")
     ctx.markdown("Slide content is added with _markdown_.")
@@ -96,7 +96,7 @@ def examples(ctx):
     )
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def static_content(ctx):
     """
     ## Static Content
@@ -121,7 +121,7 @@ def static_content(ctx):
     )
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def layout(ctx):
     """
     ## Custom layout
@@ -148,7 +148,7 @@ def layout(ctx):
         )
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def data_binding(ctx):
     """
     ## Dynamic Data
@@ -177,7 +177,7 @@ def data_binding(ctx):
     )
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def animation(ctx):
     """
     ## Animations
@@ -198,7 +198,7 @@ def animation(ctx):
     )
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def vertical_slides(ctx):
     """
     ## Vertical Slides
@@ -249,7 +249,7 @@ def vertical_more(ctx):
     """
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def blocks(ctx):
     """
     ## Blocks
@@ -258,7 +258,6 @@ def blocks(ctx):
     """
 
     with ctx.columns(2) as cl:
-
         with ctx.block("Standard block"):
             ctx.markdown("And its content...")
 
@@ -297,7 +296,7 @@ def blocks_code(ctx):
     )
 
 
-@show.slide
+@show.slide(autoslide=5000)
 def fragments(ctx):
     """
     ## Fragments
@@ -328,8 +327,8 @@ def fragment_examples(ctx):
 
     with ctx.columns(3) as cl:
         for i, style in enumerate(
-            "grow shrink fade-in fade-out fade-up fade-down fade-left \
-                fade-right highlight-blue highlight-red highlight-green".split()
+                "grow shrink fade-in fade-out fade-up fade-down fade-left \
+                    fade-right highlight-blue highlight-red highlight-green".split()
         ):
             if i > 0 and i % 4 == 0:
                 cl.tab()
@@ -381,6 +380,7 @@ def pyplot(ctx):
                     "**Pi = %.3f**"
                     % (4 * colors.count("green") / len(x) if len(x) > 0 else 0)
                 )
+
 
 @pyplot.slide
 def pyplot_code(ctx):
