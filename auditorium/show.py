@@ -38,10 +38,11 @@ class UpdateData(BaseModel):
 
 
 class Show(FastAPI):
-    def __init__(self, title="", theme="white", code_style="monokai", metadata=None, context_class=None):
+    def __init__(self, title="", theme="white", code_style="monokai", metadata=None, context_class=None,
+                 autoslide: int = None):
         self.theme = theme
         self.formatter = HtmlFormatter(style=get_style_by_name(code_style))
-
+        self._autoslide = autoslide
         self._slides = {}
         self._sections = []
         self._tail = []
@@ -104,7 +105,6 @@ class Show(FastAPI):
             print("(!) Connection to %s closed by server." % url)
             exit(1)
 
-
     def _do_ws_command(self, command):
         if command["type"] == "render":
             print("Rendering content")
@@ -123,6 +123,18 @@ class Show(FastAPI):
             return update
 
         raise ValueError("Unknown command: %s", command["type"])
+
+    def autoslide(self, slide: str):
+        auto = None
+        if slide in self._slides:
+            auto = self._slides.get(slide).autoslide
+        if auto:
+            auto = int(auto)
+        if auto is None or auto <= 0:
+            auto = self._autoslide
+            if auto is None:
+                auto = 0
+        return auto
 
     @property
     def show_title(self) -> str:
@@ -161,10 +173,6 @@ class Show(FastAPI):
                 pass
 
         raise ValueError(f"Invalid slide id: {slide_id}")
-
-    @property
-    def all_slides(self):
-        return self._slides
 
     @property
     def slides(self):
@@ -241,12 +249,32 @@ class Show(FastAPI):
         ctx = slide.run(ShowMode.Code, values)
         return ctx.update
 
+    def _generate_init_js(self) -> str:
+        options = ''
+        if self._autoslide:
+            options += 'autoSlide: ' + str(self._autoslide) + ',loop: true'
+
+        ret = '''
+            Reveal.initialize({
+                dependencies: [
+                    // TODO: Include mathjax in statics
+                    // { src: 'static/plugin/math/math.js' },
+                    // TODO: Notes don't work with animations
+                    // { src: 'static/plugin/notes/notes.js' },
+                    // { src: 'static/plugin/highlight/highlight.js' },
+                ],
+               ''' + options + '''
+            });'''
+
+        return ret
+
     def render(self, theme=None):
         return self._template_static.render(
             show=self,
             content=self._render_content(),
             code_style=self._code_style(),
             embed=self._embed,
+            init_js=self._generate_init_js(),
             theme=theme or self.theme,
         )
 
@@ -277,6 +305,7 @@ class Show(FastAPI):
                 show=self,
                 content=self._content,
                 code_style=self._code_style(),
+                init_js=self._generate_init_js(),
                 theme=theme,
             )
         )

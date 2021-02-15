@@ -6,11 +6,11 @@ A simple demo script for `auditorium`.
 
 from auditorium import Show
 
-show = Show("Auditorium Demo")
+show = Show("Auditorium Demo", autoslide=10000)
 app = show.app
 
 
-@show.slide(autoslide=5000)
+@show.slide(autoslide=4000)
 def intro(ctx):
     """
     # Auditorium
@@ -18,7 +18,7 @@ def intro(ctx):
     """
 
 
-@show.slide(autoslide=5000)
+@show.slide(autoslide=6000)
 def what_is_this(ctx):
     """
     ## What is Auditorium
@@ -33,7 +33,7 @@ def what_is_this(ctx):
     """
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def how_it_works(ctx):
     """
     ## How it works
@@ -50,7 +50,7 @@ def how_it_works(ctx):
     """
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def the_basics(ctx):
     ctx.markdown("## The basics")
     ctx.markdown("Start by declaring a `Show` instance.")
@@ -77,7 +77,7 @@ def the_basics(ctx):
     ctx.code("auditorium run [file.py]", "bash")
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def examples(ctx):
     ctx.header("Some examples")
     ctx.markdown("Slide content is added with _markdown_.")
@@ -96,7 +96,7 @@ def examples(ctx):
     )
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def static_content(ctx):
     """
     ## Static Content
@@ -121,7 +121,7 @@ def static_content(ctx):
     )
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def layout(ctx):
     """
     ## Custom layout
@@ -148,7 +148,7 @@ def layout(ctx):
         )
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def data_binding(ctx):
     """
     ## Dynamic Data
@@ -177,7 +177,7 @@ def data_binding(ctx):
     )
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def animation(ctx):
     """
     ## Animations
@@ -198,7 +198,7 @@ def animation(ctx):
     )
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def vertical_slides(ctx):
     """
     ## Vertical Slides
@@ -249,7 +249,7 @@ def vertical_more(ctx):
     """
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def blocks(ctx):
     """
     ## Blocks
@@ -273,7 +273,7 @@ def blocks(ctx):
             ctx.markdown("When nothing works...")
 
 
-@blocks.slide(autoslide=5000)
+@blocks.slide
 def blocks_code(ctx):
     """
     ## Blocks: Code
@@ -296,7 +296,7 @@ def blocks_code(ctx):
     )
 
 
-@show.slide(autoslide=5000)
+@show.slide
 def fragments(ctx):
     """
     ## Fragments
