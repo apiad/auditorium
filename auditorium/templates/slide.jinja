@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="/assets/tailwind.min.css" rel="stylesheet">
+  <link href="/assets/auditorium.css" rel="stylesheet">
+</head>
+<body class="overflow-hidden">
+
+  {% for slide in slides %}
+    <div id="slide-{{ slide.id }}" class="h-screen w-screen bg-white">
+
+
+    </div>
+  {% endfor %}
+
+</body>
+</html>
