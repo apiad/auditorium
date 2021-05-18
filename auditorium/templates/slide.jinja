@@ -11,6 +11,9 @@
   {% for slide in slides %}
     <div id="slide-{{ slide.id }}" class="h-screen w-screen bg-white">
 
+      {% for component in slide.build() %}
+      {{ component.build() }}
+      {% endfor %}
 
     </div>
   {% endfor %}

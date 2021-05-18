@@ -1,7 +1,7 @@
 # This is a demo slideshow to showcase the main features of `auditorium`.
 # In auditorium, a slideshow starts with a `Show` class.
 
-from auditorium import Show
+from auditorium import Show, Context
 
 # We being by creating an instance of the Show.
 
@@ -11,12 +11,8 @@ show = Show()
 # a special decorator.
 
 @show.slide
-def intro():
-    pass
-
-@show.slide
-def intro():
-    pass
+def intro(ctx: Context):
+    ctx.text("Hello world! 🖖")
 
 # Finally, we call `show.run()`
 
