@@ -16,19 +16,34 @@ socket.onmessage = function(event) {
     command(data);
 };
 
-function createElement(element) {
-    var el = document.createElement(element.tag)
-    el.id = element.id
+function createElements(elements) {
+    var els = [];
 
-    if (element.text) {
-        el.textContent = element.text;
-    }
+    elements.forEach(element => {
+        var el = document.createElement(element.tag)
+        el.id = element.id
 
-    element.children.forEach(child => {
-        el.appendChild(createElement(child));
+        if (element.text) {
+            el.textContent = element.text;
+        }
+
+        el.className = element.clss;
+
+        el.style.setProperty('transition-duration', element.transition_duration);
+        el.style.setProperty('transition-property', element.transition_property);
+
+        for(var key in element.style) {
+            el.style.setProperty(key, element.style[key]);
+        }
+
+        element.children.forEach(child => {
+            el.appendChild(createElements(child));
+        });
+
+        els.push(el);
     });
 
-    return el;
+    return els;
 }
 
 function updateElement(element) {
@@ -38,6 +53,15 @@ function updateElement(element) {
         el.textContent = element.text;
     }
 
+    el.className = element.clss;
+
+    el.style.setProperty('transition-duration', element.transition_duration);
+    el.style.setProperty('transition-property', element.transition_property);
+
+    for(var key in element.style) {
+        el.style.setProperty(key, element.style[key]);
+    }
+
     element.children.forEach(child => {
         updateElement(child);
     });
@@ -45,7 +69,9 @@ function updateElement(element) {
 
 commands = {
     build: function(data) {
-        currentSlide.appendChild(createElement(data.content));
+        createElements(data.content).forEach(el => {
+            currentSlide.appendChild(el);
+        });
     },
 
     update: function(data) {

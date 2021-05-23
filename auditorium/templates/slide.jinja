@@ -8,7 +8,7 @@
 </head>
 <body class="overflow-hidden">
   {% for slide in slides.values() %}
-    <div id="{{ slide.id }}" class="slide h-screen w-screen bg-white align-center"></div>
+    <div id="{{ slide.id }}" class="slide h-screen w-screen bg-white flex flex-col items-center justify-center"></div>
   {% endfor %}
 </body>
 </html>
