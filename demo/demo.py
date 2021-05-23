@@ -11,8 +11,12 @@ show = Show()
 # a special decorator.
 
 @show.slide
-def intro(ctx: Context):
-    ctx.text("Hello world! 🖖")
+async def intro(ctx: Context):
+    text1 = await ctx.text("Hello world! 🖖")
+    await ctx.sleep(0.5)
+    await ctx.text("Another sentence!")
+    await ctx.sleep(0.5)
+    await text1.update(text="Here I am!")
 
 # Finally, we call `show.run()`
 

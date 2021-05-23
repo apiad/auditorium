@@ -7,16 +7,10 @@
   <link href="/assets/auditorium.css" rel="stylesheet">
 </head>
 <body class="overflow-hidden">
-
-  {% for slide in slides %}
-    <div id="slide-{{ slide.id }}" class="h-screen w-screen bg-white">
-
-      {% for component in slide.build() %}
-      {{ component.build() }}
-      {% endfor %}
-
-    </div>
+  {% for slide in slides.values() %}
+    <div id="{{ slide.id }}" class="slide h-screen w-screen bg-white align-center"></div>
   {% endfor %}
-
 </body>
 </html>
+
+<script src="/assets/auditorium.js" type="application/javascript"></script>
