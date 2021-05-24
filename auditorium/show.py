@@ -35,7 +35,7 @@ class Show:
 
     async def _index(self):
         template = Template(
-            (Path(__file__).parent / "templates" / "slide.jinja").read_text()
+            (Path(__file__).parent / "templates" / "slide.html").read_text()
         )
         return HTMLResponse(template.render(slides=self.slides))
 
@@ -43,6 +43,7 @@ class Show:
         await websocket.accept()
         data = await websocket.receive_json()
         request = SlideRequest(**data)
+        print(f"Serving {request}")
         slide = self.slides[request.slide]
         await slide.build(websocket)
 
@@ -98,7 +99,7 @@ class Context:
     async def sleep(self, delay: float):
         await asyncio.sleep(delay)
 
-    def text(self, text: str, size: str = "xl", **kwargs) -> "Text":
+    def text(self, text: str, size: int = 1, **kwargs) -> "Text":
         return Text(
             text,
             size=size,
@@ -159,6 +160,28 @@ class Component(abc.ABC):
 
         if transition is not None:
             self.transition(transition)
+
+    def scaled(self, scale=None, x=None, y=None) -> "Component":
+        if scale is not None:
+            x = scale
+            y = scale
+
+        if x is not None:
+            self.__style["--tw-scale-x"] = x
+
+        if y is not None:
+            self.__style["--tw-scale-y"] = y
+
+        return self
+
+    def translated(self, x=None, y=None) -> "Component":
+        if x is not None:
+            self.__style["--tw-translate-x"] = f"{x}px"
+
+        if y is not None:
+            self.__style["--tw-translate-y"] = f"{y}px"
+
+        return self
 
     def transition(self, duration: float):
         old_transition = self.__transition_duration
@@ -262,12 +285,12 @@ class HtmlNode:
 
 
 class Text(Component):
-    def __init__(self, text: str, size: str, *args, **kwargs) -> None:
+    def __init__(self, text: str, size: int, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.text = text
         self.size = size
 
     def _build(self) -> HtmlNode:
         return HtmlNode(
-            tag="span", clss=f"text-{self.size}", id=self.key, text=self.text
+            tag="span", clss=f"text-{self.size}xl", id=self.key, text=self.text
         )

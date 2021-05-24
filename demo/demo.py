@@ -14,14 +14,12 @@ show = Show()
 @show.slide
 async def intro(ctx: Context):
     _, text2, text3 = await ctx.create(
-        ctx.text("Welcome to Auditorium 2.0! 🖖", size="5xl"),
+        ctx.text("Welcome to Auditorium 2.0! 🖖", size=5),
         ctx.text(
             "🔥 A Python framework for composing HTML animations!",
-            size="3xl",
-            scale_x=0,
-            scale_y=0,
-        ),
-        ctx.text("➡️ Hit LEFT or SPACE to continue", scale_x=0, scale_y=0, translate_y=300),
+            size=3,
+        ).scaled(0),
+        ctx.text("⬇️ Hit SPACE to continue").scaled(0).translated(y=300),
     )
 
     await ctx.sequential(1, text2.zoom_in(1), 1.5, text3.zoom_in())
@@ -29,7 +27,9 @@ async def intro(ctx: Context):
 
 @show.slide
 async def quickstart(ctx: Context):
-    await ctx.text("Auditorium is Python framework for creating animated HTML+CSS slideshows").create()
+    await ctx.text(
+        "Auditorium is Python framework for creating animated HTML+CSS slideshows"
+    ).create()
 
 
 # Finally, we call `show.run()`
