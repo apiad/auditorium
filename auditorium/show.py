@@ -25,13 +25,24 @@ class Show:
     def __init__(self, *, default_classes="py-2") -> None:
         self.__default_classes = default_classes
 
+        # The center of the `Show` class is a `FastAPI` application
+        # that serves the static files, the HTML templates, and the
+        # websocket endpoint that communicates the frontend with a `Show` instance.
         self.app = FastAPI()
         self.app.mount(
             "/assets", StaticFiles(directory=Path(__file__).parent / "assets")
         )
         self.app.get("/")(self._index)
         self.app.websocket("/ws")(self._ws)
+
+        # This dictionary maps from a slide's id to its instance.
         self.slides: Dict[str, Slide] = {}
+
+        # These two dictionaries will hold direct and reverse mappings
+        # between a slide's id and its index.
+        # We will use them for implementing the next/previous functionality.
+        self._slide_to_index: Dict[str, int] = {}
+        self._index_to_slide: Dict[int, str] = {}
 
     async def _index(self):
         template = Template(
@@ -41,14 +52,32 @@ class Show:
 
     async def _ws(self, websocket: WebSocket):
         await websocket.accept()
-        data = await websocket.receive_json()
-        request = SlideRequest(**data)
-        print(f"Serving {request}")
-        slide = self.slides[request.slide]
-        await slide.build(websocket)
+
+        while True:
+            data = await websocket.receive_json()
+            request = SlideRequest(**data)
+            print(f"Serving {request}")
+
+            if request.event == "start":
+                slide = self.slides[request.slide]
+                await slide.build(websocket)
+            elif request.event == "keypress":
+                # Handle a keypress
+                # NOTE: For now we're only implementing moving forward and backward!
+                slide_id = request.slide
+                slide_idx = self._slide_to_index[slide_id]
+                next_idx = slide_idx + 1 if request.keycode == 32 else slide_idx - 1
+
+                if next_idx not in self._index_to_slide:
+                    continue
+
+                next_slide = self._index_to_slide[next_idx]
+                await websocket.send_json(asdict(GoToCommand(next_slide, 500)))
 
     def slide(self, fn):
         slide = Slide(fn, self.__default_classes)
+        self._slide_to_index[slide.id] = len(self.slides)
+        self._index_to_slide[len(self.slides)] = slide.id
         self.slides[slide.id] = slide
         return fn
 
@@ -60,6 +89,8 @@ class Show:
 
 class SlideRequest(BaseModel):
     slide: str
+    event: str
+    keycode: Optional[int] = None
 
 
 @dataclass
@@ -72,6 +103,13 @@ class BuildCommand:
 class UpdateCommand:
     content: "HtmlNode"
     type: str = "update"
+
+
+@dataclass
+class GoToCommand:
+    slide: str
+    time: int
+    type: str = "goto"
 
 
 class Slide:

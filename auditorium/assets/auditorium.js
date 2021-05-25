@@ -3,8 +3,9 @@ var currentSlide = 0;
 var body = document.getElementsByTagName("body")[0]
 
 
-function customScrollTo(start, to, duration) {
-    var start = start,
+function customScrollTo(from, towards, duration) {
+    var start = -from.offsetTop,
+        to = -towards.offsetTop,
         change = to - start,
         currentTime = 0,
         increment = 20;
@@ -19,6 +20,8 @@ function customScrollTo(start, to, duration) {
         }
         else{
             body.style.setProperty("top", to + "px");
+            from.replaceChildren();
+            towards.scrollIntoView();
         }
     };
     setTimeout(animateScroll, increment);
@@ -33,18 +36,15 @@ Math.easeInOutQuad = function (t, b, c, d) {
 
 function goToSlide(slide, duration) {
     var element = allSlides[slide];
-
-    var destinationY = -element.offsetTop;
-    var currentY = -allSlides[currentSlide].offsetTop;
-
-    customScrollTo(currentY, destinationY, duration);
+    customScrollTo(allSlides[currentSlide], element, duration);
     currentSlide = slide;
 
     let socket = new WebSocket("ws://localhost:8000/ws");
 
     socket.onopen = function(event) {
         socket.send(JSON.stringify({
-            slide: element.id
+            slide: element.id,
+            event: "start"
         }));
     };
 
@@ -54,8 +54,22 @@ function goToSlide(slide, duration) {
         command = commands[data.type];
         command(data);
     };
+
+    window.onkeypress = function (event) {
+        if (event.keyCode == 32 || event.keyCode == 97) {
+            socket.send(JSON.stringify({
+                slide: element.id,
+                event: "keypress",
+                keycode: event.keyCode,
+            }));
+        }
+        else {
+            console.log("Pressed", event.keyCode);
+        }
+    };
 }
 
+window.scrollTo(0, 0);
 goToSlide(0, 0);
 
 function goToNext() {
@@ -139,13 +153,8 @@ commands = {
     update: function(data) {
         updateElement(data.content);
     },
-}
 
-window.onkeypress = function (event) {
-    if (event.keyCode == 32) {
-        goToNext();
-        return
+    goto: function(data) {
+        goToSlide(data.slide, data.time);
     }
-
-    print(event);
-};
+}
