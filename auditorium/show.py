@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 
 class Show:
-    def __init__(self, *, default_classes="py-2") -> None:
+    def __init__(self, *, default_classes="m-2") -> None:
         self.__default_classes = default_classes
 
         # The center of the `Show` class is a `FastAPI` application
@@ -148,6 +148,14 @@ class Context:
             **kwargs,
         )
 
+    def shape(self, **kwargs) -> "Shape":
+        return Shape(
+            key=self.__autokey(),
+            websocket=self.__websocket,
+            default_classes=self.__default_classes,
+            **kwargs,
+        )
+
     def stretch(self) -> "Stretch":
         return Stretch(
             key=self.__autokey(),
@@ -193,7 +201,7 @@ class Component(abc.ABC):
         self.key = key
         self._websocket = websocket
         self.__default_classes = default_classes.split()
-        self.__style = {
+        self._style = {
             "--tw-translate-x": f"{translate_x}px",
             "--tw-translate-y": f"{translate_y}px",
             "--tw-rotate": f"{rotate}deg",
@@ -216,7 +224,7 @@ class Component(abc.ABC):
         return self
 
     def transparent(self) -> "Component":
-        self.__style["opacity"] = 0
+        self._style["opacity"] = 0
         return self
 
     async def animate(self, animation:str):
@@ -228,24 +236,24 @@ class Component(abc.ABC):
             y = scale
 
         if x is not None:
-            self.__style["--tw-scale-x"] = x
+            self._style["--tw-scale-x"] = x
 
         if y is not None:
-            self.__style["--tw-scale-y"] = y
+            self._style["--tw-scale-y"] = y
 
         return self
 
     def rotated(self, rotation) -> "Component":
-        self.__style["--tw-rotate"] = f"{rotation}def"
+        self._style["--tw-rotate"] = f"{rotation}def"
 
         return self
 
     def translated(self, x=None, y=None) -> "Component":
         if x is not None:
-            self.__style["--tw-translate-x"] = f"{x}px"
+            self._style["--tw-translate-x"] = f"{x}px"
 
         if y is not None:
-            self.__style["--tw-translate-y"] = f"{y}px"
+            self._style["--tw-translate-y"] = f"{y}px"
 
         return self
 
@@ -264,7 +272,7 @@ class Component(abc.ABC):
     def _build_content(self) -> "HtmlNode":
         content = self._build()
         content.clss = " ".join(self.__default_classes) + " " + content.clss
-        content.style = dict(self.__style, **(content.style or {}))
+        content.style = dict(self._style, **(content.style or {}))
         content.transition_duration = f"{self.__transition_duration}ms"
         content.transition_property = self.__transition_property
         return content
@@ -300,21 +308,21 @@ class Component(abc.ABC):
             old_transition = self.transition(duration)
 
         if translate_x is not None:
-            self.__style["--tw-translate-x"] = f"{translate_x}px"
+            self._style["--tw-translate-x"] = f"{translate_x}px"
         if translate_y is not None:
-            self.__style["--tw-translate-y"] = f"{translate_y}px"
+            self._style["--tw-translate-y"] = f"{translate_y}px"
         if rotate is not None:
-            self.__style["--tw-rotate"] = f"{rotate}deg"
+            self._style["--tw-rotate"] = f"{rotate}deg"
         if skew_x is not None:
-            self.__style["--tw-skew-x"] = f"{skew_x}deg"
+            self._style["--tw-skew-x"] = f"{skew_x}deg"
         if skew_y is not None:
-            self.__style["--tw-skew-y"] = f"{skew_y}deg"
+            self._style["--tw-skew-y"] = f"{skew_y}deg"
         if scale_x is not None:
-            self.__style["--tw-scale-x"] = scale_x
+            self._style["--tw-scale-x"] = scale_x
         if scale_y is not None:
-            self.__style["--tw-scale-y"] = scale_y
+            self._style["--tw-scale-y"] = scale_y
         if opacity is not None:
-            self.__style["opacity"] = opacity
+            self._style["opacity"] = opacity
 
         await self.update()
 
@@ -373,4 +381,17 @@ class Stretch(Component):
     def _build(self) -> HtmlNode:
         return HtmlNode(
             tag="div", clss=f"flex-grow", id=self.key
+        )
+
+
+class Shape(Component):
+    def __init__(self, width=24, height=24, color="gray-300", **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._style["width"] = f"{width}px"
+        self._style["height"] = f"{height}px"
+        self.color = color
+
+    def _build(self) -> "HtmlNode":
+        return HtmlNode(
+            tag="div", clss=f"bg-{self.color}", id=self.key
         )
