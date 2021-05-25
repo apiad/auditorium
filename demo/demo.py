@@ -21,11 +21,10 @@ async def intro(ctx: Context):
             size=3,
         ).scaled(0),
         ctx.stretch(),
-        ctx.text("⬇️ Hit SPACE to continue").scaled(0)
+        ctx.text("⬇️ Hit SPACE to continue").animated("bounce").transparent()
     )
 
-    await ctx.sequential(1, text2.restore(1), 1.5, text3.restore(0.25))
-    await text3.animate("bounce")
+    await ctx.sequential(1, text2.restore(1), 1.5, text3.restore(0.5))
 
 
 @show.slide

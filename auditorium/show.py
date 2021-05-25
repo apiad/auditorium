@@ -149,6 +149,7 @@ class Component(abc.ABC):
         rotate=0,
         skew_x=0,
         skew_y=0,
+        opacity=1,
         transition=None,
     ) -> None:
         self.key = key
@@ -162,6 +163,7 @@ class Component(abc.ABC):
             "--tw-skew-y": f"{skew_y}deg",
             "--tw-scale-x": scale_x,
             "--tw-scale-y": scale_y,
+            "opacity": f"{opacity}",
             "transform": "translateX(var(--tw-translate-x)) translateY(var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))",
             "transition-timing-function": "cubic-bezier(0.4,0,0.2,1)",
         }
@@ -173,6 +175,10 @@ class Component(abc.ABC):
 
     def animated(self, animation:str) -> "Component":
         self.__default_classes.append(f"animate-{animation}")
+        return self
+
+    def transparent(self) -> "Component":
+        self.__style["opacity"] = 0
         return self
 
     async def animate(self, animation:str):
@@ -247,6 +253,7 @@ class Component(abc.ABC):
         rotate=None,
         skew_x=None,
         skew_y=None,
+        opacity=None,
         duration: float = None,
     ):
         old_transition = None
@@ -268,6 +275,8 @@ class Component(abc.ABC):
             self.__style["--tw-scale-x"] = scale_x
         if scale_y is not None:
             self.__style["--tw-scale-y"] = scale_y
+        if opacity is not None:
+            self.__style["opacity"] = opacity
 
         await self.update()
 
@@ -291,7 +300,7 @@ class Component(abc.ABC):
         await self.transform(scale_x=x, scale_y=y, duration=duration)
 
     async def restore(self, duration: float = None):
-        await self.transform(0, 0, 1, 1, 0, 0, 0, duration)
+        await self.transform(0, 0, 1, 1, 0, 0, 0, 1, duration)
 
     @abc.abstractmethod
     def _build(self) -> "HtmlNode":
