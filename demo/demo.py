@@ -35,6 +35,7 @@ async def quickstart(ctx: Context):
     ).create()
 
     boxes = await ctx.create(*[ctx.shape(width=32, height=32) for _ in range(10)])
+    text = await ctx.text("💡 Press SPACE to stop the animation").animated("pulse").create()
 
     while await ctx.loop():
         await ctx.sleep(1)
@@ -57,6 +58,10 @@ async def quickstart(ctx: Context):
                 for b in boxes
             ]
         )
+
+    await text.update(text="👍 Good, now press SPACE again to reorder the blocks")
+    await ctx.keypress()
+    await ctx.parallel(*[b.restore(1) for b in boxes])
 
 
 # Finally, we call `show.run()`

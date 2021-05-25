@@ -224,6 +224,10 @@ class Context:
 
         return False
 
+    async def keypress(self):
+        while await self.loop():
+            await self.sleep(1)
+
 
 class Component(abc.ABC):
     def __init__(
@@ -320,10 +324,11 @@ class Component(abc.ABC):
         content.transition_property = self.__transition_property
         return content
 
-    async def create(self):
+    async def create(self) -> "Component":
         await self._websocket.send_json(
             asdict(CreateCommand(content=[self._build_content()]))
         )
+        return self
 
     async def update(self, **kwargs):
         for k, v in kwargs.items():
