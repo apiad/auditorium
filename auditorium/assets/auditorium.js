@@ -20,7 +20,9 @@ function customScrollTo(from, towards, duration) {
         }
         else{
             body.style.setProperty("top", to + "px");
-            from.replaceChildren();
+            if (from != towards) {
+                from.replaceChildren();
+            }
             towards.scrollIntoView();
         }
     };
@@ -39,38 +41,36 @@ function goToSlide(slide, duration) {
     customScrollTo(allSlides[currentSlide], element, duration);
     currentSlide = slide;
 
-    let socket = new WebSocket("ws://localhost:8000/ws");
-
-    socket.onopen = function(event) {
-        socket.send(JSON.stringify({
-            slide: element.id,
-            event: "start"
-        }));
-    };
-
-    socket.onmessage = function(event) {
-        data = JSON.parse(event.data);
-        console.log(data);
-        command = commands[data.type];
-        command(data);
-    };
-
-    window.onkeypress = function (event) {
-        if (event.keyCode == 32 || event.keyCode == 97) {
-            socket.send(JSON.stringify({
-                slide: element.id,
-                event: "keypress",
-                keycode: event.keyCode,
-            }));
-        }
-        else {
-            console.log("Pressed", event.keyCode);
-        }
-    };
+    socket.send(JSON.stringify({
+        slide: element.id,
+        event: "start"
+    }));
 }
 
-window.scrollTo(0, 0);
-goToSlide(0, 0);
+let socket = new WebSocket("ws://localhost:8000/ws");
+
+socket.onmessage = function(event) {
+    data = JSON.parse(event.data);
+    console.log(data);
+    command = commands[data.type];
+    command(data);
+};
+
+var lastKeyCode = null;
+
+window.onkeypress = function (event) {
+    if (event.keyCode == 32 || event.keyCode == 97) {
+        lastKeyCode = event.keyCode;
+    }
+    else {
+        console.log("Pressed", event.keyCode);
+    }
+};
+
+socket.onopen = function(event) {
+    window.scrollTo(0, 0);
+    goToSlide(0, 0);
+};
 
 function goToNext() {
     let nextSlide = currentSlide + 1;
@@ -144,7 +144,7 @@ function updateElement(element) {
 }
 
 commands = {
-    build: function(data) {
+    create: function(data) {
         createElements(data.content).forEach(el => {
             allSlides[currentSlide].appendChild(el);
         });
@@ -156,5 +156,14 @@ commands = {
 
     goto: function(data) {
         goToSlide(data.slide, data.time);
+    },
+
+    keypress: function(data) {
+        socket.send(JSON.stringify({
+            slide: allSlides[currentSlide].id,
+            event: "keypress",
+            keycode: lastKeyCode,
+        }));
+        lastKeyCode = null;
     }
 }

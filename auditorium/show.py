@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, AnyStr, Coroutine, Dict, List, Optional
 
 from dataclasses import dataclass, asdict
+from fastapi import responses
 from jinja2 import Template
 
 import asyncio
@@ -19,6 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from jinja2.nodes import And
 
 from pydantic import BaseModel
+from pydantic.errors import AnyStrMaxLengthError
 
 
 class Show:
@@ -53,14 +55,23 @@ class Show:
     async def _ws(self, websocket: WebSocket):
         await websocket.accept()
 
+        request = None
+
         while True:
-            data = await websocket.receive_json()
-            request = SlideRequest(**data)
+            if request is None:
+                data = await websocket.receive_json()
+                request = SlideRequest(**data)
+
             print(f"Serving {request}")
 
             if request.event == "start":
                 slide = self.slides[request.slide]
                 await slide.build(websocket)
+
+                # We wait until someone unblocks us by pressing a key or something
+                request = await self._block(websocket)
+                continue
+
             elif request.event == "keypress":
                 # Handle a keypress
                 # NOTE: For now we're only implementing moving forward and backward!
@@ -68,11 +79,27 @@ class Show:
                 slide_idx = self._slide_to_index[slide_id]
                 next_idx = slide_idx + 1 if request.keycode == 32 else slide_idx - 1
 
+                # We've done with this request, we have to wait for another
+                request = None
+
                 if next_idx not in self._index_to_slide:
+                    request = await self._block(websocket)
                     continue
 
                 next_slide = self._index_to_slide[next_idx]
                 await websocket.send_json(asdict(GoToCommand(next_slide, 500)))
+
+    async def _block(self, websocket: WebSocket, sleep:float=1) -> "SlideRequest":
+        while True:
+            await websocket.send_json(asdict(KeypressCommand()))
+            data = await websocket.receive_json()
+            response = SlideRequest(**data)
+
+            if response.event != "keypress" or response.keycode is not None:
+                return response
+
+            await asyncio.sleep(sleep)
+
 
     def slide(self, fn):
         slide = Slide(fn, self.__default_classes)
@@ -94,9 +121,9 @@ class SlideRequest(BaseModel):
 
 
 @dataclass
-class BuildCommand:
+class CreateCommand:
     content: List["HtmlNode"]
-    type: str = "build"
+    type: str = "create"
 
 
 @dataclass
@@ -112,6 +139,11 @@ class GoToCommand:
     type: str = "goto"
 
 
+@dataclass
+class KeypressCommand:
+    type: str = "keypress"
+
+
 class Slide:
     def __init__(self, fn, default_classes, id=None, margin:int=20) -> None:
         self.id = id or fn.__name__
@@ -119,9 +151,10 @@ class Slide:
         self.margin = margin
         self.default_classes = default_classes
 
-    async def build(self, websocket: WebSocket):
+    async def build(self, websocket: WebSocket) -> "Context":
         context = Context(self.id, websocket, self.default_classes)
         await self.fn(context)
+        return context
 
 
 class Context:
@@ -165,7 +198,7 @@ class Context:
 
     async def create(self, *components: "Component"):
         await self.__websocket.send_json(
-            asdict(BuildCommand(content=[c._build_content() for c in components]))
+            asdict(CreateCommand(content=[c._build_content() for c in components]))
         )
 
         return components
@@ -180,6 +213,16 @@ class Context:
 
         for a in animations:
             await a
+
+    async def loop(self) -> bool:
+        await self.__websocket.send_json(asdict(KeypressCommand()))
+        data = await self.__websocket.receive_json()
+        response = SlideRequest(**data)
+
+        if response.event == "keypress" and response.keycode is None:
+            return True
+
+        return False
 
 
 class Component(abc.ABC):
@@ -279,7 +322,7 @@ class Component(abc.ABC):
 
     async def create(self):
         await self._websocket.send_json(
-            asdict(BuildCommand(content=[self._build_content()]))
+            asdict(CreateCommand(content=[self._build_content()]))
         )
 
     async def update(self, **kwargs):
