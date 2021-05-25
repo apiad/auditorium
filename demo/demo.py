@@ -13,16 +13,19 @@ show = Show()
 
 @show.slide
 async def intro(ctx: Context):
-    _, text2, text3 = await ctx.create(
+    _, _, text2, _, text3 = await ctx.create(
+        ctx.stretch(),
         ctx.text("Welcome to Auditorium 2.0! 🖖", size=5),
         ctx.text(
             "🔥 A Python framework for composing HTML animations!",
             size=3,
         ).scaled(0),
-        ctx.text("⬇️ Hit SPACE to continue").scaled(0).translated(y=300),
+        ctx.stretch(),
+        ctx.text("⬇️ Hit SPACE to continue").scaled(0)
     )
 
-    await ctx.sequential(1, text2.zoom_in(1), 1.5, text3.zoom_in())
+    await ctx.sequential(1, text2.restore(1), 1.5, text3.restore(0.25))
+    await text3.animate("bounce")
 
 
 @show.slide

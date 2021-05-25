@@ -75,9 +75,10 @@ class UpdateCommand:
 
 
 class Slide:
-    def __init__(self, fn, default_classes, id=None) -> None:
+    def __init__(self, fn, default_classes, id=None, margin:int=20) -> None:
         self.id = id or fn.__name__
         self.fn = fn
+        self.margin = margin
         self.default_classes = default_classes
 
     async def build(self, websocket: WebSocket):
@@ -94,7 +95,7 @@ class Context:
 
     def __autokey(self):
         self.__auto_counter += 1
-        return str(self.__auto_counter)
+        return self.__slide_id + ":" + str(self.__auto_counter)
 
     async def sleep(self, delay: float):
         await asyncio.sleep(delay)
@@ -103,10 +104,17 @@ class Context:
         return Text(
             text,
             size=size,
-            key=self.__slide_id + ":" + self.__autokey(),
+            key=self.__autokey(),
             websocket=self.__websocket,
             default_classes=self.__default_classes,
             **kwargs,
+        )
+
+    def stretch(self) -> "Stretch":
+        return Stretch(
+            key=self.__autokey(),
+            websocket=self.__websocket,
+            default_classes=self.__default_classes,
         )
 
     async def create(self, *components: "Component"):
@@ -120,7 +128,9 @@ class Context:
         await asyncio.gather(*animations)
 
     async def sequential(self, *animations: Coroutine):
-        animations = [asyncio.sleep(a) if isinstance(a, (float, int)) else a for a in animations]
+        animations = [
+            asyncio.sleep(a) if isinstance(a, (float, int)) else a for a in animations
+        ]
 
         for a in animations:
             await a
@@ -143,7 +153,7 @@ class Component(abc.ABC):
     ) -> None:
         self.key = key
         self._websocket = websocket
-        self.__default_classes = default_classes
+        self.__default_classes = default_classes.split()
         self.__style = {
             "--tw-translate-x": f"{translate_x}px",
             "--tw-translate-y": f"{translate_y}px",
@@ -161,6 +171,13 @@ class Component(abc.ABC):
         if transition is not None:
             self.transition(transition)
 
+    def animated(self, animation:str) -> "Component":
+        self.__default_classes.append(f"animate-{animation}")
+        return self
+
+    async def animate(self, animation:str):
+        await self.animated(animation).update()
+
     def scaled(self, scale=None, x=None, y=None) -> "Component":
         if scale is not None:
             x = scale
@@ -171,6 +188,11 @@ class Component(abc.ABC):
 
         if y is not None:
             self.__style["--tw-scale-y"] = y
+
+        return self
+
+    def rotated(self, rotation) -> "Component":
+        self.__style["--tw-rotate"] = f"{rotation}def"
 
         return self
 
@@ -197,7 +219,7 @@ class Component(abc.ABC):
 
     def _build_content(self) -> "HtmlNode":
         content = self._build()
-        content.clss = self.__default_classes + " " + content.clss
+        content.clss = " ".join(self.__default_classes) + " " + content.clss
         content.style = dict(self.__style, **(content.style or {}))
         content.transition_duration = f"{self.__transition_duration}ms"
         content.transition_property = self.__transition_property
@@ -220,8 +242,8 @@ class Component(abc.ABC):
         self,
         translate_x=None,
         translate_y=None,
-        scale_x=1,
-        scale_y=1,
+        scale_x=None,
+        scale_y=None,
         rotate=None,
         skew_x=None,
         skew_y=None,
@@ -261,11 +283,15 @@ class Component(abc.ABC):
     async def rotate(self, deg, duration: float = None):
         await self.transform(rotate=deg, duration=duration)
 
-    async def scale(self, x, y, duration: float = None):
+    async def scale(self, scale=None, x=None, y=None, duration: float = None):
+        if scale is not None:
+            x = scale
+            y = scale
+
         await self.transform(scale_x=x, scale_y=y, duration=duration)
 
-    async def zoom_in(self, duration: float = .250):
-        await self.scale(1, 1, duration)
+    async def restore(self, duration: float = None):
+        await self.transform(0, 0, 1, 1, 0, 0, 0, duration)
 
     @abc.abstractmethod
     def _build(self) -> "HtmlNode":
@@ -293,4 +319,11 @@ class Text(Component):
     def _build(self) -> HtmlNode:
         return HtmlNode(
             tag="span", clss=f"text-{self.size}xl", id=self.key, text=self.text
+        )
+
+
+class Stretch(Component):
+    def _build(self) -> HtmlNode:
+        return HtmlNode(
+            tag="div", clss=f"flex-grow", id=self.key
         )
