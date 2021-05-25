@@ -1,5 +1,6 @@
 var allSlides = document.getElementsByClassName("slide");
 var currentSlide = 0;
+var body = document.getElementsByTagName("body")[0]
 
 
 function customScrollTo(start, to, duration) {
@@ -11,14 +12,16 @@ function customScrollTo(start, to, duration) {
     var animateScroll = function(){
         currentTime += increment;
         var val = Math.easeInOutQuad(currentTime, start, change, duration);
-        window.scrollTo(0, val);
+        body.style.setProperty("top", val + "px");
 
         if(currentTime < duration) {
             setTimeout(animateScroll, increment);
         }
+        else{
+            body.style.setProperty("top", to + "px");
+        }
     };
-    animateScroll();
-    window.scrollTo(0, to);
+    setTimeout(animateScroll, increment);
 }
 
 Math.easeInOutQuad = function (t, b, c, d) {
@@ -31,8 +34,8 @@ Math.easeInOutQuad = function (t, b, c, d) {
 function goToSlide(slide, duration) {
     var element = allSlides[slide];
 
-    var destinationY = element.offsetTop;
-    var currentY = allSlides[currentSlide].offsetTop;
+    var destinationY = -element.offsetTop;
+    var currentY = -allSlides[currentSlide].offsetTop;
 
     customScrollTo(currentY, destinationY, duration);
     currentSlide = slide;
@@ -53,7 +56,7 @@ function goToSlide(slide, duration) {
     };
 }
 
-goToSlide(0, 500);
+goToSlide(0, 0);
 
 function goToNext() {
     let nextSlide = currentSlide + 1;

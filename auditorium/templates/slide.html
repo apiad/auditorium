@@ -6,7 +6,7 @@
   <link href="/assets/tailwind.min.css" rel="stylesheet">
   <link href="/assets/auditorium.css" rel="stylesheet">
 </head>
-<body class="overflow-hidden">
+<body class="overflow-hidden absolute" style="top: 0px;">
   {% for slide in slides.values() %}
     <div id="{{ slide.id }}" class="slide p-{{ slide.margin }} h-screen w-screen bg-white flex flex-col items-center justify-center"></div>
   {% endfor %}
