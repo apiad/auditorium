@@ -3,17 +3,16 @@ var currentSlide = allSlides[0].id;
 var body = document.getElementsByTagName("body")[0];
 var hash = window.location.hash;
 
-if (hash !== undefined) {
+if (hash !== "") {
     currentSlide = hash.substr(1);
 }
 
 function customScrollTo(from, towards, duration) {
     var start = from.offsetTop,
         to = towards.offsetTop,
-        change = to - start,
-        currentTime = 0,
-        increment = 20;
-        from.scrollIntoView();
+        change = to - start;
+
+    from.scrollIntoView();
 
     const startTime = window.performance.now();
 
@@ -68,6 +67,9 @@ var lastKeyCode = null;
 window.onkeypress = function (event) {
     if (event.keyCode == 32 || event.keyCode == 97) {
         lastKeyCode = event.keyCode;
+    }
+    else if (event.keyCode == 114) {
+        window.location.reload();
     }
     else {
         console.log("Pressed", event.keyCode);

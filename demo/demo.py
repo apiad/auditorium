@@ -71,7 +71,8 @@ async def quickstart(ctx: Context):
 @show.slide
 async def layouts(ctx:Context):
     await ctx.create(
-        ctx.text("The standard layout is fully centered, but you can use the full power of flexbox and grids to compose any layout you desire...", size=2),
+        ctx.text("The standard layout is fully centered."),
+        ctx.text("But you can use the full power of flexbox and grids to compose any layout you desire..."),
     )
 
 # Finally, we call `show.run()`
