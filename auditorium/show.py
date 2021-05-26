@@ -203,15 +203,17 @@ class Context:
 
         return components
 
+    def _unwrap(self, seq):
+        if len(seq) == 1 and hasattr(seq[0], "__iter__"):
+            seq = seq[0]
+
+        return [self.sleep(i) if isinstance(i, (float, int)) else i for i in seq]
+
     async def parallel(self, *animations: Coroutine):
-        await asyncio.gather(*animations)
+        await asyncio.gather(*self._unwrap(animations))
 
     async def sequential(self, *animations: Coroutine):
-        animations = [
-            asyncio.sleep(a) if isinstance(a, (float, int)) else a for a in animations
-        ]
-
-        for a in animations:
+        for a in self._unwrap(animations):
             await a
 
     async def loop(self) -> bool:

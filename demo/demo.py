@@ -12,7 +12,7 @@ show = Show()
 # a special decorator.
 
 
-@show.slide
+# @show.slide
 async def intro(ctx: Context):
     _, _, text2, _, text3 = await ctx.create(
         ctx.stretch(),
@@ -31,19 +31,19 @@ async def intro(ctx: Context):
 @show.slide
 async def quickstart(ctx: Context):
     await ctx.text(
-        "Auditorium is Python framework for creating animated HTML+CSS slideshows", size=2
+        "Auditorium is Python framework for creating animated HTML slideshows 🤩", size=2
     ).create()
 
     boxes = await ctx.create(*[ctx.shape(width=32, height=32) for _ in range(10)])
-    text = await ctx.text("💡 Press SPACE to stop the animation").animated("pulse").create()
+    text = (
+        await ctx.text("💡 Press SPACE to stop the animation").animated("pulse").create()
+    )
 
     while await ctx.loop():
-        await ctx.sleep(1)
         await ctx.parallel(
-            *[
+            [
                 b.transform(
                     translate_x=random.uniform(-400, 400),
-                    translate_y=random.uniform(-200, 200),
                     rotate=random.uniform(-360, 360),
                     duration=1,
                 )
@@ -51,7 +51,7 @@ async def quickstart(ctx: Context):
             ]
             + [
                 b.update(
-                    color=random.choice("red green blue yellow".split())
+                    color=random.choice("red green blue yellow purple".split())
                     + "-"
                     + str(random.randint(2, 6) * 100)
                 )
@@ -61,7 +61,9 @@ async def quickstart(ctx: Context):
 
     await text.update(text="👍 Good, now press SPACE again to reorder the blocks")
     await ctx.keypress()
-    await ctx.parallel(*[b.restore(1) for b in boxes])
+    await ctx.parallel(
+        [ctx.parallel(b.restore(1), b.update(color="gray-300")) for b in boxes]
+    )
 
 
 # Finally, we call `show.run()`

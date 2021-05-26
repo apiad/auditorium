@@ -2,7 +2,6 @@ var allSlides = document.getElementsByClassName("slide");
 var currentSlide = 0;
 var body = document.getElementsByTagName("body")[0]
 
-
 function customScrollTo(from, towards, duration) {
     var start = -from.offsetTop,
         to = -towards.offsetTop,
@@ -71,22 +70,6 @@ socket.onopen = function(event) {
     window.scrollTo(0, 0);
     goToSlide(0, 0);
 };
-
-function goToNext() {
-    let nextSlide = currentSlide + 1;
-
-    if (nextSlide < allSlides.length) {
-        goToSlide(nextSlide, 500);
-    }
-}
-
-function goToPrevious() {
-    let previousSlide = currentSlide - 1;
-
-    if (previousSlide >= 0) {
-        goToSlide(previousSlide, 500);
-    }
-}
 
 function createElements(elements) {
     var els = [];
