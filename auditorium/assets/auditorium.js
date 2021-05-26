@@ -1,31 +1,38 @@
 var allSlides = document.getElementsByClassName("slide");
-var currentSlide = 0;
-var body = document.getElementsByTagName("body")[0]
+var currentSlide = allSlides[0].id;
+var body = document.getElementsByTagName("body")[0];
+var hash = window.location.hash;
+
+if (hash !== undefined) {
+    currentSlide = hash.substr(1);
+}
 
 function customScrollTo(from, towards, duration) {
-    var start = -from.offsetTop,
-        to = -towards.offsetTop,
+    var start = from.offsetTop,
+        to = towards.offsetTop,
         change = to - start,
         currentTime = 0,
         increment = 20;
+        from.scrollIntoView();
 
-    var animateScroll = function(){
-        currentTime += increment;
-        var val = Math.easeInOutQuad(currentTime, start, change, duration);
-        body.style.setProperty("top", val + "px");
+    const startTime = window.performance.now();
 
-        if(currentTime < duration) {
-            setTimeout(animateScroll, increment);
+    var animateScroll = function(timestamp){
+        elapsed = timestamp - startTime;
+        var val = Math.easeInOutQuad(elapsed, start, change, duration);
+        window.scrollTo(0, val);
+
+        if(elapsed < duration) {
+            window.requestAnimationFrame(animateScroll);
         }
         else{
-            body.style.setProperty("top", to + "px");
             if (from != towards) {
                 from.replaceChildren();
             }
             towards.scrollIntoView();
         }
     };
-    setTimeout(animateScroll, increment);
+    window.requestAnimationFrame(animateScroll);
 }
 
 Math.easeInOutQuad = function (t, b, c, d) {
@@ -39,6 +46,7 @@ function goToSlide(slide, duration) {
     var element = allSlides[slide];
     customScrollTo(allSlides[currentSlide], element, duration);
     currentSlide = slide;
+    window.location.hash = "#" + String(currentSlide);
 
     socket.send(JSON.stringify({
         slide: element.id,
@@ -67,8 +75,7 @@ window.onkeypress = function (event) {
 };
 
 socket.onopen = function(event) {
-    window.scrollTo(0, 0);
-    goToSlide(0, 0);
+    goToSlide(currentSlide, 0);
 };
 
 function createElements(elements) {

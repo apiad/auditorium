@@ -12,7 +12,7 @@ show = Show()
 # a special decorator.
 
 
-# @show.slide
+@show.slide
 async def intro(ctx: Context):
     _, _, text2, _, text3 = await ctx.create(
         ctx.stretch(),
@@ -38,6 +38,8 @@ async def quickstart(ctx: Context):
     text = (
         await ctx.text("💡 Press SPACE to stop the animation").animated("pulse").create()
     )
+
+    await ctx.sleep(1)
 
     while await ctx.loop():
         await ctx.parallel(
@@ -65,6 +67,12 @@ async def quickstart(ctx: Context):
         [ctx.parallel(b.restore(1), b.update(color="gray-300")) for b in boxes]
     )
 
+
+@show.slide
+async def layouts(ctx:Context):
+    await ctx.create(
+        ctx.text("The standard layout is fully centered, but you can use the full power of flexbox and grids to compose any layout you desire...", size=2),
+    )
 
 # Finally, we call `show.run()`
 
