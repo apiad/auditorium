@@ -49,11 +49,15 @@ function goToSlide(slide, duration) {
 
     socket.send(JSON.stringify({
         slide: element.id,
-        event: "start"
+        event: "render"
     }));
 }
 
 let socket = new WebSocket("ws://localhost:8000/ws");
+
+socket.onopen = function(event) {
+    goToSlide(currentSlide, 0);
+};
 
 socket.onmessage = function(event) {
     data = JSON.parse(event.data);
@@ -63,26 +67,17 @@ socket.onmessage = function(event) {
 };
 
 var lastKeyCode = null;
+var askedKeypress = false;
 
 window.onkeypress = function (event) {
-    if (event.keyCode == 32 || event.keyCode == 97) {
-        lastKeyCode = event.keyCode;
-    }
-    else if (event.keyCode == 114) {
-        window.location.reload();
-    }
-    else {
-        console.log("Pressed", event.keyCode);
-    }
+    socket.send(JSON.stringify({
+        slide: currentSlide,
+        event: "keypress",
+        keycode: event.keyCode,
+    }));
 };
 
-socket.onopen = function(event) {
-    goToSlide(currentSlide, 0);
-};
-
-function createElements(elements) {
-    var els = [];
-
+function createElements(elements, parent) {
     elements.forEach(element => {
         if (document.getElementById(element.id)) {
             return;
@@ -95,23 +90,30 @@ function createElements(elements) {
             el.textContent = element.text;
         }
 
+        el.style.setProperty("transition-duration", element.transition_duration);
         el.className = element.clss;
-
-        el.style.setProperty('transition-duration', element.transition_duration);
-        el.style.setProperty('transition-property', element.transition_property);
 
         for(var key in element.style) {
             el.style.setProperty(key, element.style[key]);
+        }
+
+        if (element.props !== null) {
+            for(var key in element.props) {
+                el.setAttribute(key, element.props[key]);
+            }
         }
 
         element.children.forEach(child => {
             el.appendChild(createElements(child));
         });
 
-        els.push(el);
+        if (element.parent !== null) {
+            document.getElementById(element.parent).appendChild(el);
+        }
+        else {
+            parent.appendChild(el);
+        }
     });
-
-    return els;
 }
 
 function updateElement(element) {
@@ -121,10 +123,8 @@ function updateElement(element) {
         el.textContent = element.text;
     }
 
+    el.style.setProperty("transition-duration", element.transition_duration);
     el.className = element.clss;
-
-    el.style.setProperty('transition-duration', element.transition_duration);
-    el.style.setProperty('transition-property', element.transition_property);
 
     for(var key in element.style) {
         el.style.setProperty(key, element.style[key]);
@@ -137,9 +137,7 @@ function updateElement(element) {
 
 commands = {
     create: function(data) {
-        createElements(data.content).forEach(el => {
-            allSlides[currentSlide].appendChild(el);
-        });
+        createElements(data.content, allSlides[currentSlide]);
     },
 
     update: function(data) {
@@ -151,11 +149,16 @@ commands = {
     },
 
     keypress: function(data) {
-        socket.send(JSON.stringify({
-            slide: allSlides[currentSlide].id,
-            event: "keypress",
-            keycode: lastKeyCode,
-        }));
-        lastKeyCode = null;
+        if (data.immediate) {
+            socket.send(JSON.stringify({
+                slide: allSlides[currentSlide].id,
+                event: "keypress",
+                keycode: lastKeyCode,
+            }));
+            lastKeyCode = null;
+        }
+        else {
+            waitingKeypress = true;
+        }
     }
 }

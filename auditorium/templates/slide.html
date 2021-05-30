@@ -8,9 +8,23 @@
 </head>
 <body class="overflow-hidden absolute" style="top: 0px;">
   {% for slide in slides.values() %}
-    <div id="{{ slide.id }}" class="slide p-{{ slide.margin }} h-screen w-screen bg-white flex flex-col items-center justify-center"></div>
+    <div id="{{ slide.id }}" class="slide p-{{ slide.margin }} h-screen w-screen bg-white"></div>
   {% endfor %}
 </body>
 </html>
+
+<style>
+{%- for animation in animations %}
+@keyframes {{ animation }} {
+  {%- for frame in animation %}
+  {{ frame }} {
+    {%- for k,v in frame %}
+    {{ k }}: {{ v }};
+    {%- endfor %}
+  }
+  {%- endfor %}
+}
+{%- endfor %}
+</style>
 
 <script src="/assets/auditorium.js" type="application/javascript"></script>

@@ -75,6 +75,16 @@ async def layouts(ctx:Context):
         ctx.text("But you can use the full power of flexbox and grids to compose any layout you desire..."),
     )
 
+    await ctx.stretch().create()
+
+    with await ctx.row().create():
+        await ctx.create(
+            ctx.text("This text is in a single row"),
+            ctx.text("With this other text"),
+            ctx.stretch(),
+            ctx.text("And this one (after a stretch)"),
+        )
+
 # Finally, we call `show.run()`
 
 show.run()
