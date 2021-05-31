@@ -116,6 +116,12 @@ function createElements(elements, parent) {
     });
 }
 
+function destroyElements(elements) {
+    elements.forEach(el => {
+        document.getElementById(el).remove()
+    });
+}
+
 function updateElement(element) {
     var el = document.getElementById(element.id);
 
@@ -142,6 +148,10 @@ commands = {
 
     update: function(data) {
         updateElement(data.content);
+    },
+
+    destroy: function(data) {
+        destroyElements(data.content);
     },
 
     goto: function(data) {

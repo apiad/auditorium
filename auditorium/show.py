@@ -50,6 +50,14 @@ class Show:
         self.register(animation)
         return animation
 
+
+    def animation(self, name:str, duration:float=1) -> "Animation":
+        animation = Animation(name, duration)
+        self.register(animation)
+        return animation
+
+    def register(self, animation:"Animation"):
+        self._animations.append(animation)
     def register(self, animation:"Animation"):
         self._animations.append(animation)
 
@@ -134,6 +142,12 @@ class SlideRequest(BaseModel):
 class CreateCommand:
     content: List["HtmlNode"]
     type: str = "create"
+
+
+@dataclass
+class DestroyCommand:
+    content: List[str]
+    type: str = "destroy"
 
 
 @dataclass
@@ -247,18 +261,29 @@ class Context:
     def column(self, **kwargs) -> "Layout":
         return self.layout("column", "wrap", "center", "center", **kwargs)
 
-    async def create(self, *components: "Component"):
+    async def create(self, *components: "Component") -> List["Component"]:
+        components = list(self._flatten(components))
+
         await self.__websocket.send_json(
-            asdict(CreateCommand(content=[c._build_content() for c in self._unwrap(components)]))
+            asdict(CreateCommand(content=[c._build_content() for c in components]))
         )
 
         return components
 
-    def _unwrap(self, seq):
-        if len(seq) == 1 and hasattr(seq[0], "__iter__"):
-            seq = seq[0]
+    async def destroy(self, *components: "Component"):
+        await self.__websocket.send_json(
+            asdict(DestroyCommand(content=[c.key for c in self._flatten(components)]))
+        )
 
-        return [self.sleep(i) if isinstance(i, (float, int)) else i for i in seq]
+    def _flatten(self, seq):
+        if hasattr(seq, '__iter__'):
+            for x in seq:
+                yield from self._flatten(x)
+        else:
+            yield seq
+
+    def _unwrap(self, seq):
+        return [self.sleep(i) if isinstance(i, (float, int)) else i for i in self._flatten(seq)]
 
     async def parallel(self, *animations: Coroutine):
         await asyncio.gather(*self._unwrap(animations))
@@ -302,7 +327,6 @@ class Component(abc.ABC):
         width: str = "initial",
         height: str = "initial",
         animation: "Animation" = None,
-        animation_duration: float = None,
     ) -> None:
         self.key = key
         self.translate_x = translate_x
@@ -414,7 +438,8 @@ class Component(abc.ABC):
             old_transition = self.transition(duration)
 
         for k, v in kwargs.items():
-            setattr(self, k, v)
+            if v is not None:
+                setattr(self, k, v)
 
         await self._websocket.send_json(
             asdict(UpdateCommand(content=self._build_content()))
@@ -426,13 +451,13 @@ class Component(abc.ABC):
         if old_transition is not None:
             self.transition(old_transition)
 
-    async def translate(self, x, y, duration: float = None):
+    async def translate(self, x=0, y=0, duration: float = None):
         await self.update(translate_x=x, translate_y=y, duration=duration)
 
     async def rotate(self, deg, duration: float = None):
         await self.update(rotate=deg, duration=duration)
 
-    async def scale(self, scale=None, x=None, y=None, duration: float = None):
+    async def scale(self, scale=None, x=1, y=1, duration: float = None):
         if scale is not None:
             x = scale
             y = scale
