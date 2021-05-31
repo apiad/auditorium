@@ -309,6 +309,7 @@ class Context:
 class Component(abc.ABC):
     def __init__(
         self,
+        *,
         key,
         websocket: WebSocket,
         context: Context,
@@ -316,7 +317,7 @@ class Component(abc.ABC):
         translate_y=0,
         scale_x=1,
         scale_y=1,
-        rotate=0,
+        rotation=0,
         skew_x=0,
         skew_y=0,
         opacity=1,
@@ -333,7 +334,7 @@ class Component(abc.ABC):
         self.translate_y = translate_y
         self.scale_x = scale_x
         self.scale_y = scale_y
-        self.rotation = rotate
+        self.rotation = rotation
         self.skew_x = skew_x
         self.skew_y = skew_y
         self.opacity = opacity
@@ -536,13 +537,21 @@ class Stretch(Component):
 
 class Layout(Component):
     def __init__(
-        self, direction: str, wrap: str, align: str, justify: str, *args, **kwargs
+        self, direction: str, wrap: str, align: str, justify: str, *children: Component, **kwargs
     ):
         self.direction = direction
         self.wrap = wrap
         self.align = align
         self.justify = justify
-        super().__init__(*args, **kwargs)
+        self.children = children
+        super().__init__(**kwargs)
+
+    async def create(self) -> "Component":
+        with await super().create():
+            for element in self.children:
+                await element.create()
+
+        return self
 
     def _make_style(self, style):
         style["display"] = "flex"
