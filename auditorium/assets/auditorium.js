@@ -157,4 +157,15 @@ commands = {
     goto: function(data) {
         goToSlide(data.slide, data.time);
     },
+
+    media: function(data) {
+        let el = document.getElementById(data.id);
+
+        if (data.command === "play") {
+            el.play();
+        }
+        else if (data.command === "pause") {
+            el.pause();
+        }
+    }
 }

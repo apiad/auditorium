@@ -126,10 +126,16 @@ class Show:
 
         return self._index_to_slide[slide_index]
 
-    def run(self, host: str = "127.0.0.1", port: int = 8000):
-        from uvicorn import run
+    async def run(self, host: str = "127.0.0.1", port: int = 8000):
+        from uvicorn import Server, Config, run
 
-        run(self.app, host=host, port=port)
+        config = Config(self.app, host=host, port=port)
+        self._server = Server(config)
+
+        await self._server.serve()
+
+    async def stop(self):
+        await self._server.shutdown()
 
 
 class SlideRequest(BaseModel):
@@ -164,9 +170,10 @@ class GoToCommand:
 
 
 @dataclass
-class KeypressCommand:
-    type: str = "keypress"
-    immediate: bool = False
+class MediaCommand:
+    id: str
+    command: str
+    type: str = "media"
 
 
 class Slide:
@@ -221,6 +228,16 @@ class Context:
     def image(self, src: str, **kwargs) -> "Image":
         return Image(
             src=src,
+            key=self.__autokey(),
+            websocket=self.__websocket,
+            context=self,
+            **kwargs,
+        )
+
+    def audio(self, src:str, autoplay:bool=False, **kwargs) -> "Audio":
+        return Audio(
+            src=src,
+            autoplay=autoplay,
             key=self.__autokey(),
             websocket=self.__websocket,
             context=self,
@@ -533,6 +550,23 @@ class Image(Component):
             id=self.key,
             props=dict(src=self.src),
         )
+
+
+class Audio(Component):
+    def __init__(self, src:str, autoplay:bool=False, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.src = src
+        self.autoplay=autoplay
+
+    def _build(self) -> HtmlNode:
+        return HtmlNode(
+            tag="audio",
+            id=self.key,
+            props=dict(src=self.src),
+        )
+
+    async def play(self):
+        await self._websocket.send_json(asdict(MediaCommand(id=self.key, command="play")))
 
 
 class Stretch(Component):

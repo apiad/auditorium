@@ -1,7 +1,6 @@
 # This is a demo slideshow to showcase the main features of `auditorium`.
 # In auditorium, a slideshow starts with a `Show` class.
 
-import random
 from auditorium import Show, Context
 
 # We being by creating an instance of the Show.
@@ -9,7 +8,9 @@ from auditorium import Show, Context
 show = Show()
 
 # A show is composed of slides. Each slide is a function, decorated with
-# a special decorator.
+# a special `slide` decorator. Slides are implemented with the `async/await` pattern,
+# since under the hood there is a bidirectional connection with the browser
+# via websockets.
 
 
 @show.slide
@@ -22,7 +23,7 @@ async def intro(ctx: Context):
             size=3,
         ).scaled(0),
         ctx.stretch(),
-        ctx.text("⬇️ Hit SPACE to continue").animated("bounce").transparent(),
+        ctx.text("⬇️ Hit SPACE to continue").transparent()
     )
 
     await ctx.sequential(1, text2.restore(1), 1.5, text3.restore(0.5))
@@ -85,6 +86,4 @@ async def layouts(ctx:Context):
             ctx.text("And this one (after a stretch)"),
         )
 
-# Finally, we call `show.run()`
-
-show.run()
+# To run the show, we call `auditorium run <path/to/demo.py>` in the terminal.
