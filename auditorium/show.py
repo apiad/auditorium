@@ -50,14 +50,6 @@ class Show:
         self.register(animation)
         return animation
 
-
-    def animation(self, name:str, duration:float=1) -> "Animation":
-        animation = Animation(name, duration)
-        self.register(animation)
-        return animation
-
-    def register(self, animation:"Animation"):
-        self._animations.append(animation)
     def register(self, animation:"Animation"):
         self._animations.append(animation)
 
@@ -70,35 +62,43 @@ class Show:
     async def _ws(self, websocket: WebSocket):
         await websocket.accept()
 
-        slide_index = 0
         slide = None
+        current_task = None
 
         while True:
             data = await websocket.receive_json()
-            print(f"Serving {data}")
+            print(f"Event {data}")
 
             request = SlideRequest(**data)
 
             if request.event == "render":
                 slide = self.slides[request.slide]
-                slide_index = self._slide_to_index[request.slide]
-                await slide.build(websocket)
+                current_task = asyncio.create_task(slide.build(websocket))
 
             elif request.event == "keypress":
                 # Handle a keypress
-                # NOTE: For now we're only implementing moving forward and backward!
                 slide_id = request.slide
                 slide_idx = self._slide_to_index[slide_id]
-                next_idx = slide_idx + 1 if request.keycode == 32 else slide_idx - 1
 
-                # We've done with this request, we have to wait for another
-                request = None
+                # if SPACE is pressed we just release the current slide
+                # in case it is waiting for a keypress
+                if request.keycode == 32:
+                    if current_task is not None:
+                        slide.context.release()
 
-                if next_idx not in self._index_to_slide:
-                    continue
+                # if N or B we go to the next/previous slide respectively
+                elif request.keycode in [98, 110]:
+                    next_idx = slide_idx + 1 if request.keycode == 110 else slide_idx - 1
 
-                next_slide = self._index_to_slide[next_idx]
-                await websocket.send_json(asdict(GoToCommand(next_slide, 500)))
+                    if next_idx not in self._index_to_slide:
+                        continue
+
+                    if current_task is not None:
+                        current_task.cancel()
+                        current_task = None
+
+                    next_slide = self._index_to_slide[next_idx]
+                    await websocket.send_json(asdict(GoToCommand(next_slide, 500)))
 
     async def _block(self, websocket: WebSocket, sleep: float = 1) -> "SlideRequest":
         while True:
@@ -180,9 +180,9 @@ class Slide:
         return self.show._next_slide(self.id)
 
     async def build(self, websocket: WebSocket) -> "Context":
-        context = Context(self, websocket)
-        await self.fn(context)
-        return context
+        self.context = Context(self, websocket)
+        await self.fn(self.context)
+        return self.context
 
 
 class Context:
@@ -192,6 +192,7 @@ class Context:
         self.__auto_counter = 0
         self.__websocket = websocket
         self._parent: "Component" = None
+        self._keypress = asyncio.Event()
 
     def __autokey(self):
         self.__auto_counter += 1
@@ -303,7 +304,11 @@ class Context:
         return False
 
     async def keypress(self):
-        await self.__websocket.send_json(asdict(KeypressCommand(immediate=False)))
+        await self._keypress.wait()
+
+    def release(self):
+        self._keypress.set()
+        self._keypress.clear()
 
 
 class Component(abc.ABC):

@@ -157,18 +157,4 @@ commands = {
     goto: function(data) {
         goToSlide(data.slide, data.time);
     },
-
-    keypress: function(data) {
-        if (data.immediate) {
-            socket.send(JSON.stringify({
-                slide: allSlides[currentSlide].id,
-                event: "keypress",
-                keycode: lastKeyCode,
-            }));
-            lastKeyCode = null;
-        }
-        else {
-            waitingKeypress = true;
-        }
-    }
 }
