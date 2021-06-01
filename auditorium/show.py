@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from pydantic import BaseModel
+from starlette.websockets import WebSocketDisconnect
 
 
 class Show:
@@ -44,6 +45,7 @@ class Show:
         self._index_to_slide: Dict[int, str] = {}
 
         self._animations = []
+        self._closing = False
 
     def animation(self, name:str, duration:float=1) -> "Animation":
         animation = Animation(name, duration)
@@ -66,7 +68,11 @@ class Show:
         current_task = None
 
         while True:
-            data = await websocket.receive_json()
+            try:
+                data = await websocket.receive_json()
+            except WebSocketDisconnect:
+                break
+
             print(f"Event {data}")
 
             request = SlideRequest(**data)
@@ -78,7 +84,6 @@ class Show:
             elif request.event == "keypress":
                 # Handle a keypress
                 slide_id = request.slide
-                slide_idx = self._slide_to_index[slide_id]
 
                 # if SPACE is pressed we just release the current slide
                 # in case it is waiting for a keypress
@@ -88,28 +93,16 @@ class Show:
 
                 # if N or B we go to the next/previous slide respectively
                 elif request.keycode in [98, 110]:
-                    next_idx = slide_idx + 1 if request.keycode == 110 else slide_idx - 1
+                    next_slide = self._next_slide(slide_id) if request.keycode == 110 else self._previous_slide(slide_id)
 
-                    if next_idx not in self._index_to_slide:
+                    if next_slide is None:
                         continue
 
                     if current_task is not None:
                         current_task.cancel()
                         current_task = None
 
-                    next_slide = self._index_to_slide[next_idx]
                     await websocket.send_json(asdict(GoToCommand(next_slide, 500)))
-
-    async def _block(self, websocket: WebSocket, sleep: float = 1) -> "SlideRequest":
-        while True:
-            await websocket.send_json(asdict(KeypressCommand()))
-            data = await websocket.receive_json()
-            response = SlideRequest(**data)
-
-            if response.event != "keypress" or response.keycode is not None:
-                return response
-
-            await asyncio.sleep(sleep)
 
     def slide(self, fn):
         slide = Slide(fn, self)
@@ -126,8 +119,16 @@ class Show:
 
         return self._index_to_slide[slide_index]
 
+    def _previous_slide(self, slide_id:str):
+        slide_index = self._slide_to_index[slide_id] - 1
+
+        if slide_index not in self._index_to_slide:
+            return None
+
+        return self._index_to_slide[slide_index]
+
     async def run(self, host: str = "127.0.0.1", port: int = 8000):
-        from uvicorn import Server, Config, run
+        from uvicorn import Server, Config
 
         config = Config(self.app, host=host, port=port)
         self._server = Server(config)
@@ -135,6 +136,7 @@ class Show:
         await self._server.serve()
 
     async def stop(self):
+        self._closing = True
         await self._server.shutdown()
 
 
@@ -182,6 +184,7 @@ class Slide:
         self.fn = fn
         self.show = show
         self.margin = margin
+        self.enabled = True
 
     def next_slide(self):
         return self.show._next_slide(self.id)
@@ -203,7 +206,7 @@ class Context:
 
     def __autokey(self):
         self.__auto_counter += 1
-        return self.__slide_id + ":" + str(self.__auto_counter)
+        return self.__slide_id + "-" + str(self.__auto_counter)
 
     async def sleep(self, delay: float):
         await asyncio.sleep(delay)
@@ -214,11 +217,12 @@ class Context:
         if next_slide is not None:
             await self.__websocket.send_json(asdict(GoToCommand(next_slide, 500)))
 
-    def text(self, text: str, size: int = 1, align:str = "left", **kwargs) -> "Text":
+    def text(self, text: str, size: int = 1, align:str = "left", styling:str="", **kwargs) -> "Text":
         return Text(
             text,
             size=size,
             align=align,
+            styling=styling,
             key=self.__autokey(),
             websocket=self.__websocket,
             context=self,
@@ -309,16 +313,6 @@ class Context:
     async def sequential(self, *animations: Coroutine):
         for a in self._unwrap(animations):
             await a
-
-    async def loop(self) -> bool:
-        await self.__websocket.send_json(asdict(KeypressCommand(immediate=True)))
-        data = await self.__websocket.receive_json()
-        response = SlideRequest(**data)
-
-        if response.event == "keypress" and response.keycode is None:
-            return True
-
-        return False
 
     async def keypress(self):
         await self._keypress.wait()
@@ -527,15 +521,16 @@ class HtmlNode:
 
 
 class Text(Component):
-    def __init__(self, text: str, size: int, align:str, *args, **kwargs) -> None:
+    def __init__(self, text: str, size: int, align:str, styling:str="", *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.text = text
         self.size = size
         self.align = align
+        self.styling = styling
 
     def _build(self) -> HtmlNode:
         return HtmlNode(
-            tag="div", clss=f"text-{self.size}xl text-{self.align}", id=self.key, text=self.text
+            tag="div", clss=f"text-{self.size}xl text-{self.align} {self.styling}", id=self.key, text=self.text
         )
 
 

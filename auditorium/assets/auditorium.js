@@ -5,6 +5,10 @@ var hash = window.location.hash;
 
 if (hash !== "") {
     currentSlide = hash.substr(1);
+
+    if (allSlides[currentSlide] === undefined) {
+        currentSlide = allSlides[0].id;
+    }
 }
 
 function customScrollTo(from, towards, duration) {
@@ -16,15 +20,15 @@ function customScrollTo(from, towards, duration) {
 
     const startTime = window.performance.now();
 
-    var animateScroll = function(timestamp){
+    var animateScroll = function (timestamp) {
         elapsed = timestamp - startTime;
         var val = Math.easeInOutQuad(elapsed, start, change, duration);
         window.scrollTo(0, val);
 
-        if(elapsed < duration) {
+        if (elapsed < duration) {
             window.requestAnimationFrame(animateScroll);
         }
-        else{
+        else {
             if (from != towards) {
                 from.replaceChildren();
             }
@@ -35,10 +39,10 @@ function customScrollTo(from, towards, duration) {
 }
 
 Math.easeInOutQuad = function (t, b, c, d) {
-    t /= d/2;
-    if (t < 1) return c/2*t*t + b;
+    t /= d / 2;
+    if (t < 1) return c / 2 * t * t + b;
     t--;
-    return -c/2 * (t*(t-2) - 1) + b;
+    return -c / 2 * (t * (t - 2) - 1) + b;
 };
 
 function goToSlide(slide, duration) {
@@ -53,18 +57,38 @@ function goToSlide(slide, duration) {
     }));
 }
 
-let socket = new WebSocket("ws://localhost:8000/ws");
+var socket = new WebSocket("ws://localhost:8000/ws");
 
-socket.onopen = function(event) {
+socket.onopen = function (event) {
+    console.log("CONNECTED!");
     goToSlide(currentSlide, 0);
 };
 
-socket.onmessage = function(event) {
+socket.onmessage = function (event) {
     data = JSON.parse(event.data);
     console.log(data);
     command = commands[data.type];
     command(data);
 };
+
+socket.onclose = function (event) {
+    console.log("CLOSED!");
+
+    setInterval(
+        function() {
+            try {
+                s = new WebSocket("ws://localhost:8000/ws");
+                s.onopen = function(event) {
+                    window.location.reload();
+                }
+            }
+            catch(error) {
+                console.log(error);
+            }
+        },
+        1000
+    )
+}
 
 var lastKeyCode = null;
 var askedKeypress = false;
@@ -93,12 +117,12 @@ function createElements(elements, parent) {
         el.style.setProperty("transition-duration", element.transition_duration);
         el.className = element.clss;
 
-        for(var key in element.style) {
+        for (var key in element.style) {
             el.style.setProperty(key, element.style[key]);
         }
 
         if (element.props !== null) {
-            for(var key in element.props) {
+            for (var key in element.props) {
                 el.setAttribute(key, element.props[key]);
             }
         }
@@ -132,7 +156,7 @@ function updateElement(element) {
     el.style.setProperty("transition-duration", element.transition_duration);
     el.className = element.clss;
 
-    for(var key in element.style) {
+    for (var key in element.style) {
         el.style.setProperty(key, element.style[key]);
     }
 
@@ -142,23 +166,23 @@ function updateElement(element) {
 }
 
 commands = {
-    create: function(data) {
+    create: function (data) {
         createElements(data.content, allSlides[currentSlide]);
     },
 
-    update: function(data) {
+    update: function (data) {
         updateElement(data.content);
     },
 
-    destroy: function(data) {
+    destroy: function (data) {
         destroyElements(data.content);
     },
 
-    goto: function(data) {
+    goto: function (data) {
         goToSlide(data.slide, data.time);
     },
 
-    media: function(data) {
+    media: function (data) {
         let el = document.getElementById(data.id);
 
         if (data.command === "play") {
