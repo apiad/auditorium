@@ -8,8 +8,6 @@
 
 > A Python-powered slideshow creator with steroids.
 
-See the demo at [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
-
 ## What's this about
 
 Auditorium is a Python-powered slideshow generator.
