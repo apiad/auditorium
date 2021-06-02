@@ -1,7 +1,7 @@
 from asyncio.exceptions import CancelledError
 import typer
 import asyncio
-from .show import Show
+from auditorium import Show
 from traceback import print_exc
 
 from pathlib import Path
@@ -45,6 +45,7 @@ async def main(path: Path, host: str, port: int, instance: str, reload: bool):
         except Exception as e:
             print_exc()
             print("Waiting for file modification to reload...")
+
 
 @app.command("run")
 def run(
