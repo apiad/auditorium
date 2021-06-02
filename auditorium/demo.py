@@ -6,11 +6,11 @@ A simple demo script for `auditorium`.
 
 from auditorium import Show
 
-show = Show("Auditorium Demo")
+show = Show("Auditorium Demo", autoslide=10000)
 app = show.app
 
 
-@show.slide
+@show.slide(autoslide=4000)
 def intro(ctx):
     """
     # Auditorium
@@ -18,7 +18,7 @@ def intro(ctx):
     """
 
 
-@show.slide
+@show.slide(autoslide=6000)
 def what_is_this(ctx):
     """
     ## What is Auditorium
@@ -258,7 +258,6 @@ def blocks(ctx):
     """
 
     with ctx.columns(2) as cl:
-
         with ctx.block("Standard block"):
             ctx.markdown("And its content...")
 
@@ -328,8 +327,8 @@ def fragment_examples(ctx):
 
     with ctx.columns(3) as cl:
         for i, style in enumerate(
-            "grow shrink fade-in fade-out fade-up fade-down fade-left \
-                fade-right highlight-blue highlight-red highlight-green".split()
+                "grow shrink fade-in fade-out fade-up fade-down fade-left \
+                    fade-right highlight-blue highlight-red highlight-green".split()
         ):
             if i > 0 and i % 4 == 0:
                 cl.tab()
@@ -381,6 +380,7 @@ def pyplot(ctx):
                     "**Pi = %.3f**"
                     % (4 * colors.count("green") / len(x) if len(x) > 0 else 0)
                 )
+
 
 @pyplot.slide
 def pyplot_code(ctx):

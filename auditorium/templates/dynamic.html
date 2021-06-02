@@ -27,22 +27,12 @@
 		{{ content | safe }}
 
         <script src="static/js/reveal.js"></script>
-
+		<script> {{ init_js | safe }} </script>
 		<script>
 			// More info about config & dependencies:
 			// - https://github.com/hakimel/reveal.js#configuration
 			// - https://github.com/hakimel/reveal.js#dependencies
-			Reveal.initialize({
-				dependencies: [
-					// TODO: Include mathjax in statics
-					// { src: 'static/plugin/math/math.js' },
-					// TODO: Notes don't work with animations
-					// { src: 'static/plugin/notes/notes.js' },
-					// { src: 'static/plugin/highlight/highlight.js' },
-				],
 
-				hash: true,
-			});
 		</script>
 
 		<script src="static/js/auditorium.js"></script>
