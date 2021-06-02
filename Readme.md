@@ -1,5 +1,9 @@
 # Auditorium
 
+> **NOTE!**: This version of auditorium has been superseeded. New development is happening on the `main` branch.
+
+---
+
 [<img alt="PyPI - License" src="https://img.shields.io/pypi/l/auditorium.svg">](https://github.com/apiad/auditorium/blob/master/LICENSE)
 [<img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/auditorium.svg">](https://pypi.org/project/auditorium/)
 [<img alt="PyPI" src="https://img.shields.io/pypi/v/auditorium.svg">](https://pypi.org/project/auditorium/)
