@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  dev:
+    user: coder
+    image: apiad/auditorium:dev
+    build:
+      context: ".."
+      dockerfile: .devcontainer/dockerfile
+    volumes:
+      - "..:/home/coder/auditorium"
+      - vscode-auditorium:/home/coder/.vscode-server/extensions
+      - vscode-auditorium-insiders:/home/coder/.vscode-server-insiders/extensions
+
+volumes:
+  vscode-auditorium:
+  vscode-auditorium-insiders:
