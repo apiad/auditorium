@@ -1,7 +1,0 @@
-{
-    "name": "auditorium-demo",
-    "rewrites": [
-        { "source": "/", "destination": "/index.html" },
-        { "source": "/update", "destination": "/api/update" }
-    ]
-}
