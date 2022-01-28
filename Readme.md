@@ -6,10 +6,6 @@
 
 <!-- <img src="https://apiad.net/auditorium/assets/logo.png"></img> -->
 
-> An HTML+CSS+JS generator from pure Python code
-
-## What's this about
-
 Auditorium is a Python-powered webpage generator.
 You write pure Python code, and obtain an HTML+CSS+JS single page application.
 You manage a virtual DOM in Python that gets automatically updated on the frontend app, with bidirectional communication.
