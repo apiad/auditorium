@@ -8,9 +8,7 @@
 
 <!-- <img src="https://apiad.net/auditorium/assets/logo.png"></img> -->
 
-> A Python-powered slideshow creator with steroids.
-
-See the demo at [auditorium-demo.apiad.net](https://auditorium-demo.apiad.net).
+> An HTML+CSS+JS generator from pure Python code
 
 ## What's this about
 
@@ -32,45 +30,7 @@ Alternatively, if you need little to no Python code, you can author your slidesh
 
 Simply run:
 
-    pip install auditorium[server]
-
-To see a quick demo run:
-
-    auditorium demo
-
-And point your browser at [localhost:6789](http://localhost:6789).
-
-## Quick Start and Tutorials
-
-If you want to quickly grok `auditorium`, the best option is to [look at the demo online](https://auditorium-demo.apiad.net) and then
-[read the source code](https://github.com/apiad/auditorium/blob/master/auditorium/demo.py). This way you will both see the end result and what effort it takes to get there.
-
-* [Authoring a slideshow with Python](https://apiad.net/auditorium/quickstart/#python-first)
-* [Authoring a slideshow with Markdown](https://apiad.net/auditorium/quickstart/#markdown-first)
-* [Rendering a slideshow as purely static HTML](https://apiad.net/auditorium/quickstart/#going-full-static)
-* [Hosting a slideshow online for free](https://apiad.net/auditorium/hosting/#hosting-freely-with-auditorium-publish)
-
-## Made with Auditorium
-
-* [Auditorium Demo](https://auditorium-demo.apiad.net) - a slideshow showcasing the most important features from `auditorium`.
-
-### Your Contributions Here
-
-If you have a slideshow to showcase here, feel free to [edit this Readme](https://github.com/apiad/auditorium/edit/master/README.md) and send a pull request. Add your website, Github repository, and any other information.
-
-If you feel like sending some support please consider adding a badge somewhere in your website or repository:
-
-```html
-<a href="https://apiad.net/auditorium">
-    <img alt="Made with Auditorium"
-         src="https://img.shields.io/badge/made--with-auditorium-blue">
-    </img>
-</a>
-```
-
-It looks like this:
-
-<a href="https://apiad.net/auditorium"><img alt="Made with Auditorium" src="https://img.shields.io/badge/made--with-auditorium-blue"></img></a>
+    pip install auditorium[uvicorn]
 
 ## History
 
