@@ -11,6 +11,7 @@ services:
       - "..:/home/coder/auditorium"
       - vscode-auditorium:/home/coder/.vscode-server/extensions
       - vscode-auditorium-insiders:/home/coder/.vscode-server-insiders/extensions
+    command: /bin/sh -c "while sleep 1000; do :; done"
 
 volumes:
   vscode-auditorium:

@@ -1,4 +1,8 @@
 {
-	"name": "Auditorium Development",
-	"remoteUser": "coder",
+    "name": "Auditorium Development",
+    "dockerComposeFile": "./docker-compose.yml",
+    "service": "dev",
+    "workspaceFolder": "/home/coder/auditorium",
+    "remoteUser": "coder",
+    "shutdownAction": "stopCompose"
 }
