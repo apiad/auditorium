@@ -125,7 +125,27 @@ Available: `columns(sizing)`, `rows(sizing)`, `place(html, x, y)`. They nest fre
 - **Hot reload** — edit and see changes instantly, staying on the same slide
 - **Independent sessions** — each browser tab runs its own slide independently
 - **Reconnection** — survives server restarts without losing your place
+- **Video recording** — `auditorium record` captures presentations via Playwright
 - **No build step** — Tailwind, KaTeX, and highlight.js loaded via CDN
+
+## Recording
+
+Record your presentation to video (requires `pip install auditorium[record]` and `playwright install chromium`):
+
+```bash
+# Auto mode: headless, deterministic pacing
+auditorium record talk.py -o talk.webm --auto-step 2.0
+
+# Live mode: you drive, Playwright captures
+auditorium record talk.py -o talk.webm --live
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output` / `-o` | `recording.webm` | Output file path |
+| `--resolution` | `1920x1080` | Viewport size |
+| `--auto-step` | `2.0` | Seconds per `step()` in auto mode |
+| `--live` | off | Visible browser, manual navigation |
 
 ## Example
 
