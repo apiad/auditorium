@@ -90,6 +90,31 @@ def run(
     uvicorn.run(application, host=host, port=port, log_level="warning")
 
 
+@app.command()
+def record(
+    deck_path: Path = typer.Argument(..., help="Path to the deck.py file"),
+    output: Path = typer.Option("recording.webm", "-o", "--output", help="Output file path"),
+    resolution: str = typer.Option("1920x1080", help="Viewport size, e.g. 1280x720"),
+    auto_step: float = typer.Option(2.0, "--auto-step", help="Seconds per step() in auto mode"),
+    live: bool = typer.Option(False, "--live", help="Launch visible browser for manual recording"),
+    port: int = typer.Option(0, help="Server port (0 = random)"),
+) -> None:
+    """Record a presentation to video."""
+    deck_path = deck_path.resolve()
+    if not deck_path.exists():
+        typer.echo(f"Error: {deck_path} not found", err=True)
+        raise typer.Exit(1)
+
+    if port == 0:
+        import socket
+        with socket.socket() as s:
+            s.bind(("", 0))
+            port = s.getsockname()[1]
+
+    from auditorium.recorder import record as do_record
+    asyncio.run(do_record(deck_path, output, resolution, auto_step, live, port))
+
+
 def _setup_watcher(application, deck_path: Path) -> None:
     """Set up a file watcher that hot-reloads the deck on changes."""
     import threading
