@@ -17,6 +17,7 @@ dependencies = [
 auditorium = "auditorium.cli:app"
 
 [project.optional-dependencies]
+record = ["playwright>=1.40"]
 dev = [
     "pytest>=8",
     "ruff>=0.4",
