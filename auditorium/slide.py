@@ -80,10 +80,16 @@ class SlideContext:
     # --- Timing ---
 
     async def step(self) -> None:
-        """Wait for a keypress to continue."""
+        """Wait for a keypress to continue, or auto-advance if auto_step is set."""
         event = asyncio.Event()
         self._session.step_event = event
-        await event.wait()
+        if self._session.auto_step is not None:
+            try:
+                await asyncio.wait_for(event.wait(), timeout=self._session.auto_step)
+            except asyncio.TimeoutError:
+                pass  # auto-advance
+        else:
+            await event.wait()
 
     async def sleep(self, seconds: float) -> None:
         """Pause for a duration."""

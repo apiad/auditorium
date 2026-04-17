@@ -26,6 +26,7 @@ class Session:
     step_event: asyncio.Event | None = None
     numeric_buffer: str = ""
     pending_acks: dict[str, asyncio.Event] = field(default_factory=dict)
+    auto_step: float | None = None
 
     async def send(self, message: dict) -> None:
         """Send a JSON message to this session's client."""
@@ -93,6 +94,9 @@ def create_app(deck: Deck | None = None) -> FastAPI:
             msg = json.loads(data)
             if msg.get("type") == "hello":
                 session.current_slide = msg.get("slide", 0)
+                auto_step = msg.get("auto_step")
+                if auto_step is not None:
+                    session.auto_step = float(auto_step)
 
             # Start the slide for this session
             if app.state.deck:
@@ -143,6 +147,14 @@ async def _run_slide(app: FastAPI, session: Session) -> None:
             await ctx.md(slide_fn.func.__doc__)
         # Execute the slide body
         await slide_fn.func(ctx)
+        # Auto-advance to next slide if in recording mode
+        if session.auto_step is not None and index < len(deck.slides) - 1:
+            session.current_slide = index + 1
+            session.slide_task = asyncio.create_task(_run_slide(app, session))
+            return
+        # If this was the last slide and it completed naturally, signal finished
+        if index == len(deck.slides) - 1:
+            await session.send({"type": "finished"})
     except (asyncio.CancelledError, Exception):
         pass
 
