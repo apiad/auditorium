@@ -1,9 +1,10 @@
 [project]
 name = "auditorium"
-version = "1!2.0.0"
+version = "1!2.0.1"
 description = "Python-scripted live slide framework"
 authors = [{name = "Alejandro Piad", email = "apiad@apiad.net"}]
 license = {text = "MIT"}
+readme = "Readme.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.110",
