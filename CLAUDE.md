@@ -33,6 +33,19 @@ Each browser tab gets its own `Session` on the server with independent slide sta
 
 **Design decisions:** See `design.md` for the full rationale. Key ones: no reveal.js, no build step, server-driven (not Pyodide), flexbox-first layout, `async def` slides with markdown docstrings.
 
+## Releasing
+
+Version uses PEP 440 epoch (`1!2.0.0`) because old PyPI releases used calver (`20.2.1`). The `1!` prefix ensures semver versions sort higher. Keep the `1!` prefix in `pyproject.toml`.
+
+To release, push to main and create a GitHub release:
+
+```bash
+git push origin main
+gh release create v2.1.0 --title "v2.1.0" --generate-notes
+```
+
+The `deploy.yaml` workflow triggers on `release: published` and publishes to PyPI via trusted publisher (no API tokens). Update the version in `pyproject.toml` and `cli.py` before creating the release.
+
 ## Living documentation
 
 `examples/demo_deck.py` is living documentation. It must always contain every feature in a sensible structure and run smoothly. When adding a new vocabulary primitive or capability, add a slide to `demo_deck.py` that exercises it. When changing existing behavior, update the relevant slide. Run it (`uv run auditorium run examples/demo_deck.py`) and walk through all slides to verify before considering work complete.
