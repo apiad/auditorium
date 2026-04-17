@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditorium</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Highlight.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+    <!-- Google Fonts: academic serif pair -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600&display=swap" rel="stylesheet">
+
+    <!-- Theme -->
+    <link rel="stylesheet" href="/theme.css">
+</head>
+<body class="bg-white text-gray-900 overflow-hidden">
+    <div id="slide-root" class="w-screen h-screen flex flex-col items-center justify-center p-12">
+    </div>
+
+    <div id="slide-indicator" class="fixed bottom-4 right-4 text-sm text-gray-400 font-mono"></div>
+    <div id="connection-status" class="fixed bottom-4 left-4 flex items-center gap-1.5 text-xs font-mono"></div>
+
+    <script>
+    (function() {
+        const root = document.getElementById('slide-root');
+        const indicator = document.getElementById('slide-indicator');
+        const statusEl = document.getElementById('connection-status');
+        let ws = null;
+        let targetStack = [root];
+
+        function currentTarget() {
+            return targetStack[targetStack.length - 1];
+        }
+
+        function getSlideFromHash() {
+            const match = location.hash.match(/#slide-(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+        }
+
+        function setStatus(state) {
+            const dot = '<span class="aud-dot aud-dot-' + state + '"></span>';
+            statusEl.innerHTML = dot;
+        }
+
+        function connect() {
+            setStatus('connecting');
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
+            ws.onopen = function() {
+                setStatus('connected');
+                // Send hello with current slide from hash
+                ws.send(JSON.stringify({ type: 'hello', slide: getSlideFromHash() }));
+            };
+
+            ws.onmessage = function(event) {
+                const msg = JSON.parse(event.data);
+                handleMessage(msg);
+            };
+
+            ws.onclose = function() {
+                setStatus('disconnected');
+                setTimeout(connect, 1000);
+            };
+
+            ws.onerror = function(err) {
+                console.error('[auditorium] websocket error', err);
+                ws.close();
+            };
+        }
+
+        function handleMessage(msg) {
+            switch (msg.type) {
+                case 'mutation':
+                    applyMutation(msg);
+                    break;
+                case 'clear':
+                    root.innerHTML = '';
+                    root.className = 'w-screen h-screen flex flex-col items-center justify-center p-12';
+                    targetStack = [root];
+                    break;
+                case 'slide':
+                    location.hash = `#slide-${msg.index}`;
+                    indicator.textContent = msg.total ? `${msg.index + 1} / ${msg.total}` : `${msg.index + 1}`;
+                    break;
+                case 'reload':
+                    location.hash = `#slide-${msg.slide}`;
+                    // Don't reload the page — just clear and let the server push new content
+                    root.innerHTML = '';
+                    root.className = 'w-screen h-screen flex flex-col items-center justify-center p-12';
+                    targetStack = [root];
+                    break;
+            }
+        }
+
+        function applyMutation(msg) {
+            const target = msg.target ? document.querySelector(msg.target) : currentTarget();
+            switch (msg.action) {
+                case 'append': {
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = msg.html;
+                    const el = wrapper.firstElementChild || wrapper;
+                    if (msg.element_id) {
+                        el.id = msg.element_id;
+                    }
+                    if (target) {
+                        // FLIP: snapshot positions of existing siblings before DOM change
+                        const siblings = Array.from(target.children);
+                        const beforeRects = new Map();
+                        siblings.forEach(s => beforeRects.set(s, s.getBoundingClientRect()));
+
+                        // Append the new element
+                        target.appendChild(el);
+
+                        // Animate the new element in
+                        el.classList.add('aud-enter');
+                        el.addEventListener('animationend', () => el.classList.remove('aud-enter'), { once: true });
+
+                        // FLIP: animate existing siblings from old position to new
+                        siblings.forEach(s => {
+                            const before = beforeRects.get(s);
+                            const after = s.getBoundingClientRect();
+                            const dx = before.left - after.left;
+                            const dy = before.top - after.top;
+                            if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                                s.style.transition = 'none';
+                                s.style.transform = `translate(${dx}px, ${dy}px)`;
+                                requestAnimationFrame(() => {
+                                    requestAnimationFrame(() => {
+                                        s.style.transition = 'transform 0.3s ease';
+                                        s.style.transform = '';
+                                        s.addEventListener('transitionend', () => {
+                                            s.style.transition = '';
+                                        }, { once: true });
+                                    });
+                                });
+                            }
+                        });
+                    }
+                    // Render math and code in the new element
+                    renderMath(el);
+                    renderCode(el);
+                    break;
+                }
+                case 'remove': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) el.remove();
+                    break;
+                }
+                case 'replace': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) {
+                        el.innerHTML = msg.html;
+                        renderMath(el);
+                        renderCode(el);
+                    }
+                    break;
+                }
+                case 'set_class': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) el.classList.add(...msg.cls.split(' '));
+                    break;
+                }
+                case 'remove_class': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) el.classList.remove(...msg.cls.split(' '));
+                    break;
+                }
+                case 'push_target': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) targetStack.push(el);
+                    break;
+                }
+                case 'pop_target': {
+                    if (targetStack.length > 1) targetStack.pop();
+                    break;
+                }
+            }
+            // Send acknowledgment
+            if (msg.id && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'ack', id: msg.id }));
+            }
+        }
+
+        function renderMath(el) {
+            if (typeof renderMathInElement === 'function') {
+                renderMathInElement(el, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                    ],
+                    throwOnError: false,
+                });
+            }
+        }
+
+        function renderCode(el) {
+            if (typeof hljs !== 'undefined') {
+                el.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+            }
+        }
+
+        // Capture keypress events
+        document.addEventListener('keydown', function(e) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const key = e.key;
+                if (['ArrowRight', 'ArrowLeft', 'PageDown', ' ', 'r'].includes(key) ||
+                    (key >= '0' && key <= '9') || key === 'Enter') {
+                    e.preventDefault();
+                    ws.send(JSON.stringify({ type: 'keypress', key: key }));
+                }
+            }
+        });
+
+        connect();
+    })();
+    </script>
+</body>
+</html>
