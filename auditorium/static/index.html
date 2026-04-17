@@ -61,8 +61,12 @@
 
             ws.onopen = function() {
                 setStatus('connected');
-                // Send hello with current slide from hash
-                ws.send(JSON.stringify({ type: 'hello', slide: getSlideFromHash() }));
+                // Send hello with current slide from hash and optional auto_step from URL params
+                const params = new URLSearchParams(location.search);
+                const hello = { type: 'hello', slide: getSlideFromHash() };
+                const autoStep = params.get('auto_step');
+                if (autoStep) hello.auto_step = parseFloat(autoStep);
+                ws.send(JSON.stringify(hello));
             };
 
             ws.onmessage = function(event) {
@@ -101,6 +105,9 @@
                     root.innerHTML = '';
                     root.className = 'w-screen h-screen flex flex-col items-center justify-center p-12';
                     targetStack = [root];
+                    break;
+                case 'finished':
+                    window.__auditorium_finished = true;
                     break;
             }
         }
