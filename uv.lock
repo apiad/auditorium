@@ -39,7 +39,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "markdown" },
-    { name = "tqdm" },
+    { name = "rich" },
     { name = "typer" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -60,8 +60,8 @@ requires-dist = [
     { name = "markdown", specifier = ">=3.6" },
     { name = "playwright", marker = "extra == 'record'", specifier = ">=1.40" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
+    { name = "rich", specifier = ">=15.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
-    { name = "tqdm", specifier = ">=4.67.3" },
     { name = "tqdm", marker = "extra == 'record'", specifier = ">=4.67.3" },
     { name = "typer", specifier = ">=0.12" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.29" },

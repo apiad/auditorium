@@ -8,7 +8,8 @@ from pathlib import Path
 
 import typer
 import uvicorn
-from tqdm import tqdm
+
+from auditorium.console import console
 
 
 async def export_deck(
@@ -28,11 +29,10 @@ async def export_deck(
     try:
         from playwright.async_api import async_playwright
     except ImportError:
-        typer.echo(
-            "Export requires playwright. Install with:\n"
-            "  pip install auditorium[record]\n"
-            "  playwright install chromium",
-            err=True,
+        console.print(
+            "[red]Error:[/] Export requires playwright. Install with:\n"
+            "  [bold]pip install auditorium\\[record][/]\n"
+            "  [bold]playwright install chromium[/]"
         )
         raise typer.Exit(1)
 
@@ -63,8 +63,18 @@ async def export_deck(
 
             slide_doms: list[dict] = []
 
-            with tqdm(range(total), desc=f"Exporting {fmt.upper()}", unit="slide") as pbar:
-                for i in pbar:
+            from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
+
+            with Progress(
+                TextColumn("[bold]{task.description}"),
+                BarColumn(),
+                TextColumn("{task.completed}/{task.total} slides"),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
+                console=console,
+            ) as progress:
+                task = progress.add_task(f"Exporting {fmt.upper()}", total=total)
+                for i in range(total):
                     url = f"http://127.0.0.1:{port}/?auto_step=0&slide_delay=9999&_s={i}#slide-{i}"
                     await page.goto(url, wait_until="load")
                     await page.wait_for_timeout(1000)
@@ -80,16 +90,18 @@ async def export_deck(
                         )
                         slide_doms.append(dom)
 
+                    progress.update(task, advance=1)
+
             await browser.close()
 
         if fmt == "html":
             _build_html(slide_doms, output, width, height, STATIC_DIR)
-            typer.echo(f"HTML saved to {output}")
+            console.print(f"[green]✓[/] HTML saved to [bold]{output}[/]")
         elif fmt == "pdf":
             await _build_pdf(slide_doms, output, width, height, STATIC_DIR, tmpdir)
-            typer.echo(f"PDF saved to {output}")
+            console.print(f"[green]✓[/] PDF saved to [bold]{output}[/]")
         elif fmt == "png":
-            typer.echo(f"PNG slides saved to {output}/")
+            console.print(f"[green]✓[/] PNG slides saved to [bold]{output}/[/]")
 
     finally:
         server.should_exit = True

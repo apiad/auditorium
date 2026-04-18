@@ -9,12 +9,14 @@ from pathlib import Path
 import typer
 import uvicorn
 
+from auditorium.console import console
+
 app = typer.Typer(name="auditorium", help="Python-scripted live slide framework")
 
 
 def _version_callback(value: bool) -> None:
     if value:
-        typer.echo("auditorium 1!3.0.0")
+        console.print("auditorium [bold]1!3.0.0[/]")
         raise typer.Exit()
 
 
@@ -30,25 +32,40 @@ def _load_deck(deck_path: Path):
     """Import a deck.py file and find the Deck instance."""
     from auditorium.deck import Deck
 
-    # Use a unique module name to avoid cache hits on reload
     module_name = f"_deck_{id(deck_path)}"
     spec = importlib.util.spec_from_file_location(module_name, deck_path)
     if spec is None or spec.loader is None:
-        typer.echo(f"Error: cannot load {deck_path}", err=True)
+        console.print(f"[red]Error:[/] cannot load {deck_path}")
         raise typer.Exit(1)
     module = importlib.util.module_from_spec(spec)
-    # Add the deck's directory to sys.path so relative imports work
     deck_dir = str(deck_path.parent.resolve())
     if deck_dir not in sys.path:
         sys.path.insert(0, deck_dir)
     spec.loader.exec_module(module)
-    # Find the Deck instance
     for attr in dir(module):
         obj = getattr(module, attr)
         if isinstance(obj, Deck):
             return obj
-    typer.echo(f"Error: no Deck instance found in {deck_path}", err=True)
+    console.print(f"[red]Error:[/] no Deck instance found in {deck_path}")
     raise typer.Exit(1)
+
+
+def _print_banner(deck, host: str, port: int) -> None:
+    """Print a startup banner with deck info."""
+    from rich.panel import Panel
+    from rich.text import Text
+
+    body = Text()
+    body.append("Deck:   ", style="dim")
+    body.append(deck.title, style="bold")
+    body.append("\n")
+    body.append("Slides: ", style="dim")
+    body.append(str(len(deck.slides)))
+    body.append("\n")
+    body.append("URL:    ", style="dim")
+    body.append(f"http://{host}:{port}", style="bold cyan")
+
+    console.print(Panel(body, title="[bold]Auditorium[/]", border_style="dim"))
 
 
 @app.command()
@@ -63,13 +80,14 @@ def run(
     """Run a presentation deck."""
     deck_path = deck_path.resolve()
     if not deck_path.exists():
-        typer.echo(f"Error: {deck_path} not found", err=True)
+        console.print(f"[red]Error:[/] {deck_path} not found")
         raise typer.Exit(1)
 
     deck = _load_deck(deck_path)
     from auditorium.server import create_app
 
     application = create_app(deck)
+    _print_banner(deck, host, port)
 
     if watch:
         _setup_watcher(application, deck_path)
@@ -88,8 +106,6 @@ def run(
 
         threading.Thread(target=_open, daemon=True).start()
 
-    # Reset SIGINT to default so uvicorn's shutdown handler works cleanly
-    # even when daemon threads (watchfiles) are running.
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     uvicorn.run(application, host=host, port=port, log_level="warning")
 
@@ -99,15 +115,15 @@ def record(
     deck_path: Path = typer.Argument(..., help="Path to the deck.py file"),
     output: Path = typer.Option("recording.webm", "-o", "--output", help="Output file path"),
     resolution: str = typer.Option("1920x1080", help="Viewport size, e.g. 1280x720"),
-    auto_step: float = typer.Option(2.0, "--auto-step", help="Seconds per step() in auto mode"),
-    slide_delay: float = typer.Option(3.0, "--slide-delay", help="Seconds to linger on completed slide before advancing"),
+    auto_step: float = typer.Option(2.0, "-a", "--auto-step", help="Seconds per step() in auto mode"),
+    slide_delay: float = typer.Option(3.0, "-d", "--slide-delay", help="Seconds to linger on completed slide before advancing"),
     live: bool = typer.Option(False, "--live", help="Launch visible browser for manual recording"),
     port: int = typer.Option(0, help="Server port (0 = random)"),
 ) -> None:
     """Record a presentation to video."""
     deck_path = deck_path.resolve()
     if not deck_path.exists():
-        typer.echo(f"Error: {deck_path} not found", err=True)
+        console.print(f"[red]Error:[/] {deck_path} not found")
         raise typer.Exit(1)
 
     if port == 0:
@@ -125,18 +141,18 @@ def export(
     deck_path: Path = typer.Argument(..., help="Path to the deck.py file"),
     fmt: str = typer.Option("pdf", "-f", "--format", help="Output format: pdf, html, png"),
     output: Path = typer.Option(None, "-o", "--output", help="Output path (default: deck.pdf/html or slides/)"),
-    resolution: str = typer.Option("1920x1080", help="Viewport size, e.g. 1280x720"),
-    step_by_step: bool = typer.Option(False, "--step-by-step", help="One page/frame per step instead of per slide"),
+    resolution: str = typer.Option("1920x1080", "-r", "--resolution", help="Viewport size, e.g. 1280x720"),
+    step_by_step: bool = typer.Option(False, "-s", "--step-by-step", help="One page/frame per step instead of per slide"),
     port: int = typer.Option(0, help="Server port (0 = random)"),
 ) -> None:
     """Export presentation to PDF, HTML, or PNG."""
     deck_path = deck_path.resolve()
     if not deck_path.exists():
-        typer.echo(f"Error: {deck_path} not found", err=True)
+        console.print(f"[red]Error:[/] {deck_path} not found")
         raise typer.Exit(1)
 
     if fmt not in ("pdf", "html", "png"):
-        typer.echo(f"Error: unknown format '{fmt}'. Use pdf, html, or png.", err=True)
+        console.print(f"[red]Error:[/] unknown format [bold]'{fmt}'[/]. Use pdf, html, or png.")
         raise typer.Exit(1)
 
     if output is None:
@@ -153,7 +169,6 @@ def export(
             port = s.getsockname()[1]
 
     from auditorium.exporter import export_deck
-    typer.echo(f"Exporting to {fmt}...")
     asyncio.run(export_deck(deck_path, output, fmt, resolution, step_by_step, port))
 
 
@@ -165,7 +180,7 @@ def _setup_watcher(application, deck_path: Path) -> None:
     def _watch():
         watch_dir = deck_path.parent
         for _changes in watch_files(watch_dir, watch_filter=_python_filter):
-            typer.echo(f"[auditorium] Change detected, reloading...")
+            console.print("[yellow]⟳[/] Change detected, reloading...")
             try:
                 new_deck = _load_deck(deck_path)
                 loop = getattr(application.state, "loop", None)
@@ -175,7 +190,7 @@ def _setup_watcher(application, deck_path: Path) -> None:
                         reload_deck(application, new_deck), loop
                     )
             except Exception as e:
-                typer.echo(f"[auditorium] Reload error: {e}", err=True)
+                console.print(f"[red]Reload error:[/] {e}")
 
     thread = threading.Thread(target=_watch, daemon=True)
     thread.start()
