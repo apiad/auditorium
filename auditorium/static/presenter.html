@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditorium – Presenter</title>
+
+    <!-- All assets are local — no outbound requests -->
+    <link rel="stylesheet" href="/static/theme.css">
+    <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="/static/vendor/hljs/styles/github.min.css">
+    <script src="/static/vendor/katex/katex.min.js"></script>
+    <script src="/static/vendor/katex/contrib/auto-render.min.js"></script>
+    <script src="/static/vendor/hljs/highlight.min.js"></script>
+</head>
+<body>
+    <div id="presenter-container">
+        <!-- Left pane: slide mirror -->
+        <div id="slide-pane">
+            <div id="slide-root"></div>
+        </div>
+
+        <!-- Right pane: notes, next preview, footer -->
+        <div id="info-pane">
+            <div id="notes">No notes.</div>
+
+            <div id="next-preview">
+                <div id="next-title">Next: —</div>
+                <div id="next-excerpt"></div>
+            </div>
+
+            <div id="presenter-footer">
+                <span id="presenter-timer">00:00</span>
+                <span id="slide-indicator"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="connection-status"></div>
+
+    <script>
+    (function() {
+        const root = document.getElementById('slide-root');
+        const indicator = document.getElementById('slide-indicator');
+        const statusEl = document.getElementById('connection-status');
+        const notesEl = document.getElementById('notes');
+        const nextTitleEl = document.getElementById('next-title');
+        const nextExcerptEl = document.getElementById('next-excerpt');
+        const timerEl = document.getElementById('presenter-timer');
+
+        let ws = null;
+        let targetStack = [root];
+        let timerStart = null;
+        let timerInterval = null;
+
+        function currentTarget() {
+            return targetStack[targetStack.length - 1];
+        }
+
+        function getSlideFromHash() {
+            const match = location.hash.match(/#slide-(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+        }
+
+        function setStatus(state) {
+            const dot = '<span class="aud-dot aud-dot-' + state + '"></span>';
+            statusEl.innerHTML = dot;
+        }
+
+        const SLIDE_ROOT_RESET = 'aud-slide-root';
+
+        function resetRoot() {
+            root.innerHTML = '';
+            root.className = SLIDE_ROOT_RESET;
+            targetStack = [root];
+        }
+
+        function startTimer() {
+            if (timerStart !== null) return;
+            timerStart = Date.now();
+            timerInterval = setInterval(function() {
+                const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+                const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                const ss = String(elapsed % 60).padStart(2, '0');
+                timerEl.textContent = mm + ':' + ss;
+            }, 1000);
+        }
+
+        function connect() {
+            setStatus('connecting');
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
+            ws.onopen = function() {
+                setStatus('connected');
+                const params = new URLSearchParams(location.search);
+                const hello = { type: 'hello', slide: getSlideFromHash() };
+                const autoStep = params.get('auto_step');
+                if (autoStep) hello.auto_step = parseFloat(autoStep);
+                const slideDelay = params.get('slide_delay');
+                if (slideDelay) hello.slide_delay = parseFloat(slideDelay);
+                ws.send(JSON.stringify(hello));
+            };
+
+            ws.onmessage = function(event) {
+                const msg = JSON.parse(event.data);
+                handleMessage(msg);
+            };
+
+            ws.onclose = function() {
+                setStatus('disconnected');
+                setTimeout(connect, 1000);
+            };
+
+            ws.onerror = function(err) {
+                console.error('[auditorium] websocket error', err);
+                ws.close();
+            };
+        }
+
+        function handleMessage(msg) {
+            switch (msg.type) {
+                case 'mutation':
+                    applyMutation(msg);
+                    break;
+                case 'clear':
+                    resetRoot();
+                    break;
+                case 'slide':
+                    startTimer();
+                    location.hash = `#slide-${msg.index}`;
+                    indicator.textContent = msg.total ? `${msg.index + 1} / ${msg.total}` : `${msg.index + 1}`;
+                    break;
+                case 'reload':
+                    location.hash = `#slide-${msg.slide}`;
+                    resetRoot();
+                    break;
+                case 'finished':
+                    window.__auditorium_finished = true;
+                    break;
+                case 'notes':
+                    notesEl.innerHTML = msg.html && msg.html.trim() ? msg.html : 'No notes.';
+                    break;
+                case 'next_preview':
+                    if (msg.title === null || msg.title === undefined) {
+                        nextTitleEl.textContent = 'Last slide';
+                        nextExcerptEl.textContent = '';
+                    } else {
+                        nextTitleEl.textContent = 'Next: ' + msg.title;
+                        nextExcerptEl.textContent = msg.excerpt || '';
+                    }
+                    break;
+            }
+        }
+
+        function applyMutation(msg) {
+            const target = msg.target ? document.querySelector(msg.target) : currentTarget();
+            switch (msg.action) {
+                case 'append': {
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = msg.html;
+                    const el = wrapper.firstElementChild || wrapper;
+                    if (msg.element_id) {
+                        el.id = msg.element_id;
+                    }
+                    if (target) {
+                        target.appendChild(el);
+                    }
+                    renderMath(el);
+                    renderCode(el);
+                    break;
+                }
+                case 'remove': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) el.remove();
+                    break;
+                }
+                case 'replace': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) {
+                        el.innerHTML = msg.html;
+                        renderMath(el);
+                        renderCode(el);
+                    }
+                    break;
+                }
+                case 'set_class': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) el.classList.add(...msg.cls.split(' '));
+                    break;
+                }
+                case 'remove_class': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) el.classList.remove(...msg.cls.split(' '));
+                    break;
+                }
+                case 'push_target': {
+                    const el = document.querySelector(msg.selector);
+                    if (el) targetStack.push(el);
+                    break;
+                }
+                case 'pop_target': {
+                    if (targetStack.length > 1) targetStack.pop();
+                    break;
+                }
+            }
+            if (msg.id && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'ack', id: msg.id }));
+            }
+        }
+
+        function renderMath(el) {
+            if (typeof renderMathInElement === 'function') {
+                renderMathInElement(el, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                    ],
+                    throwOnError: false,
+                });
+            }
+        }
+
+        function renderCode(el) {
+            if (typeof hljs !== 'undefined') {
+                el.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const key = e.key;
+                if (['ArrowRight', 'ArrowLeft', 'PageDown', ' ', 'r'].includes(key) ||
+                    (key >= '0' && key <= '9') || key === 'Enter') {
+                    e.preventDefault();
+                    ws.send(JSON.stringify({ type: 'keypress', key: key }));
+                }
+            }
+        });
+
+        connect();
+    })();
+    </script>
+</body>
+</html>
