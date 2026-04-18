@@ -120,6 +120,43 @@ def record(
     asyncio.run(do_record(deck_path, output, resolution, auto_step, slide_delay, live, port))
 
 
+@app.command()
+def export(
+    deck_path: Path = typer.Argument(..., help="Path to the deck.py file"),
+    fmt: str = typer.Option("pdf", "-f", "--format", help="Output format: pdf, html, png"),
+    output: Path = typer.Option(None, "-o", "--output", help="Output path (default: deck.pdf/html or slides/)"),
+    resolution: str = typer.Option("1920x1080", help="Viewport size, e.g. 1280x720"),
+    step_by_step: bool = typer.Option(False, "--step-by-step", help="One page/frame per step instead of per slide"),
+    port: int = typer.Option(0, help="Server port (0 = random)"),
+) -> None:
+    """Export presentation to PDF, HTML, or PNG."""
+    deck_path = deck_path.resolve()
+    if not deck_path.exists():
+        typer.echo(f"Error: {deck_path} not found", err=True)
+        raise typer.Exit(1)
+
+    if fmt not in ("pdf", "html", "png"):
+        typer.echo(f"Error: unknown format '{fmt}'. Use pdf, html, or png.", err=True)
+        raise typer.Exit(1)
+
+    if output is None:
+        stem = deck_path.stem
+        if fmt == "png":
+            output = Path(f"{stem}-slides")
+        else:
+            output = Path(f"{stem}.{fmt}")
+
+    if port == 0:
+        import socket
+        with socket.socket() as s:
+            s.bind(("", 0))
+            port = s.getsockname()[1]
+
+    from auditorium.exporter import export_deck
+    typer.echo(f"Exporting to {fmt}...")
+    asyncio.run(export_deck(deck_path, output, fmt, resolution, step_by_step, port))
+
+
 def _setup_watcher(application, deck_path: Path) -> None:
     """Set up a file watcher that hot-reloads the deck on changes."""
     import threading
