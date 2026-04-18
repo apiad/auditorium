@@ -13,10 +13,8 @@ deck = Deck(title="My Talk")
 
 @deck.slide
 async def hello(ctx):
-    """# Hello, World!
-
-    This is rendered from the **docstring**.
-    """
+    """Speaker notes go here — only visible in presenter view."""
+    await ctx.md("# Hello, World!")
     await ctx.step()
     await ctx.md("This appeared after pressing right arrow.")
 ```
@@ -79,6 +77,20 @@ Hot reload is on by default — edit your `.py` file and the browser stays on th
 | `r` | Restart current slide |
 | Digits + Enter | Jump to slide N |
 
+## Presenter Mode
+
+Press `p` during a presentation to open the presenter view in a new tab, or start with:
+
+```bash
+auditorium run talk.py --presenter
+```
+
+The presenter view shows:
+- Current slide (mirrored from audience view)
+- Speaker notes (from the slide's docstring)
+- Next slide preview (name and first line of notes)
+- Elapsed timer
+
 ## Layouts
 
 Layout primitives return `Region` objects that scope insertion targets via `async with`:
@@ -116,7 +128,9 @@ Available: `columns(sizing)`, `rows(sizing)`, `place(html, x, y)`. They nest fre
 
 ## Features
 
-- **Markdown docstrings** — slide content as prose, right next to the code
+- **Speaker notes** — docstrings become private presenter notes
+- **Presenter mode** — second tab with notes, timer, and slide preview
+- **Static export** — PDF, HTML, or PNG via `auditorium export`
 - **Progressive reveals** — `await ctx.step()` pauses for a keypress
 - **Timed animations** — `await ctx.sleep(seconds)` for automatic pacing
 - **LaTeX math** — KaTeX bundled, use `$...$` or `$$...$$` in Markdown
@@ -147,6 +161,16 @@ auditorium record talk.py -o talk.webm --live
 | `--auto-step` | `2.0` | Seconds per `step()` in auto mode |
 | `--slide-delay` | `3.0` | Seconds to linger on completed slide before advancing |
 | `--live` | off | Visible browser, manual navigation |
+
+## Export
+
+Export your presentation to static formats (requires `auditorium[record]`):
+
+```bash
+auditorium export talk.py -f html -o talk.html   # self-contained HTML
+auditorium export talk.py -f pdf -o talk.pdf     # vector PDF
+auditorium export talk.py -f png -o slides/      # one PNG per slide
+```
 
 ## Example
 

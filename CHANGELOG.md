@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.0.0
+
+### Breaking
+
+- **Docstrings are now presenter notes**, not slide content. All visible content must come from `md()`, `show()`, etc. in the function body. Docstrings are shown only in the presenter view.
+
+### Added
+
+- **Presenter mode** — press `p` or use `--presenter` flag to open a second tab with notes, elapsed timer, current slide mirror, and next-slide preview. Also available at `/presenter`.
+- **`auditorium export`** — export presentations to PDF (vector), self-contained HTML (arrow-key navigator), or PNG (one image per slide). Requires `auditorium[record]`.
+
+### Changed
+
+- `demo_deck.py` rewritten: all content via `md()` calls, docstrings are presenter notes.
+
 ## 2.1.0
 
 ### Added

@@ -30,7 +30,9 @@ Each browser tab gets its own `Session` on the server with independent slide sta
 - `layout.py` — `Region` (async context manager for `with` block scoping), layout factory functions. Top-level layouts auto-remove `justify-center` from `#slide-root` to switch from centered to fill mode.
 - `cli.py` — Typer CLI. `auditorium run <deck.py>` loads the module, discovers the `Deck` instance, sets up file watching (watchfiles), and starts uvicorn. `auditorium record <deck.py>` records to video via Playwright. SIGINT is set to SIG_DFL for clean shutdown.
 - `recorder.py` — Video recording. Starts uvicorn programmatically, launches Playwright (headless or headed), captures video. Auto mode: navigates via `?auto_step=N` URL param, waits for `window.__auditorium_finished`. Live mode: waits for browser close. Optional dep: `auditorium[record]`.
+- `exporter.py` — Static export to PDF, self-contained HTML, or PNG. Reuses recorder infrastructure (Playwright + ephemeral uvicorn). For HTML: inlines all assets into a single file with arrow-key navigation (no server needed). For PDF/PNG: screenshots each slide. Optional dep: `auditorium[record]`.
 - `static/index.html` — HTML shell with Tailwind CDN, KaTeX CDN, highlight.js CDN, Google Fonts. Client-side JS handles WebSocket, `hello` handshake with slide index from URL hash, mutation application (with FLIP animation), keypress capture, auto-reconnect, and connection status dot.
+- `static/presenter.html` — Presenter view served at `/presenter`. Shows current slide mirror, speaker notes (from docstring), next-slide preview, and elapsed timer. Syncs with the audience view via a shared session over WebSocket. Opens automatically with `--presenter` flag or press `p` during a presentation.
 
 **Design decisions:** See `design.md` for the full rationale. Key ones: no reveal.js, no build step, server-driven (not Pyodide), flexbox-first layout, `async def` slides with markdown docstrings.
 
