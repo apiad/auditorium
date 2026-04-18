@@ -106,6 +106,8 @@ def run(
 
         threading.Thread(target=_open, daemon=True).start()
 
+    _start_live_status(application, deck)
+
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     uvicorn.run(application, host=host, port=port, log_level="warning")
 
@@ -170,6 +172,53 @@ def export(
 
     from auditorium.exporter import export_deck
     asyncio.run(export_deck(deck_path, output, fmt, resolution, step_by_step, port))
+
+
+def _start_live_status(application, deck) -> None:
+    """Start a background thread that displays live session status."""
+    import threading
+    from rich.live import Live
+    from rich.table import Table
+
+    def _render():
+        table = Table(show_header=True, header_style="dim", box=None, padding=(0, 1))
+        table.add_column("Session", style="dim", width=8)
+        table.add_column("Slide", width=20)
+        table.add_column("Status", width=10)
+
+        sessions = getattr(application.state, "sessions", {})
+        if not sessions:
+            table.add_row("", "[dim]No connections[/]", "")
+        else:
+            for i, (sid, session) in enumerate(sessions.items()):
+                slide_idx = session.current_slide
+                total = len(deck.slides) if deck else 0
+                slide_name = ""
+                if deck and slide_idx < len(deck.slides):
+                    slide_name = deck.slides[slide_idx].name
+                task_status = "idle"
+                if session.slide_task and not session.slide_task.done():
+                    task_status = "[green]running[/]"
+                elif session.step_event:
+                    task_status = "[yellow]waiting[/]"
+                table.add_row(
+                    f"#{i + 1}",
+                    f"{slide_idx + 1}/{total} [dim]{slide_name}[/]",
+                    task_status,
+                )
+        return table
+
+    def _run():
+        import time
+        # Wait for server to start
+        time.sleep(1)
+        with Live(_render(), console=console, refresh_per_second=2, transient=True) as live:
+            while True:
+                time.sleep(0.5)
+                live.update(_render())
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
 
 
 def _setup_watcher(application, deck_path: Path) -> None:

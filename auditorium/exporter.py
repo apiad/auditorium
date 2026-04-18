@@ -65,32 +65,61 @@ async def export_deck(
 
             from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 
+            # Use auto_step=0 for instant steps (default) or small delay for step-by-step
+            auto_step_val = 0.1 if step_by_step else 0
+
             with Progress(
                 TextColumn("[bold]{task.description}"),
                 BarColumn(),
-                TextColumn("{task.completed}/{task.total} slides"),
+                TextColumn("{task.completed}/{task.total}"),
                 TimeElapsedColumn(),
                 TimeRemainingColumn(),
                 console=console,
             ) as progress:
                 task = progress.add_task(f"Exporting {fmt.upper()}", total=total)
                 for i in range(total):
-                    url = f"http://127.0.0.1:{port}/?auto_step=0&slide_delay=9999&_s={i}#slide-{i}"
+                    url = f"http://127.0.0.1:{port}/?auto_step={auto_step_val}&slide_delay=9999&_s={i}#slide-{i}"
                     await page.goto(url, wait_until="load")
-                    await page.wait_for_timeout(1000)
 
-                    if fmt == "png":
-                        await page.screenshot(path=str(output / f"slide-{i + 1:03d}.png"))
-                    else:
-                        dom = await page.evaluate(
-                            """() => {
-                            const root = document.getElementById('slide-root');
-                            return { html: root.innerHTML, classes: root.className };
-                        }"""
+                    # Wait for the slide function to actually complete
+                    await page.wait_for_function(
+                        "() => window.__auditorium_slide_complete === true",
+                        timeout=120000,
+                    )
+
+                    if step_by_step:
+                        # Capture each step state: get the final step count,
+                        # then re-run the slide capturing after each step
+                        final_steps = await page.evaluate(
+                            "() => window.__auditorium_step_count || 0"
                         )
-                        slide_doms.append(dom)
-
-                    progress.update(task, advance=1)
+                        if final_steps > 0:
+                            # Re-run this slide, capturing DOM after each step
+                            progress.update(task, total=progress.tasks[task].total - 1 + final_steps + 1)
+                            for s in range(final_steps + 1):
+                                step_url = f"http://127.0.0.1:{port}/?auto_step=0.1&slide_delay=9999&_s={i}.{s}#slide-{i}"
+                                await page.goto(step_url, wait_until="load")
+                                # Wait for step s to complete (or slide_complete for the last one)
+                                if s < final_steps:
+                                    await page.wait_for_function(
+                                        f"() => (window.__auditorium_step_count || 0) >= {s + 1}",
+                                        timeout=60000,
+                                    )
+                                else:
+                                    await page.wait_for_function(
+                                        "() => window.__auditorium_slide_complete === true",
+                                        timeout=60000,
+                                    )
+                                await _capture(page, fmt, output, slide_doms, i, s)
+                                progress.update(task, advance=1)
+                        else:
+                            # No steps — just capture the final state
+                            await _capture(page, fmt, output, slide_doms, i, None)
+                            progress.update(task, advance=1)
+                    else:
+                        # Default: capture final state of the slide
+                        await _capture(page, fmt, output, slide_doms, i, None)
+                        progress.update(task, advance=1)
 
             await browser.close()
 
@@ -241,6 +270,21 @@ async def _build_pdf(
             print_background=True,
         )
         await browser.close()
+
+
+async def _capture(page, fmt: str, output: Path, slide_doms: list[dict], slide_idx: int, step_idx: int | None) -> None:
+    """Capture the current DOM state as PNG or DOM dict."""
+    if fmt == "png":
+        suffix = f"-step{step_idx + 1:02d}" if step_idx is not None else ""
+        await page.screenshot(path=str(output / f"slide-{slide_idx + 1:03d}{suffix}.png"))
+    else:
+        dom = await page.evaluate(
+            """() => {
+            const root = document.getElementById('slide-root');
+            return { html: root.innerHTML, classes: root.className };
+        }"""
+        )
+        slide_doms.append(dom)
 
 
 def _parse_resolution(resolution: str) -> tuple[int, int]:

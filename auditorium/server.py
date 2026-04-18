@@ -181,6 +181,9 @@ async def _run_slide(app: FastAPI, session: Session) -> None:
         ctx = SlideContext(session)
         await slide_fn.func(ctx)
 
+        # Signal that the slide function has finished (for exporters)
+        await session.send({"type": "slide_complete", "index": index})
+
         # Auto-advance in recording mode
         if session.auto_step is not None:
             await asyncio.sleep(session.slide_delay)

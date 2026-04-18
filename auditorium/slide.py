@@ -90,6 +90,8 @@ class SlideContext:
                 pass  # auto-advance
         else:
             await event.wait()
+        # Signal step completion (for step-by-step export)
+        await self._session.send({"type": "step_complete"})
 
     async def sleep(self, seconds: float) -> None:
         """Pause for a duration."""
