@@ -210,6 +210,11 @@
         }
 
         document.addEventListener('keydown', function(e) {
+            if (e.key === 'p') {
+                e.preventDefault();
+                window.open('/presenter' + location.hash, '_blank');
+                return;
+            }
             if (ws && ws.readyState === WebSocket.OPEN) {
                 const key = e.key;
                 if (['ArrowRight', 'ArrowLeft', 'PageDown', ' ', 'r'].includes(key) ||

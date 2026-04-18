@@ -79,6 +79,11 @@ def create_app(deck: Deck | None = None) -> FastAPI:
         html = (STATIC_DIR / "index.html").read_text()
         return HTMLResponse(html)
 
+    @app.get("/presenter")
+    async def presenter() -> HTMLResponse:
+        html = (STATIC_DIR / "presenter.html").read_text()
+        return HTMLResponse(html)
+
     # Serve all static assets (CSS, JS, fonts, vendor libs)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 

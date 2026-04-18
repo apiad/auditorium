@@ -57,6 +57,7 @@ def run(
     host: str = typer.Option("127.0.0.1", help="Host to bind to"),
     port: int = typer.Option(8000, help="Port to bind to"),
     open_browser: bool = typer.Option(True, "--open/--no-open", help="Open browser automatically"),
+    presenter: bool = typer.Option(False, "--presenter", help="Also open presenter view"),
     watch: bool = typer.Option(True, "--watch/--no-watch", help="Watch for file changes and hot-reload"),
 ) -> None:
     """Run a presentation deck."""
@@ -81,6 +82,9 @@ def run(
             import time
             time.sleep(0.5)
             webbrowser.open(f"http://{host}:{port}")
+            if presenter:
+                time.sleep(0.3)
+                webbrowser.open(f"http://{host}:{port}/presenter")
 
         threading.Thread(target=_open, daemon=True).start()
 
