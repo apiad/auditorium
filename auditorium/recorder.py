@@ -7,6 +7,7 @@ from pathlib import Path
 
 import typer
 import uvicorn
+from tqdm import tqdm
 
 
 async def record(
@@ -64,16 +65,28 @@ async def record(
             await page.goto(url)
 
             if live:
-                typer.echo(f"Recording live. Navigate with keypresses. Close the browser to stop.")
+                typer.echo("Recording live. Navigate with keypresses. Close the browser to stop.")
                 await page.wait_for_event("close", timeout=0)
             else:
-                typer.echo(f"Recording {len(deck.slides)} slides with {auto_step}s per step...")
-                # Wait for the "finished" message via the page's console
-                await page.wait_for_function(
-                    "() => window.__auditorium_finished === true",
-                    timeout=len(deck.slides) * 60 * 1000,  # generous timeout
-                )
-                typer.echo("All slides recorded.")
+                total = len(deck.slides)
+                with tqdm(total=total, desc="Recording", unit="slide") as pbar:
+                    last_slide = -1
+                    while True:
+                        finished = await page.evaluate(
+                            "() => window.__auditorium_finished === true"
+                        )
+                        if finished:
+                            pbar.update(total - pbar.n)
+                            break
+                        current = await page.evaluate(
+                            "() => { const el = document.getElementById('slide-indicator'); "
+                            "if (!el) return 0; const m = el.textContent.match(/(\\d+)/); "
+                            "return m ? parseInt(m[1]) : 0; }"
+                        )
+                        if current > last_slide:
+                            pbar.update(current - last_slide)
+                            last_slide = current
+                        await asyncio.sleep(0.3)
 
             await context.close()
             await browser.close()

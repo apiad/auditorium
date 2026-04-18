@@ -8,6 +8,7 @@ from pathlib import Path
 
 import typer
 import uvicorn
+from tqdm import tqdm
 
 
 async def export_deck(
@@ -62,29 +63,22 @@ async def export_deck(
 
             slide_doms: list[dict] = []
 
-            for i in range(total):
-                # Use auto_step=0 so step() resolves instantly, and a large
-                # slide_delay so the slide stays rendered long enough for us to
-                # capture the DOM before auto-advance kicks in.
-                # Each URL must be unique to force a full page reload (hash-only
-                # changes don't trigger navigation in Playwright).
-                url = f"http://127.0.0.1:{port}/?auto_step=0&slide_delay=9999&_s={i}#slide-{i}"
-                await page.goto(url, wait_until="load")
-                # Allow the slide to render and mutations to settle.
-                await page.wait_for_timeout(1000)
+            with tqdm(range(total), desc=f"Exporting {fmt.upper()}", unit="slide") as pbar:
+                for i in pbar:
+                    url = f"http://127.0.0.1:{port}/?auto_step=0&slide_delay=9999&_s={i}#slide-{i}"
+                    await page.goto(url, wait_until="load")
+                    await page.wait_for_timeout(1000)
 
-                typer.echo(f"  Slide {i + 1}/{total}")
-
-                if fmt == "png":
-                    await page.screenshot(path=str(output / f"slide-{i + 1:03d}.png"))
-                else:
-                    dom = await page.evaluate(
-                        """() => {
-                        const root = document.getElementById('slide-root');
-                        return { html: root.innerHTML, classes: root.className };
-                    }"""
-                    )
-                    slide_doms.append(dom)
+                    if fmt == "png":
+                        await page.screenshot(path=str(output / f"slide-{i + 1:03d}.png"))
+                    else:
+                        dom = await page.evaluate(
+                            """() => {
+                            const root = document.getElementById('slide-root');
+                            return { html: root.innerHTML, classes: root.className };
+                        }"""
+                        )
+                        slide_doms.append(dom)
 
             await browser.close()
 
