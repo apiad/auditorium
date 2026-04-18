@@ -137,28 +137,52 @@ async def _run_slide(app: FastAPI, session: Session) -> None:
     if not deck or index >= len(deck.slides):
         return
     try:
-        # Clear the slide container
         await session.send({"type": "clear"})
         await session.send({"type": "slide", "index": index, "total": len(deck.slides)})
-        # Run the slide function
-        slide_fn = deck.slides[index]
-        from auditorium.slide import SlideContext
 
-        ctx = SlideContext(session)
-        # Render docstring as markdown
+        slide_fn = deck.slides[index]
+
+        # Send presenter notes (docstring rendered as markdown)
+        notes_html = ""
         if slide_fn.func.__doc__:
-            await ctx.md(slide_fn.func.__doc__)
-        # Execute the slide body
+            import textwrap
+            import markdown
+            notes_html = markdown.markdown(
+                textwrap.dedent(slide_fn.func.__doc__).strip(),
+                extensions=["fenced_code", "tables"],
+            )
+        await session.send({"type": "notes", "html": notes_html})
+
+        # Send next slide preview
+        if index < len(deck.slides) - 1:
+            next_fn = deck.slides[index + 1]
+            next_excerpt = ""
+            if next_fn.func.__doc__:
+                import textwrap
+                lines = textwrap.dedent(next_fn.func.__doc__).strip().split("\n")
+                para = []
+                for line in lines:
+                    if line.strip() == "" and para:
+                        break
+                    if line.strip():
+                        para.append(line.strip())
+                next_excerpt = " ".join(para)
+            await session.send({"type": "next_preview", "title": next_fn.name, "excerpt": next_excerpt})
+        else:
+            await session.send({"type": "next_preview", "title": None, "excerpt": ""})
+
+        # Execute the slide body (docstring is NOT rendered as content)
+        from auditorium.slide import SlideContext
+        ctx = SlideContext(session)
         await slide_fn.func(ctx)
+
         # Auto-advance in recording mode
         if session.auto_step is not None:
-            # Linger on the completed slide before advancing
             await asyncio.sleep(session.slide_delay)
             if index < len(deck.slides) - 1:
                 session.current_slide = index + 1
                 session.slide_task = asyncio.create_task(_run_slide(app, session))
                 return
-            # Last slide — signal finished
             await session.send({"type": "finished"})
     except (asyncio.CancelledError, Exception):
         pass
