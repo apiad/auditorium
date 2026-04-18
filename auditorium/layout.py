@@ -56,9 +56,9 @@ def _normalize_sizing(sizing: Sizing) -> list[SizingItem]:
 async def _switch_to_layout_mode(ctx: SlideContext) -> None:
     """Switch slide root from centered mode to layout mode."""
     await ctx._session.send_mutation({
-        "action": "remove_class",
+        "action": "set_class",
         "selector": "#slide-root",
-        "cls": "justify-center",
+        "cls": "aud-layout-mode",
     })
 
 

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 if TYPE_CHECKING:
     from auditorium.deck import Deck
@@ -78,10 +79,8 @@ def create_app(deck: Deck | None = None) -> FastAPI:
         html = (STATIC_DIR / "index.html").read_text()
         return HTMLResponse(html)
 
-    @app.get("/theme.css")
-    async def theme_css() -> HTMLResponse:
-        css = (STATIC_DIR / "theme.css").read_text()
-        return HTMLResponse(css, media_type="text/css")
+    # Serve all static assets (CSS, JS, fonts, vendor libs)
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.websocket("/ws")
     async def websocket_endpoint(ws: WebSocket) -> None:

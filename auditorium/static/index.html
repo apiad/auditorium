@@ -5,32 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auditorium</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- KaTeX -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-
-    <!-- Highlight.js -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-
-    <!-- Google Fonts: academic serif pair -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600&display=swap" rel="stylesheet">
-
-    <!-- Theme -->
-    <link rel="stylesheet" href="/theme.css">
+    <!-- All assets are local — no outbound requests -->
+    <link rel="stylesheet" href="/static/theme.css">
+    <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="/static/vendor/hljs/styles/github.min.css">
+    <script src="/static/vendor/katex/katex.min.js"></script>
+    <script src="/static/vendor/katex/contrib/auto-render.min.js"></script>
+    <script src="/static/vendor/hljs/highlight.min.js"></script>
 </head>
-<body class="bg-white text-gray-900 overflow-hidden">
-    <div id="slide-root" class="w-screen h-screen flex flex-col items-center justify-center p-12">
-    </div>
+<body>
+    <div id="slide-root"></div>
 
-    <div id="slide-indicator" class="fixed bottom-4 right-4 text-sm text-gray-400 font-mono"></div>
-    <div id="connection-status" class="fixed bottom-4 left-4 flex items-center gap-1.5 text-xs font-mono"></div>
+    <div id="slide-indicator"></div>
+    <div id="connection-status"></div>
 
     <script>
     (function() {
@@ -54,6 +41,14 @@
             statusEl.innerHTML = dot;
         }
 
+        const SLIDE_ROOT_RESET = 'aud-slide-root';
+
+        function resetRoot() {
+            root.innerHTML = '';
+            root.className = SLIDE_ROOT_RESET;
+            targetStack = [root];
+        }
+
         function connect() {
             setStatus('connecting');
             const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -61,7 +56,6 @@
 
             ws.onopen = function() {
                 setStatus('connected');
-                // Send hello with current slide from hash and optional auto_step from URL params
                 const params = new URLSearchParams(location.search);
                 const hello = { type: 'hello', slide: getSlideFromHash() };
                 const autoStep = params.get('auto_step');
@@ -93,9 +87,7 @@
                     applyMutation(msg);
                     break;
                 case 'clear':
-                    root.innerHTML = '';
-                    root.className = 'w-screen h-screen flex flex-col items-center justify-center p-12';
-                    targetStack = [root];
+                    resetRoot();
                     break;
                 case 'slide':
                     location.hash = `#slide-${msg.index}`;
@@ -103,10 +95,7 @@
                     break;
                 case 'reload':
                     location.hash = `#slide-${msg.slide}`;
-                    // Don't reload the page — just clear and let the server push new content
-                    root.innerHTML = '';
-                    root.className = 'w-screen h-screen flex flex-col items-center justify-center p-12';
-                    targetStack = [root];
+                    resetRoot();
                     break;
                 case 'finished':
                     window.__auditorium_finished = true;
@@ -130,7 +119,6 @@
                         const beforeRects = new Map();
                         siblings.forEach(s => beforeRects.set(s, s.getBoundingClientRect()));
 
-                        // Append the new element
                         target.appendChild(el);
 
                         // Animate the new element in
@@ -158,7 +146,6 @@
                             }
                         });
                     }
-                    // Render math and code in the new element
                     renderMath(el);
                     renderCode(el);
                     break;
@@ -197,7 +184,6 @@
                     break;
                 }
             }
-            // Send acknowledgment
             if (msg.id && ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'ack', id: msg.id }));
             }
@@ -223,7 +209,6 @@
             }
         }
 
-        // Capture keypress events
         document.addEventListener('keydown', function(e) {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 const key = e.key;
