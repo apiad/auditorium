@@ -66,10 +66,12 @@ async def export_deck(
                 # Use auto_step=0 so step() resolves instantly, and a large
                 # slide_delay so the slide stays rendered long enough for us to
                 # capture the DOM before auto-advance kicks in.
-                url = f"http://127.0.0.1:{port}/?auto_step=0&slide_delay=9999#slide-{i}"
-                await page.goto(url)
+                # Each URL must be unique to force a full page reload (hash-only
+                # changes don't trigger navigation in Playwright).
+                url = f"http://127.0.0.1:{port}/?auto_step=0&slide_delay=9999&_s={i}#slide-{i}"
+                await page.goto(url, wait_until="load")
                 # Allow the slide to render and mutations to settle.
-                await page.wait_for_timeout(500)
+                await page.wait_for_timeout(1000)
 
                 typer.echo(f"  Slide {i + 1}/{total}")
 
@@ -111,6 +113,7 @@ def _build_html(
     """Build a self-contained HTML file with all slides and a JS navigator."""
     theme_css = (static_dir / "theme.css").read_text()
     katex_css = (static_dir / "vendor" / "katex" / "katex.min.css").read_text()
+    hljs_css = (static_dir / "vendor" / "hljs" / "styles" / "github.min.css").read_text()
 
     # Inline fonts as base64 data URLs
     font_faces = ""
@@ -143,9 +146,10 @@ def _build_html(
 {font_faces}
 {theme_css}
 {katex_css}
+{hljs_css}
 .export-slide {{
-    width: {width}px;
-    height: {height}px;
+    width: 100vw;
+    height: 100vh;
     overflow: hidden;
     flex-direction: column;
     align-items: center;
@@ -197,6 +201,7 @@ async def _build_pdf(
 
     theme_css = (static_dir / "theme.css").read_text()
     katex_css = (static_dir / "vendor" / "katex" / "katex.min.css").read_text()
+    hljs_css = (static_dir / "vendor" / "hljs" / "styles" / "github.min.css").read_text()
 
     slides_html = ""
     for i, dom in enumerate(slide_doms):
@@ -210,7 +215,7 @@ async def _build_pdf(
 
     print_html = (
         f'<!DOCTYPE html><html><head><meta charset="UTF-8">'
-        f"<style>{theme_css}\n{katex_css}\nbody {{ margin: 0; }}</style>"
+        f"<style>{theme_css}\n{katex_css}\n{hljs_css}\nbody {{ margin: 0; }}</style>"
         f"</head><body>{slides_html}</body></html>"
     )
 
