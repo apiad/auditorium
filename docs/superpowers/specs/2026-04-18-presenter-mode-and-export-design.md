@@ -106,48 +106,45 @@ auditorium export deck.py [OPTIONS]
 | `--format` / `-f` | `pdf` | Output format: `pdf`, `html`, `png` |
 | `--output` / `-o` | `deck.pdf` / `deck.html` / `slides/` | Output path |
 | `--resolution` | `1920x1080` | Viewport size |
+| `--step-by-step` | off | One page/frame per step instead of per slide (PDF/PNG) |
 
-### How it works
+### Core mechanism: mutation recording
 
-Same infrastructure as `auditorium record`: start server programmatically, launch headless Playwright, navigate slides. But instead of video capture:
+The exporter starts the server, connects via Playwright, and **intercepts all websocket messages** between server and client. Every mutation, clear, slide, step, and sleep is captured into a **timeline** — an ordered list of events with timing and type metadata.
 
-1. For each slide: load it with `auto_step=0` (steps resolve instantly) and `slide_delay=0` (no linger). Wait for the slide function to complete.
-2. Capture the final state based on format.
-3. Advance to the next slide. Repeat.
+This timeline is the source of truth for all three formats. The Playwright browser renders each step so that math, code highlighting, and layout are fully resolved in the DOM.
+
+### Default mode (one output per slide)
+
+For each slide, all steps auto-resolve instantly (`auto_step=0`). The exporter captures the **final state** of the DOM after the slide function returns. PDF/PNG get one page/image per slide. HTML gets one frame per slide.
+
+### Step-by-step mode (`--step-by-step`)
+
+Each `step()` in the slide produces a separate capture. The exporter runs with `auto_step` set to a short delay (e.g. 0.1s) so each step resolves and the DOM can be captured between steps. PDF/PNG get one page/image per step. HTML gets one frame per step.
+
+### Format: HTML (interactive playback)
+
+The HTML export is a **self-contained interactive replay** of the presentation. It embeds:
+
+1. **A timeline of DOM snapshots and events** — serialized as JSON. Each entry records the slide root's `innerHTML` and `className` at that point, plus metadata (slide index, whether this is a step or a new slide, any `sleep()` duration before the next event).
+2. **All CSS** — theme.css + KaTeX CSS inlined in a `<style>` tag.
+3. **Fonts** — woff2 files as base64 data URLs in `@font-face` rules.
+4. **A small JS player** (~50 lines) that:
+   - Shows one frame at a time.
+   - Right arrow / Space advances to the next frame. If the next frame has a `sleep` duration, it auto-advances after that duration (replicating the authored timing).
+   - Left arrow goes back.
+   - Slide counter shows current position.
+   - No external dependencies. One file. Works offline. Works exactly like the live presentation except there's no Python running.
+
+The key insight: `step()` maps to "wait for keypress" and `sleep(N)` maps to "auto-advance after N seconds" — both behaviors are embedded in the timeline metadata and replayed by the JS player.
 
 ### Format: PDF (vector)
 
-Use Playwright's `page.pdf()` which produces vector PDF output — text remains selectable, math renders as paths, no rasterization.
-
-For each slide:
-1. Wait for slide to finish rendering.
-2. Call `page.pdf()` with the viewport dimensions as page size.
-3. Collect all single-page PDFs.
-4. Merge into one multi-page PDF (using `pypdf` or similar, or by reloading each slide on the same page and printing once with page breaks).
-
-**Simpler approach:** Rather than merging PDFs, build a single page with all slides stacked (using the static HTML approach below) and print that to PDF once. Use CSS `@media print` with `page-break-after: always` between slides.
-
-### Format: HTML (vector, self-contained)
-
-For each slide:
-1. Wait for slide to finish rendering.
-2. Extract `document.getElementById('slide-root').innerHTML` via `page.evaluate()`.
-3. Also extract any inline styles applied by layout mutations.
-
-Bundle all slides into a single self-contained HTML file:
-- All slide DOMs as hidden `<div class="slide">` elements.
-- All CSS (theme.css content) inlined in a `<style>` tag.
-- Font files as base64-encoded data URLs in `@font-face` rules.
-- KaTeX CSS inlined (for math rendering that already happened — the rendered math is in the DOM as HTML/SVG).
-- A minimal ~20 line JS navigator: shows one slide at a time, arrow keys to flip, slide counter.
-- No external dependencies. One file. Works offline.
+Build a single HTML page with all captured DOM states stacked vertically (one per slide or per step), separated by `page-break-after: always`. Render to PDF via Playwright's `page.pdf()` which produces vector output — text remains selectable, math renders as paths.
 
 ### Format: PNG (raster)
 
-For each slide:
-1. Wait for slide to finish rendering.
-2. Call `page.screenshot({path: "slide-NNN.png"})`.
-3. Save to the output directory.
+For each captured state, take a screenshot via `page.screenshot()`. Save as `slide-001.png`, `slide-002.png`, etc.
 
 ### Dependency
 
