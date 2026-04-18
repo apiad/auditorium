@@ -14,6 +14,7 @@ async def record(
     output: Path,
     resolution: str,
     auto_step: float,
+    slide_delay: float,
     live: bool,
     port: int,
 ) -> None:
@@ -59,7 +60,7 @@ async def record(
             page = await context.new_page()
             url = f"http://127.0.0.1:{port}/"
             if not live:
-                url += f"?auto_step={auto_step}"
+                url += f"?auto_step={auto_step}&slide_delay={slide_delay}"
             await page.goto(url)
 
             if live:

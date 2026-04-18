@@ -96,6 +96,7 @@ def record(
     output: Path = typer.Option("recording.webm", "-o", "--output", help="Output file path"),
     resolution: str = typer.Option("1920x1080", help="Viewport size, e.g. 1280x720"),
     auto_step: float = typer.Option(2.0, "--auto-step", help="Seconds per step() in auto mode"),
+    slide_delay: float = typer.Option(3.0, "--slide-delay", help="Seconds to linger on completed slide before advancing"),
     live: bool = typer.Option(False, "--live", help="Launch visible browser for manual recording"),
     port: int = typer.Option(0, help="Server port (0 = random)"),
 ) -> None:
@@ -112,7 +113,7 @@ def record(
             port = s.getsockname()[1]
 
     from auditorium.recorder import record as do_record
-    asyncio.run(do_record(deck_path, output, resolution, auto_step, live, port))
+    asyncio.run(do_record(deck_path, output, resolution, auto_step, slide_delay, live, port))
 
 
 def _setup_watcher(application, deck_path: Path) -> None:

@@ -66,6 +66,8 @@
                 const hello = { type: 'hello', slide: getSlideFromHash() };
                 const autoStep = params.get('auto_step');
                 if (autoStep) hello.auto_step = parseFloat(autoStep);
+                const slideDelay = params.get('slide_delay');
+                if (slideDelay) hello.slide_delay = parseFloat(slideDelay);
                 ws.send(JSON.stringify(hello));
             };
 
