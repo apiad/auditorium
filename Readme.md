@@ -119,14 +119,14 @@ Available: `columns(sizing)`, `rows(sizing)`, `place(html, x, y)`. They nest fre
 - **Markdown docstrings** — slide content as prose, right next to the code
 - **Progressive reveals** — `await ctx.step()` pauses for a keypress
 - **Timed animations** — `await ctx.sleep(seconds)` for automatic pacing
-- **LaTeX math** — KaTeX via CDN, use `$...$` or `$$...$$` in Markdown
-- **Code highlighting** — fenced code blocks highlighted by highlight.js
+- **LaTeX math** — KaTeX bundled, use `$...$` or `$$...$$` in Markdown
+- **Code highlighting** — fenced code blocks highlighted by highlight.js (bundled)
 - **Flexible layouts** — `columns`, `rows`, `place` with `"auto"` sizing
 - **Hot reload** — edit and see changes instantly, staying on the same slide
 - **Independent sessions** — each browser tab runs its own slide independently
 - **Reconnection** — survives server restarts without losing your place
 - **Video recording** — `auditorium record` captures presentations via Playwright
-- **No build step** — Tailwind, KaTeX, and highlight.js loaded via CDN
+- **Fully offline** — all assets bundled, zero outbound requests, no build step
 
 ## Recording
 
@@ -145,6 +145,7 @@ auditorium record talk.py -o talk.webm --live
 | `--output` / `-o` | `recording.webm` | Output file path |
 | `--resolution` | `1920x1080` | Viewport size |
 | `--auto-step` | `2.0` | Seconds per `step()` in auto mode |
+| `--slide-delay` | `3.0` | Seconds to linger on completed slide before advancing |
 | `--live` | off | Visible browser, manual navigation |
 
 ## Example
