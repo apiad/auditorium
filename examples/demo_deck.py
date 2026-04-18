@@ -7,17 +7,15 @@ deck = Deck(title="Auditorium Demo")
 
 @deck.slide
 async def title_slide(ctx):
-    """# Auditorium 2.0
-
-    *Python-scripted live presentations*
-    """
-    pass
+    """Welcome the audience. Mention this is a demo of Auditorium 3.0."""
+    await ctx.md("# Auditorium 3.0")
+    await ctx.md("*Python-scripted live presentations*")
 
 
 @deck.slide
 async def progressive_reveal(ctx):
-    """## Progressive Reveals"""
-
+    """Show how step() works. Pause between each point for effect."""
+    await ctx.md("## Progressive Reveals")
     await ctx.md("Each point appears on keypress:")
     await ctx.step()
     await ctx.md("- First, we **set up** the problem")
@@ -29,8 +27,8 @@ async def progressive_reveal(ctx):
 
 @deck.slide
 async def timed_content(ctx):
-    """## Timed Animations"""
-
+    """Timed content auto-advances. No keypress needed for this slide."""
+    await ctx.md("## Timed Animations")
     await ctx.md("Watch the countdown:")
     for i in range(3, 0, -1):
         await ctx.md(f"### {i}...")
@@ -40,27 +38,27 @@ async def timed_content(ctx):
 
 @deck.slide
 async def code_example(ctx):
-    """## Code Highlighting
+    """Show a code example. The code block gets syntax highlighting via highlight.js."""
+    await ctx.md("""## Code Highlighting
 
-    ```python
-    from auditorium import Deck
+```python
+from auditorium import Deck
 
-    deck = Deck(title="My Talk")
+deck = Deck(title="My Talk")
 
-    @deck.slide
-    async def hello(ctx):
-        \"\"\"# Hello, World!\"\"\"
-        await ctx.step()
-        await ctx.md("This is **auditorium**.")
-    ```
-    """
-    pass
+@deck.slide
+async def hello(ctx):
+    await ctx.md("# Hello, World!")
+    await ctx.step()
+    await ctx.md("This is **auditorium**.")
+```
+""")
 
 
 @deck.slide
 async def math_example(ctx):
-    """## Mathematics with KaTeX"""
-
+    """KaTeX renders math. Both inline and display mode work."""
+    await ctx.md("## Mathematics with KaTeX")
     await ctx.md("Euler's identity:")
     await ctx.step()
     await ctx.md("$$e^{i\\pi} + 1 = 0$$")
@@ -72,8 +70,8 @@ async def math_example(ctx):
 
 @deck.slide
 async def two_columns(ctx):
-    """## Two-Column Layout"""
-
+    """Demonstrate columns layout with 2:1 ratio."""
+    await ctx.md("## Two-Column Layout")
     left, right = await ctx.columns([2, 1])
 
     async with left:
@@ -100,8 +98,8 @@ async def two_columns(ctx):
 
 @deck.slide
 async def header_body_footer(ctx):
-    """## Header / Body / Footer"""
-
+    """Show the auto sizing pattern. Header and footer stay fixed, body stretches."""
+    await ctx.md("## Header / Body / Footer")
     header, body, footer = await ctx.rows(["auto", 1, "auto"])
 
     async with header:
@@ -120,9 +118,8 @@ async def header_body_footer(ctx):
 
 @deck.slide
 async def progressive_list(ctx):
-    """## Progressive List (Top-Aligned)"""
-
-    # Use rows(["auto", 1]) to pin content to the top
+    """Top-aligned progressive content. Uses rows(["auto", 1]) as a stable-top replacement."""
+    await ctx.md("## Progressive List (Top-Aligned)")
     content, _spacer = await ctx.rows(["auto", 1])
 
     async with content:
@@ -139,8 +136,8 @@ async def progressive_list(ctx):
 
 @deck.slide
 async def mixed_timing(ctx):
-    """## Mixed Timing Models"""
-
+    """Show how step() and sleep() can be combined in one slide."""
+    await ctx.md("## Mixed Timing Models")
     await ctx.md("Combining keypress and timed reveals:")
     await ctx.step()
 
@@ -160,8 +157,8 @@ async def mixed_timing(ctx):
 
 @deck.slide
 async def nested_layout(ctx):
-    """## Nested Layouts"""
-
+    """Nested layouts: rows inside columns inside rows. All combinations work."""
+    await ctx.md("## Nested Layouts")
     top, bottom = await ctx.rows(2)
 
     async with top:
@@ -178,10 +175,7 @@ async def nested_layout(ctx):
 
 @deck.slide
 async def fin(ctx):
-    """# Thank You
-
-    Built with **Auditorium 2.0**
-
-    *github.com/apiad/auditorium*
-    """
-    pass
+    """Thank the audience. Mention the GitHub repo."""
+    await ctx.md("# Thank You")
+    await ctx.md("Built with **Auditorium 3.0**")
+    await ctx.md("*github.com/apiad/auditorium*")
