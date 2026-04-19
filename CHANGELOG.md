@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.2.0
+
+### Added
+
+- **Presenter drives audience** — `--presenter` mode syncs all audience tabs to the presenter's navigation. Audience keyboards are locked. Only one presenter allowed.
+- **Late-join sync** — new tabs connecting mid-slide receive the full message log and see the complete slide state immediately.
+- **Dual mode** — default is independent per-tab sessions; `--presenter` enables shared navigation.
+- `/presenter` page returns 403 without `--presenter` flag.
+
+### Changed
+
+- Replaced per-tab `Session` with `Presentation` dataclass used in both modes.
+- Removed `p` key shortcut — presenter mode is now explicitly opt-in via `--presenter`.
+- README rewritten with feature showcase and use-case examples.
+
 ## 3.1.0
 
 ### Added

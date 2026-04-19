@@ -16,7 +16,7 @@ app = typer.Typer(name="auditorium", help="Python-scripted live slide framework"
 
 def _version_callback(value: bool) -> None:
     if value:
-        console.print("auditorium [bold]1!3.1.0[/]")
+        console.print("auditorium [bold]1!3.2.0[/]")
         raise typer.Exit()
 
 
@@ -80,7 +80,7 @@ def run(
     host: str = typer.Option("127.0.0.1", help="Host to bind to"),
     port: int = typer.Option(8000, help="Port to bind to"),
     open_browser: bool = typer.Option(True, "--open/--no-open", help="Open browser automatically"),
-    presenter: bool = typer.Option(False, "--presenter", help="Also open presenter view"),
+    presenter: bool = typer.Option(False, "-p", "--presenter", help="Also open presenter view"),
     watch: bool = typer.Option(True, "--watch/--no-watch", help="Watch for file changes and hot-reload"),
 ) -> None:
     """Run a presentation deck."""

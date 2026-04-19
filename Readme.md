@@ -4,7 +4,9 @@
 [<img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/auditorium.svg">](https://pypi.org/project/auditorium/)
 [<img alt="PyPI" src="https://img.shields.io/pypi/v/auditorium.svg">](https://pypi.org/project/auditorium/)
 
-Auditorium is a Python framework for live technical presentations. You write slides as `async def` functions in a plain `.py` file, and Auditorium runs them as a live presentation in your browser — complete with keypress-gated reveals, timed animations, LaTeX math, syntax-highlighted code, and flexible layouts.
+**The presentation framework for people who think in code.**
+
+Auditorium lets you build live technical presentations as Python scripts. Each slide is an `async def` function. Animate algorithms step by step, render live-computed plots, run numerical demos — anything Python can do, your slides can do. No PowerPoint. No Markdown. Just code.
 
 ```python
 from auditorium import Deck
@@ -12,172 +14,161 @@ from auditorium import Deck
 deck = Deck(title="My Talk")
 
 @deck.slide
-async def hello(ctx):
-    """Speaker notes go here — only visible in presenter view."""
-    await ctx.md("# Hello, World!")
+async def sorting_demo(ctx):
+    """Explain how the algorithm builds the sorted prefix."""
+    await ctx.md("## Bubble Sort, Step by Step")
+    data = [5, 3, 8, 1, 2]
+    for i in range(len(data)):
+        for j in range(len(data) - 1 - i):
+            if data[j] > data[j + 1]:
+                data[j], data[j + 1] = data[j + 1], data[j]
+            await ctx.md(f"`{data}`")
+            await ctx.sleep(0.5)
     await ctx.step()
-    await ctx.md("This appeared after pressing right arrow.")
+    await ctx.md("**Sorted!**")
 ```
-
-```bash
-auditorium run talk.py
-```
-
-## How it works
-
-Each slide is an `async def` decorated with `@deck.slide`. The docstring renders as Markdown when the slide loads. The function body is imperative Python that drives the presentation through awaitable primitives:
-
-- **Content:** `show(html)`, `hide(selector)`, `replace(selector, html)`, `set_class(selector, cls)`, `remove_class(selector, cls)`
-- **Markdown:** `md(text)`, `show_md(path)`
-- **Timing:** `step()` (wait for keypress), `sleep(seconds)`
-- **Layout:** `columns(sizing)`, `rows(sizing)`, `place(html, x, y)`
-
-A FastAPI server runs your slide functions and pushes DOM mutations over WebSocket to a minimal browser client. Each browser tab gets its own independent session — you can have multiple tabs on different slides simultaneously.
-
-## Installation
-
-Requires Python 3.12+.
 
 ```bash
 pip install auditorium
+auditorium run talk.py
 ```
 
-Or with uv:
+## Why Auditorium?
+
+Most presentation tools treat slides as static documents. Auditorium treats them as **programs**.
+
+- **Run algorithms live** — sort arrays, traverse graphs, train models, all animated on stage
+- **Compute content** — generate plots, tables, or LaTeX from data, not screenshots
+- **Use any Python library** — numpy, matplotlib, pandas, whatever you import works
+- **Share with students worldwide** — presenter mode syncs your slides to every connected browser in real time
+- **Export everywhere** — record to video, export to PDF, or share as a self-contained HTML that replays your talk with original timing
+
+If you've ever wished you could `await` inside a PowerPoint slide, this is for you.
+
+## Quick Start
 
 ```bash
-uv add auditorium
+pip install auditorium    # or: uv add auditorium
 ```
 
-## Usage
+Create `talk.py`:
 
-Create a file (e.g. `talk.py`) with a `Deck` instance and `@deck.slide` functions, then run:
+```python
+from auditorium import Deck
+
+deck = Deck(title="My Talk")
+
+@deck.slide
+async def intro(ctx):
+    """Notes for the presenter — only visible in presenter view."""
+    await ctx.md("# Welcome!")
+    await ctx.md("*Press right arrow to continue*")
+
+@deck.slide
+async def demo(ctx):
+    """Show progressive reveals and timed content."""
+    await ctx.md("## Key Points")
+    await ctx.step()
+    await ctx.md("- First point")
+    await ctx.step()
+    await ctx.md("- Second point")
+    await ctx.sleep(1)
+    await ctx.md("*(that one appeared automatically)*")
+```
+
+Run it:
 
 ```bash
 auditorium run talk.py
 ```
 
-Options:
+## Features
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--host` | `127.0.0.1` | Host to bind to |
-| `--port` | `8000` | Port to bind to |
-| `--no-open` | (opens browser) | Don't auto-open the browser |
-| `--no-watch` | (watches files) | Disable hot reload |
-
-Hot reload is on by default — edit your `.py` file and the browser stays on the current slide while picking up changes. A small status dot in the bottom-left corner shows connection state (green = connected, red = disconnected, blinking orange = reconnecting).
-
-## Navigation
-
-| Key | Action |
-|-----|--------|
-| Right arrow / Space | Advance step, or next slide if no pending step |
-| Page Down | Skip to next slide (cancel remaining steps) |
-| Left arrow | Previous slide (re-runs from start) |
-| `r` | Restart current slide |
-| Digits + Enter | Jump to slide N |
+| | Feature | Description |
+|---|---------|-------------|
+| **Code** | Imperative Python slides | Each slide is an `async def` — loops, conditionals, imports, anything |
+| **Reveal** | Progressive reveals | `await ctx.step()` pauses for keypress, `await ctx.sleep(n)` auto-advances |
+| **Math** | LaTeX math | KaTeX bundled — `$inline$` and `$$display$$` in any markdown |
+| **Code** | Syntax highlighting | Fenced code blocks with highlight.js (bundled) |
+| **Layout** | Flexible layouts | `columns`, `rows` with `"auto"` sizing, arbitrarily nested |
+| **Presenter** | Presenter mode | `--presenter` opens a second tab with notes, timer, next-slide preview |
+| **Sync** | Shared navigation | Presenter drives all audience tabs — students see what you show |
+| **Late join** | Mid-slide sync | Late-joining viewers see the full slide state immediately |
+| **Export** | PDF / HTML / PNG | `auditorium export` — vector PDF, self-contained interactive HTML, or PNG per slide |
+| **Record** | Video capture | `auditorium record` — headless or live recording via Playwright |
+| **Step export** | Step-by-step | `--step-by-step` captures each reveal as a separate frame with original timing |
+| **Reload** | Hot reload | Edit your `.py` and the browser updates — stays on the same slide |
+| **Offline** | Fully bundled | All assets (fonts, KaTeX, highlight.js) ship with the package — zero CDN, zero internet |
+| **Reconnect** | Server restart | Client auto-reconnects and resumes at the same slide |
 
 ## Presenter Mode
 
-Press `p` during a presentation to open the presenter view in a new tab, or start with:
+Start with `--presenter` to sync all audience tabs to your navigation:
 
 ```bash
 auditorium run talk.py --presenter
 ```
 
-The presenter view shows:
-- Current slide (mirrored from audience view)
-- Speaker notes (from the slide's docstring)
-- Next slide preview (name and first line of notes)
-- Elapsed timer
+Two tabs open: your **presenter view** (notes + timer + slide mirror) and the **audience view** (projected/shared). Navigate from the presenter tab — every connected browser follows in real time.
+
+- Docstrings become **speaker notes** (never shown to the audience)
+- Late-joining tabs catch up instantly (full slide state replayed)
+- Audience keyboards are locked — only the presenter navigates
+
+Without `--presenter`, each tab navigates independently.
 
 ## Layouts
 
-Layout primitives return `Region` objects that scope insertion targets via `async with`:
-
 ```python
 @deck.slide
-async def side_by_side(ctx):
-    """## Two Columns"""
+async def layout_demo(ctx):
+    """Layouts nest freely."""
+    await ctx.md("## Two Columns")
     left, right = await ctx.columns([2, 1])
 
     async with left:
         await ctx.md("Main content (2/3 width)")
 
     async with right:
-        await ctx.md("Sidebar (1/3 width)")
+        await ctx.md("Sidebar (1/3)")
 ```
 
-Sizing accepts integers (proportional), or `"auto"` for natural content size:
+Use `"auto"` for natural-size regions:
 
 ```python
-@deck.slide
-async def structured(ctx):
-    """## Header / Body / Footer"""
-    header, body, footer = await ctx.rows(["auto", 1, "auto"])
-
-    async with header:
-        await ctx.md("### Fixed Header")
-    async with footer:
-        await ctx.md("*Fixed footer*")
-    async with body:
-        await ctx.md("Body stretches to fill remaining space.")
+header, body, footer = await ctx.rows(["auto", 1, "auto"])
 ```
 
-Available: `columns(sizing)`, `rows(sizing)`, `place(html, x, y)`. They nest freely.
+## Recording & Export
 
-## Features
-
-- **Speaker notes** — docstrings become private presenter notes
-- **Presenter mode** — second tab with notes, timer, and slide preview
-- **Static export** — PDF, HTML, or PNG via `auditorium export`
-- **Progressive reveals** — `await ctx.step()` pauses for a keypress
-- **Timed animations** — `await ctx.sleep(seconds)` for automatic pacing
-- **LaTeX math** — KaTeX bundled, use `$...$` or `$$...$$` in Markdown
-- **Code highlighting** — fenced code blocks highlighted by highlight.js (bundled)
-- **Flexible layouts** — `columns`, `rows`, `place` with `"auto"` sizing
-- **Hot reload** — edit and see changes instantly, staying on the same slide
-- **Independent sessions** — each browser tab runs its own slide independently
-- **Reconnection** — survives server restarts without losing your place
-- **Video recording** — `auditorium record` captures presentations via Playwright
-- **Fully offline** — all assets bundled, zero outbound requests, no build step
-
-## Recording
-
-Record your presentation to video (requires `pip install auditorium[record]` and `playwright install chromium`):
+Requires `pip install auditorium[record]` and `playwright install chromium`.
 
 ```bash
-# Auto mode: headless, deterministic pacing
-auditorium record talk.py -o talk.webm --auto-step 2.0
+# Record to video
+auditorium record talk.py -o talk.webm
 
-# Live mode: you drive, Playwright captures
-auditorium record talk.py -o talk.webm --live
+# Export to PDF (vector), HTML (interactive), or PNG
+auditorium export talk.py -f pdf -o talk.pdf
+auditorium export talk.py -f html -o talk.html
+auditorium export talk.py -f png -o slides/
+
+# Step-by-step: one frame per reveal, with original timing in HTML
+auditorium export talk.py -f html --step-by-step -o talk.html
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--output` / `-o` | `recording.webm` | Output file path |
-| `--resolution` | `1920x1080` | Viewport size |
-| `--auto-step` | `2.0` | Seconds per `step()` in auto mode |
-| `--slide-delay` | `3.0` | Seconds to linger on completed slide before advancing |
-| `--live` | off | Visible browser, manual navigation |
+## Navigation
 
-## Export
-
-Export your presentation to static formats (requires `auditorium[record]`):
-
-```bash
-auditorium export talk.py -f html -o talk.html           # self-contained HTML
-auditorium export talk.py -f pdf -o talk.pdf             # vector PDF
-auditorium export talk.py -f png -o slides/              # one PNG per slide
-auditorium export talk.py -f html --step-by-step -o out  # one frame per step
-```
-
-Step-by-step mode captures each `step()` and `sleep()` boundary as a separate frame. In HTML exports, sleep frames auto-advance at their authored timing while step frames wait for keypress — matching the live presentation.
+| Key | Action |
+|-----|--------|
+| Right arrow / Space | Advance step or next slide |
+| Page Down | Skip to next slide |
+| Left arrow | Previous slide |
+| `r` | Restart current slide |
+| Digits + Enter | Jump to slide N |
 
 ## Example
 
-See [`examples/demo_deck.py`](examples/demo_deck.py) for a complete deck exercising every feature.
+See [`examples/demo_deck.py`](examples/demo_deck.py) for a full 11-slide deck exercising every feature.
 
 ```bash
 auditorium run examples/demo_deck.py
