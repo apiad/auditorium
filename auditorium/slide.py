@@ -103,11 +103,13 @@ class SlideContext:
         if self._session.instant_sleep:
             if self._session.auto_step is None:
                 # Step-by-step export: treat sleep as a capture boundary.
+                # Send sleep_complete (not step_complete) so the exporter
+                # knows this is a timed boundary with the original duration.
                 # Set event BEFORE sending signal to avoid race with the
                 # exporter's keypress arriving before step_event is set.
                 event = asyncio.Event()
                 self._session.step_event = event
-                await self._session.send({"type": "step_complete"})
+                await self._session.send({"type": "sleep_complete", "duration": seconds})
                 await event.wait()
             return
         await asyncio.sleep(seconds)

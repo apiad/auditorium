@@ -185,8 +185,11 @@ def _build_html(
     slides_html = ""
     for i, dom in enumerate(slide_doms):
         active = " active" if i == 0 else ""
+        boundary = dom.get("boundary", "initial")
+        duration = dom.get("duration", 0)
         slides_html += (
-            f'<div class="export-slide{active} {dom["classes"]}">'
+            f'<div class="export-slide{active} {dom["classes"]}" '
+            f'data-boundary="{boundary}" data-duration="{duration}">'
             f'{dom["html"]}</div>\n'
         )
 
@@ -228,20 +231,37 @@ body {{ margin: 0; background: #fff; overflow: hidden; }}
     const slides = document.querySelectorAll('.export-slide');
     const counter = document.getElementById('counter');
     let current = 0;
-    // Show the first slide
-    slides[0].classList.add('active');
+    let autoTimer = null;
+
     function show(n) {{
         n = Math.max(0, Math.min(n, slides.length - 1));
         if (n === current) return;
+        // Cancel any pending auto-advance
+        if (autoTimer) {{ clearTimeout(autoTimer); autoTimer = null; }}
         slides[current].classList.remove('active');
         slides[n].classList.add('active');
         current = n;
         counter.textContent = (current + 1) + ' / ' + slides.length;
+        // Check if the NEXT frame is a sleep boundary — if so, auto-advance
+        scheduleAuto();
     }}
+
+    function scheduleAuto() {{
+        if (current + 1 >= slides.length) return;
+        const next = slides[current + 1];
+        if (next.dataset.boundary === 'sleep') {{
+            const dur = parseFloat(next.dataset.duration) || 0.5;
+            autoTimer = setTimeout(function() {{ show(current + 1); }}, dur * 1000);
+        }}
+    }}
+
     document.addEventListener('keydown', function(e) {{
         if (e.key === 'ArrowRight' || e.key === ' ') {{ e.preventDefault(); show(current + 1); }}
         else if (e.key === 'ArrowLeft') {{ e.preventDefault(); show(current - 1); }}
     }});
+
+    // Start auto-advance chain if the second frame is a sleep
+    scheduleAuto();
 }})();
 </script>
 </body>
@@ -304,7 +324,7 @@ async def _build_pdf(
 
 
 async def _capture(page, fmt: str, output: Path, slide_doms: list[dict], slide_idx: int, step_idx: int | None) -> None:
-    """Capture the current DOM state as PNG or DOM dict."""
+    """Capture the current DOM state as PNG or DOM dict with boundary metadata."""
     # Let the browser finish any remaining layout/paint work
     await page.wait_for_timeout(100)
     if fmt == "png":
@@ -314,7 +334,13 @@ async def _capture(page, fmt: str, output: Path, slide_doms: list[dict], slide_i
         dom = await page.evaluate(
             """() => {
             const root = document.getElementById('slide-root');
-            return { html: root.innerHTML, classes: root.className };
+            const boundary = window.__auditorium_last_boundary || {type: 'initial'};
+            return {
+                html: root.innerHTML,
+                classes: root.className,
+                boundary: boundary.type,
+                duration: boundary.duration || 0,
+            };
         }"""
         )
         slide_doms.append(dom)

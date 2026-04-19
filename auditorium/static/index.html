@@ -50,6 +50,7 @@
             window.__auditorium_slide_complete = false;
             window.__auditorium_step_count = 0;
             window.__auditorium_finished = false;
+            window.__auditorium_last_boundary = null;
         }
 
         function connect() {
@@ -109,6 +110,11 @@
                     break;
                 case 'step_complete':
                     window.__auditorium_step_count = (window.__auditorium_step_count || 0) + 1;
+                    window.__auditorium_last_boundary = {type: 'step'};
+                    break;
+                case 'sleep_complete':
+                    window.__auditorium_step_count = (window.__auditorium_step_count || 0) + 1;
+                    window.__auditorium_last_boundary = {type: 'sleep', duration: msg.duration};
                     break;
             }
         }
