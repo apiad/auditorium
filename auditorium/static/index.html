@@ -65,6 +65,7 @@
                 if (autoStep) hello.auto_step = parseFloat(autoStep);
                 const slideDelay = params.get('slide_delay');
                 if (slideDelay) hello.slide_delay = parseFloat(slideDelay);
+                if (params.get('instant_sleep')) hello.instant_sleep = true;
                 ws.send(JSON.stringify(hello));
             };
 

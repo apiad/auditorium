@@ -29,6 +29,7 @@ class Session:
     pending_acks: dict[str, asyncio.Event] = field(default_factory=dict)
     auto_step: float | None = None
     slide_delay: float = 3.0
+    instant_sleep: bool = False
 
     async def send(self, message: dict) -> None:
         """Send a JSON message to this session's client."""
@@ -105,6 +106,8 @@ def create_app(deck: Deck | None = None) -> FastAPI:
                 slide_delay = msg.get("slide_delay")
                 if slide_delay is not None:
                     session.slide_delay = float(slide_delay)
+                if msg.get("instant_sleep"):
+                    session.instant_sleep = True
 
             # Start the slide for this session
             if app.state.deck:

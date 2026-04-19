@@ -76,9 +76,6 @@ async def export_deck(
                 }
             """
 
-            # Use auto_step=0 for instant steps (default) or small delay for step-by-step
-            auto_step_val = 0.1 if step_by_step else 0
-
             with Progress(
                 TextColumn("[bold]{task.description}"),
                 BarColumn(),
@@ -89,49 +86,52 @@ async def export_deck(
             ) as progress:
                 task = progress.add_task(f"Exporting {fmt.upper()}", total=total)
                 for i in range(total):
-                    url = f"http://127.0.0.1:{port}/?auto_step={auto_step_val}&slide_delay=9999&_s={i}#slide-{i}"
-                    await page.goto(url, wait_until="load")
-                    # Kill animations/transitions on this fresh page load
-                    await page.add_style_tag(content=DISABLE_ANIM_CSS)
-
-                    # Wait for the slide function to actually complete
-                    await page.wait_for_function(
-                        "() => window.__auditorium_slide_complete === true",
-                        timeout=120000,
-                    )
-
                     if step_by_step:
-                        # Capture each step state: get the final step count,
-                        # then re-run the slide capturing after each step
-                        final_steps = await page.evaluate(
-                            "() => window.__auditorium_step_count || 0"
-                        )
-                        if final_steps > 0:
-                            # Re-run this slide, capturing DOM after each step
-                            progress.update(task, total=progress.tasks[task].total - 1 + final_steps + 1)
-                            for s in range(final_steps + 1):
-                                step_url = f"http://127.0.0.1:{port}/?auto_step=0.1&slide_delay=9999&_s={i}.{s}#slide-{i}"
-                                await page.goto(step_url, wait_until="load")
-                                await page.add_style_tag(content=DISABLE_ANIM_CSS)
-                                # Wait for step s to complete (or slide_complete for the last one)
-                                if s < final_steps:
-                                    await page.wait_for_function(
-                                        f"() => (window.__auditorium_step_count || 0) >= {s + 1}",
-                                        timeout=60000,
-                                    )
-                                else:
-                                    await page.wait_for_function(
-                                        "() => window.__auditorium_slide_complete === true",
-                                        timeout=60000,
-                                    )
-                                await _capture(page, fmt, output, slide_doms, i, s)
-                                progress.update(task, advance=1)
-                        else:
-                            # No steps — just capture the final state
-                            await _capture(page, fmt, output, slide_doms, i, None)
-                            progress.update(task, advance=1)
+                        # Step-by-step: no auto_step (steps block), instant_sleep.
+                        # We drive each step via keypress and capture between each.
+                        url = f"http://127.0.0.1:{port}/?instant_sleep=1&slide_delay=9999&_s={i}#slide-{i}"
+                        await page.goto(url, wait_until="load")
+                        await page.add_style_tag(content=DISABLE_ANIM_CSS)
+
+                        step_idx = 0
+                        while True:
+                            # Wait a bit for DOM to settle after content renders
+                            await page.wait_for_timeout(150)
+
+                            # Check if slide already completed (no steps, or after last step)
+                            done = await page.evaluate(
+                                "() => window.__auditorium_slide_complete === true"
+                            )
+                            # Capture current state
+                            await _capture(page, fmt, output, slide_doms, i, step_idx)
+                            step_idx += 1
+
+                            if done:
+                                break
+
+                            # Advance one step by sending a keypress
+                            prev_steps = await page.evaluate(
+                                "() => window.__auditorium_step_count || 0"
+                            )
+                            await page.keyboard.press("ArrowRight")
+                            # Wait for either step_complete or slide_complete
+                            await page.wait_for_function(
+                                f"() => (window.__auditorium_step_count || 0) > {prev_steps} "
+                                f"|| window.__auditorium_slide_complete === true",
+                                timeout=60000,
+                            )
+
+                        progress.update(task, advance=1)
                     else:
-                        # Default: capture final state of the slide
+                        # Default: auto_step=0 + instant_sleep — everything runs
+                        # instantly, capture final state.
+                        url = f"http://127.0.0.1:{port}/?auto_step=0&instant_sleep=1&slide_delay=9999&_s={i}#slide-{i}"
+                        await page.goto(url, wait_until="load")
+                        await page.add_style_tag(content=DISABLE_ANIM_CSS)
+                        await page.wait_for_function(
+                            "() => window.__auditorium_slide_complete === true",
+                            timeout=120000,
+                        )
                         await _capture(page, fmt, output, slide_doms, i, None)
                         progress.update(task, advance=1)
 
@@ -177,10 +177,10 @@ def _build_html(
 
     slides_html = ""
     for i, dom in enumerate(slide_doms):
-        display = "flex" if i == 0 else "none"
+        active = " active" if i == 0 else ""
         slides_html += (
-            f'<div class="export-slide {dom["classes"]}" '
-            f'style="display:{display};">{dom["html"]}</div>\n'
+            f'<div class="export-slide{active} {dom["classes"]}">'
+            f'{dom["html"]}</div>\n'
         )
 
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -208,7 +208,9 @@ def _build_html(
     line-height: 1.8;
 }}
 body {{ margin: 0; background: #fff; overflow: hidden; }}
-#counter {{ position: fixed; bottom: 1rem; right: 1rem; font: 0.875rem monospace; color: #9ca3af; }}
+.export-slide {{ position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }}
+.export-slide.active {{ opacity: 1; pointer-events: auto; }}
+#counter {{ position: fixed; bottom: 1rem; right: 1rem; font: 0.875rem monospace; color: #9ca3af; z-index: 10; }}
 </style>
 </head>
 <body>
@@ -219,10 +221,13 @@ body {{ margin: 0; background: #fff; overflow: hidden; }}
     const slides = document.querySelectorAll('.export-slide');
     const counter = document.getElementById('counter');
     let current = 0;
+    // Show the first slide
+    slides[0].classList.add('active');
     function show(n) {{
         n = Math.max(0, Math.min(n, slides.length - 1));
-        slides[current].style.display = 'none';
-        slides[n].style.display = 'flex';
+        if (n === current) return;
+        slides[current].classList.remove('active');
+        slides[n].classList.add('active');
         current = n;
         counter.textContent = (current + 1) + ' / ' + slides.length;
     }}
