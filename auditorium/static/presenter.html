@@ -94,11 +94,7 @@
             ws.onopen = function() {
                 setStatus('connected');
                 const params = new URLSearchParams(location.search);
-                const hello = { type: 'hello', slide: getSlideFromHash() };
-                const autoStep = params.get('auto_step');
-                if (autoStep) hello.auto_step = parseFloat(autoStep);
-                const slideDelay = params.get('slide_delay');
-                if (slideDelay) hello.slide_delay = parseFloat(slideDelay);
+                const hello = { type: 'hello', slide: getSlideFromHash(), role: 'presenter' };
                 ws.send(JSON.stringify(hello));
             };
 
@@ -137,6 +133,9 @@
                     break;
                 case 'finished':
                     window.__auditorium_finished = true;
+                    break;
+                case 'error':
+                    notesEl.innerHTML = '<p style="color:#ef4444;font-weight:600;">' + msg.message + '</p>';
                     break;
                 case 'notes':
                     notesEl.innerHTML = msg.html && msg.html.trim() ? msg.html : 'No notes.';

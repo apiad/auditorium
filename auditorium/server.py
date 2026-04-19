@@ -18,10 +18,11 @@ STATIC_DIR = Path(__file__).parent / "static"
 
 
 @dataclass
-class Session:
-    """Per-client session holding independent slide state."""
+class Presentation:
+    """Shared presentation state. All audience tabs + presenter share one slide state."""
 
-    ws: WebSocket
+    audience_clients: list[WebSocket] = field(default_factory=list)
+    presenter_ws: WebSocket | None = None
     slide_task: asyncio.Task | None = None
     current_slide: int = 0
     step_event: asyncio.Event | None = None
@@ -32,25 +33,33 @@ class Session:
     instant_sleep: bool = False
 
     async def send(self, message: dict) -> None:
-        """Send a JSON message to this session's client."""
-        try:
-            await self.ws.send_text(json.dumps(message))
-        except Exception:
-            pass
+        """Send a JSON message to all connected clients (audience + presenter)."""
+        data = json.dumps(message)
+        for ws in list(self.audience_clients):
+            try:
+                await ws.send_text(data)
+            except Exception:
+                self.audience_clients.remove(ws)
+        if self.presenter_ws:
+            try:
+                await self.presenter_ws.send_text(data)
+            except Exception:
+                self.presenter_ws = None
 
     async def send_mutation(self, mutation: dict) -> None:
-        """Send a mutation and wait for acknowledgment."""
+        """Send a mutation and wait for acknowledgment from any client."""
         mutation_id = str(uuid.uuid4())
         mutation["id"] = mutation_id
         mutation["type"] = "mutation"
         event = asyncio.Event()
         self.pending_acks[mutation_id] = event
         await self.send(mutation)
-        try:
-            await event.wait()
-        except asyncio.CancelledError:
-            self.pending_acks.pop(mutation_id, None)
-            raise
+        if self.audience_clients or self.presenter_ws:
+            try:
+                await event.wait()
+            except asyncio.CancelledError:
+                self.pending_acks.pop(mutation_id, None)
+                raise
 
     def cancel_slide(self) -> None:
         """Cancel the current slide task if running."""
@@ -59,21 +68,23 @@ class Session:
         self.slide_task = None
         self.step_event = None
 
+    @property
+    def has_clients(self) -> bool:
+        return bool(self.audience_clients) or self.presenter_ws is not None
+
 
 def create_app(deck: Deck | None = None) -> FastAPI:
     app = FastAPI()
     app.state.deck = deck
-    app.state.sessions: dict[str, Session] = {}
+    app.state.presentation = Presentation()
 
     @app.on_event("startup")
     async def _capture_loop() -> None:
         app.state.loop = asyncio.get_running_loop()
 
     @app.on_event("shutdown")
-    async def _cleanup_sessions() -> None:
-        for session in list(app.state.sessions.values()):
-            session.cancel_slide()
-        app.state.sessions.clear()
+    async def _cleanup() -> None:
+        app.state.presentation.cancel_slide()
 
     @app.get("/")
     async def index() -> HTMLResponse:
@@ -81,7 +92,7 @@ def create_app(deck: Deck | None = None) -> FastAPI:
         return HTMLResponse(html)
 
     @app.get("/presenter")
-    async def presenter() -> HTMLResponse:
+    async def presenter_page() -> HTMLResponse:
         html = (STATIC_DIR / "presenter.html").read_text()
         return HTMLResponse(html)
 
@@ -91,62 +102,102 @@ def create_app(deck: Deck | None = None) -> FastAPI:
     @app.websocket("/ws")
     async def websocket_endpoint(ws: WebSocket) -> None:
         await ws.accept()
-        session_id = str(uuid.uuid4())
-        session = Session(ws=ws)
-        app.state.sessions[session_id] = session
+        pres = app.state.presentation
+        is_presenter = False
+
         try:
-            # Wait for the client's hello message with its current slide
+            # Wait for the client's hello message
             data = await ws.receive_text()
             msg = json.loads(data)
-            if msg.get("type") == "hello":
-                session.current_slide = msg.get("slide", 0)
-                auto_step = msg.get("auto_step")
-                if auto_step is not None:
-                    session.auto_step = float(auto_step)
-                slide_delay = msg.get("slide_delay")
-                if slide_delay is not None:
-                    session.slide_delay = float(slide_delay)
-                if msg.get("instant_sleep"):
-                    session.instant_sleep = True
 
-            # Start the slide for this session
-            if app.state.deck:
-                # Clamp to valid range
+            if msg.get("type") != "hello":
+                await ws.close(1008, "Expected hello message")
+                return
+
+            role = msg.get("role", "audience")
+
+            if role == "presenter":
+                if pres.presenter_ws is not None:
+                    # Already have a presenter — reject
+                    await ws.send_text(json.dumps({
+                        "type": "error",
+                        "message": "A presenter is already connected",
+                    }))
+                    await ws.close(1008, "Presenter already connected")
+                    return
+                pres.presenter_ws = ws
+                is_presenter = True
+            else:
+                pres.audience_clients.append(ws)
+
+            # Handle recording/export params (only from first connection)
+            auto_step = msg.get("auto_step")
+            if auto_step is not None:
+                pres.auto_step = float(auto_step)
+            slide_delay = msg.get("slide_delay")
+            if slide_delay is not None:
+                pres.slide_delay = float(slide_delay)
+            if msg.get("instant_sleep"):
+                pres.instant_sleep = True
+
+            # Navigate to the requested slide if no slide task is running
+            requested_slide = msg.get("slide", 0)
+            slide_idle = pres.slide_task is None or pres.slide_task.done()
+
+            if app.state.deck and slide_idle:
                 total = len(app.state.deck.slides)
-                session.current_slide = max(0, min(session.current_slide, total - 1))
+                pres.current_slide = max(0, min(requested_slide, total - 1))
                 await asyncio.sleep(0.05)
-                session.slide_task = asyncio.create_task(
-                    _run_slide(app, session)
+                pres.slide_task = asyncio.create_task(
+                    _run_slide(app, pres)
                 )
+            else:
+                # Session already running — send current state to new client
+                if app.state.deck:
+                    total = len(app.state.deck.slides)
+                    await ws.send_text(json.dumps({
+                        "type": "slide",
+                        "index": pres.current_slide,
+                        "total": total,
+                    }))
 
             # Message loop
             while True:
                 data = await ws.receive_text()
                 msg = json.loads(data)
                 if msg["type"] == "ack":
-                    event = session.pending_acks.pop(msg["id"], None)
+                    event = pres.pending_acks.pop(msg["id"], None)
                     if event:
                         event.set()
                 elif msg["type"] == "keypress":
-                    await _handle_keypress(app, session, msg["key"])
+                    # Audience keypresses ignored when presenter is connected
+                    if is_presenter or pres.presenter_ws is None:
+                        await _handle_keypress(app, pres, msg["key"])
+
         except (WebSocketDisconnect, asyncio.CancelledError):
             pass
         finally:
-            session.cancel_slide()
-            app.state.sessions.pop(session_id, None)
+            if is_presenter:
+                pres.presenter_ws = None
+            else:
+                if ws in pres.audience_clients:
+                    pres.audience_clients.remove(ws)
+            # If no clients left, cancel the slide task
+            if not pres.has_clients:
+                pres.cancel_slide()
 
     return app
 
 
-async def _run_slide(app: FastAPI, session: Session) -> None:
-    """Run a slide function for a specific session."""
+async def _run_slide(app: FastAPI, pres: Presentation) -> None:
+    """Run a slide function for the shared presentation."""
     deck = app.state.deck
-    index = session.current_slide
+    index = pres.current_slide
     if not deck or index >= len(deck.slides):
         return
     try:
-        await session.send({"type": "clear"})
-        await session.send({"type": "slide", "index": index, "total": len(deck.slides)})
+        await pres.send({"type": "clear"})
+        await pres.send({"type": "slide", "index": index, "total": len(deck.slides)})
 
         slide_fn = deck.slides[index]
 
@@ -159,7 +210,7 @@ async def _run_slide(app: FastAPI, session: Session) -> None:
                 textwrap.dedent(slide_fn.func.__doc__).strip(),
                 extensions=["fenced_code", "tables"],
             )
-        await session.send({"type": "notes", "html": notes_html})
+        await pres.send({"type": "notes", "html": notes_html})
 
         # Send next slide preview
         if index < len(deck.slides) - 1:
@@ -175,78 +226,78 @@ async def _run_slide(app: FastAPI, session: Session) -> None:
                     if line.strip():
                         para.append(line.strip())
                 next_excerpt = " ".join(para)
-            await session.send({"type": "next_preview", "title": next_fn.name, "excerpt": next_excerpt})
+            await pres.send({"type": "next_preview", "title": next_fn.name, "excerpt": next_excerpt})
         else:
-            await session.send({"type": "next_preview", "title": None, "excerpt": ""})
+            await pres.send({"type": "next_preview", "title": None, "excerpt": ""})
 
-        # Execute the slide body (docstring is NOT rendered as content)
+        # Execute the slide body
         from auditorium.slide import SlideContext
-        ctx = SlideContext(session)
+        ctx = SlideContext(pres)
         await slide_fn.func(ctx)
 
         # Signal that the slide function has finished (for exporters)
-        await session.send({"type": "slide_complete", "index": index})
+        await pres.send({"type": "slide_complete", "index": index})
 
         # Auto-advance in recording mode
-        if session.auto_step is not None:
-            await asyncio.sleep(session.slide_delay)
+        if pres.auto_step is not None:
+            await asyncio.sleep(pres.slide_delay)
             if index < len(deck.slides) - 1:
-                session.current_slide = index + 1
-                session.slide_task = asyncio.create_task(_run_slide(app, session))
+                pres.current_slide = index + 1
+                pres.slide_task = asyncio.create_task(_run_slide(app, pres))
                 return
-            await session.send({"type": "finished"})
+            await pres.send({"type": "finished"})
     except (asyncio.CancelledError, Exception):
         pass
 
 
-async def _handle_keypress(app: FastAPI, session: Session, key: str) -> None:
-    """Handle navigation keypress for a specific session."""
+async def _handle_keypress(app: FastAPI, pres: Presentation, key: str) -> None:
+    """Handle navigation keypress for the shared presentation."""
     deck = app.state.deck
     if not deck:
         return
 
     if key in ("ArrowRight", " "):
-        if session.step_event is not None:
-            session.step_event.set()
-            session.step_event = None
+        if pres.step_event is not None:
+            pres.step_event.set()
+            pres.step_event = None
         else:
-            await _go_to_slide(app, session, session.current_slide + 1)
+            await _go_to_slide(app, pres, pres.current_slide + 1)
     elif key == "PageDown":
-        session.cancel_slide()
-        await _go_to_slide(app, session, session.current_slide + 1)
+        pres.cancel_slide()
+        await _go_to_slide(app, pres, pres.current_slide + 1)
     elif key == "ArrowLeft":
-        session.cancel_slide()
-        await _go_to_slide(app, session, session.current_slide - 1)
+        pres.cancel_slide()
+        await _go_to_slide(app, pres, pres.current_slide - 1)
     elif key == "r":
-        session.cancel_slide()
-        await _go_to_slide(app, session, session.current_slide)
+        pres.cancel_slide()
+        await _go_to_slide(app, pres, pres.current_slide)
     elif key.isdigit():
-        session.numeric_buffer += key
-    elif key == "Enter" and session.numeric_buffer:
-        target = int(session.numeric_buffer) - 1
-        session.numeric_buffer = ""
-        session.cancel_slide()
-        await _go_to_slide(app, session, target)
+        pres.numeric_buffer += key
+    elif key == "Enter" and pres.numeric_buffer:
+        target = int(pres.numeric_buffer) - 1
+        pres.numeric_buffer = ""
+        pres.cancel_slide()
+        await _go_to_slide(app, pres, target)
 
 
-async def _go_to_slide(app: FastAPI, session: Session, index: int) -> None:
-    """Navigate a session to a specific slide index."""
+async def _go_to_slide(app: FastAPI, pres: Presentation, index: int) -> None:
+    """Navigate the presentation to a specific slide index."""
     deck = app.state.deck
     if not deck:
         return
     index = max(0, min(index, len(deck.slides) - 1))
-    session.current_slide = index
-    session.cancel_slide()
-    session.slide_task = asyncio.create_task(_run_slide(app, session))
+    pres.current_slide = index
+    pres.cancel_slide()
+    pres.slide_task = asyncio.create_task(_run_slide(app, pres))
 
 
 async def reload_deck(app: FastAPI, new_deck) -> None:
-    """Hot-reload: swap the deck and restart all sessions at their current slide."""
+    """Hot-reload: swap the deck and restart the presentation."""
     app.state.deck = new_deck
+    pres = app.state.presentation
     total = len(new_deck.slides)
-    for session in list(app.state.sessions.values()):
-        session.cancel_slide()
-        session.current_slide = max(0, min(session.current_slide, total - 1))
-        await session.send({"type": "reload", "slide": session.current_slide})
-        await asyncio.sleep(0.05)
-        session.slide_task = asyncio.create_task(_run_slide(app, session))
+    pres.cancel_slide()
+    pres.current_slide = max(0, min(pres.current_slide, total - 1))
+    await pres.send({"type": "reload", "slide": pres.current_slide})
+    await asyncio.sleep(0.05)
+    pres.slide_task = asyncio.create_task(_run_slide(app, pres))

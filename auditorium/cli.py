@@ -182,30 +182,34 @@ def _start_live_status(application, deck) -> None:
 
     def _render():
         table = Table(show_header=True, header_style="dim", box=None, padding=(0, 1))
-        table.add_column("Session", style="dim", width=8)
-        table.add_column("Slide", width=20)
+        table.add_column("Audience", width=10)
+        table.add_column("Slide", width=24)
         table.add_column("Status", width=10)
+        table.add_column("Presenter", width=14)
 
-        sessions = getattr(application.state, "sessions", {})
-        if not sessions:
-            table.add_row("", "[dim]No connections[/]", "")
+        pres = getattr(application.state, "presentation", None)
+        if not pres or not pres.has_clients:
+            table.add_row("", "[dim]No connections[/]", "", "")
         else:
-            for i, (sid, session) in enumerate(sessions.items()):
-                slide_idx = session.current_slide
-                total = len(deck.slides) if deck else 0
-                slide_name = ""
-                if deck and slide_idx < len(deck.slides):
-                    slide_name = deck.slides[slide_idx].name
-                task_status = "idle"
-                if session.slide_task and not session.slide_task.done():
-                    task_status = "[green]running[/]"
-                elif session.step_event:
-                    task_status = "[yellow]waiting[/]"
-                table.add_row(
-                    f"#{i + 1}",
-                    f"{slide_idx + 1}/{total} [dim]{slide_name}[/]",
-                    task_status,
-                )
+            n_audience = len(pres.audience_clients)
+            slide_idx = pres.current_slide
+            total = len(deck.slides) if deck else 0
+            slide_name = ""
+            if deck and slide_idx < len(deck.slides):
+                slide_name = deck.slides[slide_idx].name
+            task_status = "idle"
+            if pres.slide_task and not pres.slide_task.done():
+                task_status = "[green]running[/]"
+            elif pres.step_event:
+                task_status = "[yellow]waiting[/]"
+            presenter_status = "[green]connected[/]" if pres.presenter_ws else "[dim]none[/]"
+            audience_label = f"{n_audience} tab{'s' if n_audience != 1 else ''}" if n_audience else "[dim]none[/]"
+            table.add_row(
+                audience_label,
+                f"{slide_idx + 1}/{total} [dim]{slide_name}[/]",
+                task_status,
+                presenter_status,
+            )
         return table
 
     def _run():
