@@ -1,0 +1,12 @@
+[Unit]
+Description=Auditorium Relay Server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=auditorium relay --port 4243
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -56,7 +56,10 @@
         function connect() {
             setStatus('connecting');
             const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${location.host}/ws`);
+            // Check for relay ws path (injected by relay server via meta tag)
+            const wsMeta = document.querySelector('meta[name="auditorium-ws-path"]');
+            const wsPath = wsMeta ? wsMeta.content : '/ws';
+            ws = new WebSocket(`${protocol}//${location.host}${wsPath}`);
 
             ws.onopen = function() {
                 setStatus('connected');

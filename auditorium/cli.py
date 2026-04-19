@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import json
 import signal
 import sys
 from pathlib import Path
@@ -81,6 +82,8 @@ def run(
     port: int = typer.Option(8000, help="Port to bind to"),
     open_browser: bool = typer.Option(True, "--open/--no-open", help="Open browser automatically"),
     presenter: bool = typer.Option(False, "-p", "--presenter", help="Also open presenter view"),
+    public: bool = typer.Option(False, "--public", help="Share via relay for remote viewers"),
+    relay_host: str = typer.Option("auditorium.apiad.net:4243", "--relay", help="Relay server host:port"),
     watch: bool = typer.Option(True, "--watch/--no-watch", help="Watch for file changes and hot-reload"),
 ) -> None:
     """Run a presentation deck."""
@@ -97,6 +100,9 @@ def run(
 
     if watch:
         _setup_watcher(application, deck_path)
+
+    if public:
+        _start_relay_bridge(relay_host, port)
 
     if open_browser:
         import webbrowser
@@ -237,6 +243,79 @@ def _start_live_status(application, deck) -> None:
                 live.update(_render())
 
     thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+
+
+@app.command()
+def relay(
+    port: int = typer.Option(4243, help="Port to bind to"),
+    host: str = typer.Option("0.0.0.0", help="Host to bind to"),
+) -> None:
+    """Run a relay server for public presentation sharing."""
+    from auditorium.relay import create_relay_app
+
+    relay_app = create_relay_app()
+    console.print(f"[bold]Auditorium Relay[/] listening on [cyan]{host}:{port}[/]")
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    uvicorn.run(relay_app, host=host, port=port, log_level="warning")
+
+
+def _start_relay_bridge(relay_host: str, local_port: int) -> None:
+    """Connect to a relay server and bridge the local presentation to it."""
+    import threading
+
+    def _bridge():
+        import time
+        from websockets.sync.client import connect as ws_connect
+
+        time.sleep(1.5)  # Wait for local server to start
+
+        relay_protocol = "wss" if ":443" in relay_host else "ws"
+        http_protocol = "https" if relay_protocol == "wss" else "http"
+
+        try:
+            # Connect to the relay as an upstream presenter
+            relay_ws = ws_connect(f"{relay_protocol}://{relay_host}/upstream")
+            reg = json.loads(relay_ws.recv())
+            if reg.get("type") != "registered":
+                console.print("[red]Relay error:[/] unexpected response")
+                return
+
+            session_id = reg["id"]
+            public_url = f"{http_protocol}://{relay_host}/r/{session_id}/"
+            console.print(f"\n[green]Public URL:[/] [bold cyan]{public_url}[/]\n")
+
+            # Connect to the local server as an audience client
+            local_ws = ws_connect(f"ws://127.0.0.1:{local_port}/ws")
+            local_ws.send(json.dumps({"type": "hello", "slide": 0}))
+
+            # Two threads: local→relay and relay→local
+            def forward_local_to_relay():
+                try:
+                    while True:
+                        data = local_ws.recv()
+                        relay_ws.send(data)
+                except Exception:
+                    pass
+
+            def forward_relay_to_local():
+                try:
+                    while True:
+                        data = relay_ws.recv()
+                        local_ws.send(data)
+                except Exception:
+                    pass
+
+            t1 = threading.Thread(target=forward_local_to_relay, daemon=True)
+            t2 = threading.Thread(target=forward_relay_to_local, daemon=True)
+            t1.start()
+            t2.start()
+            t1.join()
+
+        except Exception as e:
+            console.print(f"[red]Relay error:[/] {e}")
+
+    thread = threading.Thread(target=_bridge, daemon=True)
     thread.start()
 
 
