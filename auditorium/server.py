@@ -31,10 +31,16 @@ class Presentation:
     auto_step: float | None = None
     slide_delay: float = 3.0
     instant_sleep: bool = False
+    _message_log: list[str] = field(default_factory=list)
 
     async def send(self, message: dict) -> None:
         """Send a JSON message to all connected clients (audience + presenter)."""
         data = json.dumps(message)
+        # Log messages for late-joining clients. Reset on clear (new slide).
+        if message.get("type") == "clear":
+            self._message_log.clear()
+        self._message_log.append(data)
+
         for ws in list(self.audience_clients):
             try:
                 await ws.send_text(data)
@@ -45,6 +51,14 @@ class Presentation:
                 await self.presenter_ws.send_text(data)
             except Exception:
                 self.presenter_ws = None
+
+    async def replay_to(self, ws: WebSocket) -> None:
+        """Replay the current slide's message log to a late-joining client."""
+        for data in self._message_log:
+            try:
+                await ws.send_text(data)
+            except Exception:
+                break
 
     async def send_mutation(self, mutation: dict) -> None:
         """Send a mutation and wait for acknowledgment from any client."""
@@ -210,13 +224,9 @@ async def _handle_shared_session(app: FastAPI, ws: WebSocket, hello: dict, role:
             await asyncio.sleep(0.05)
             pres.slide_task = asyncio.create_task(_run_slide(app, pres))
         elif app.state.deck:
-            # Already running — send current state to new client
-            total = len(app.state.deck.slides)
-            await ws.send_text(json.dumps({
-                "type": "slide",
-                "index": pres.current_slide,
-                "total": total,
-            }))
+            # Already running — replay the current slide's messages so
+            # the late-joining client sees the full slide state.
+            await pres.replay_to(ws)
 
         # Message loop
         while True:
