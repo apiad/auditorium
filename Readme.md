@@ -84,22 +84,22 @@ auditorium run talk.py
 
 ## Features
 
-| | Feature | Description |
-|---|---------|-------------|
-| **Code** | Imperative Python slides | Each slide is an `async def` — loops, conditionals, imports, anything |
-| **Reveal** | Progressive reveals | `await ctx.step()` pauses for keypress, `await ctx.sleep(n)` auto-advances |
-| **Math** | LaTeX math | KaTeX bundled — `$inline$` and `$$display$$` in any markdown |
-| **Code** | Syntax highlighting | Fenced code blocks with highlight.js (bundled) |
-| **Layout** | Flexible layouts | `columns`, `rows` with `"auto"` sizing, arbitrarily nested |
-| **Presenter** | Presenter mode | `--presenter` opens a second tab with notes, timer, next-slide preview |
-| **Sync** | Shared navigation | Presenter drives all audience tabs — students see what you show |
-| **Late join** | Mid-slide sync | Late-joining viewers see the full slide state immediately |
-| **Export** | PDF / HTML / PNG | `auditorium export` — vector PDF, self-contained interactive HTML, or PNG per slide |
-| **Record** | Video capture | `auditorium record` — headless or live recording via Playwright |
-| **Step export** | Step-by-step | `--step-by-step` captures each reveal as a separate frame with original timing |
-| **Reload** | Hot reload | Edit your `.py` and the browser updates — stays on the same slide |
-| **Offline** | Fully bundled | All assets (fonts, KaTeX, highlight.js) ship with the package — zero CDN, zero internet |
-| **Reconnect** | Server restart | Client auto-reconnects and resumes at the same slide |
+|                 | Feature                  | Description                                                                             |
+| --------------- | ------------------------ | --------------------------------------------------------------------------------------- |
+| **Code**        | Imperative Python slides | Each slide is an `async def` — loops, conditionals, imports, anything                   |
+| **Reveal**      | Progressive reveals      | `await ctx.step()` pauses for keypress, `await ctx.sleep(n)` auto-advances              |
+| **Math**        | LaTeX math               | KaTeX bundled — `$inline$` and `$$display$$` in any markdown                            |
+| **Code**        | Syntax highlighting      | Fenced code blocks with highlight.js (bundled)                                          |
+| **Layout**      | Flexible layouts         | `columns`, `rows` with `"auto"` sizing, arbitrarily nested                              |
+| **Presenter**   | Presenter mode           | `--presenter` opens a second tab with notes, timer, next-slide preview                  |
+| **Sync**        | Shared navigation        | Presenter drives all audience tabs — students see what you show                         |
+| **Late join**   | Mid-slide sync           | Late-joining viewers see the full slide state immediately                               |
+| **Export**      | PDF / HTML / PNG         | `auditorium export` — vector PDF, self-contained interactive HTML, or PNG per slide     |
+| **Record**      | Video capture            | `auditorium record` — headless or live recording via Playwright                         |
+| **Step export** | Step-by-step             | `--step-by-step` captures each reveal as a separate frame with original timing          |
+| **Reload**      | Hot reload               | Edit your `.py` and the browser updates — stays on the same slide                       |
+| **Offline**     | Fully bundled            | All assets (fonts, KaTeX, highlight.js) ship with the package — zero CDN, zero internet |
+| **Reconnect**   | Server restart           | Client auto-reconnects and resumes at the same slide                                    |
 
 ## Presenter Mode
 
@@ -158,13 +158,13 @@ auditorium export talk.py -f html --step-by-step -o talk.html
 
 ## Navigation
 
-| Key | Action |
-|-----|--------|
+| Key                 | Action                     |
+| ------------------- | -------------------------- |
 | Right arrow / Space | Advance step or next slide |
-| Page Down | Skip to next slide |
-| Left arrow | Previous slide |
-| `r` | Restart current slide |
-| Digits + Enter | Jump to slide N |
+| Page Down           | Skip to next slide         |
+| Left arrow          | Previous slide             |
+| `r`                 | Restart current slide      |
+| Digits + Enter      | Jump to slide N            |
 
 ## Example
 
