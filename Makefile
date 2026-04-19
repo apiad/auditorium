@@ -1,4 +1,4 @@
-.PHONY: relay relay-install relay-uninstall relay-status relay-logs
+.PHONY: relay relay-install relay-update relay-uninstall relay-status relay-logs
 
 RELAY_SERVICE = auditorium-relay
 SERVICE_FILE = /etc/systemd/system/$(RELAY_SERVICE).service
@@ -29,6 +29,12 @@ relay-install:
 	@echo ""
 	@echo "$(RELAY_SERVICE) installed and running on port $(RELAY_PORT)"
 	@echo "Binary: $(AUDITORIUM_BIN)"
+	@sudo systemctl status $(RELAY_SERVICE) --no-pager
+
+relay-update:
+	git pull
+	pip install -e .
+	sudo systemctl restart $(RELAY_SERVICE)
 	@sudo systemctl status $(RELAY_SERVICE) --no-pager
 
 relay-uninstall:
