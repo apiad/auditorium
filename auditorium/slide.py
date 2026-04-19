@@ -94,8 +94,21 @@ class SlideContext:
         await self._session.send({"type": "step_complete"})
 
     async def sleep(self, seconds: float) -> None:
-        """Pause for a duration. Instant when instant_sleep is set (export mode)."""
+        """Pause for a duration. Instant when instant_sleep is set (export mode).
+
+        When auto_step is None but instant_sleep is True (step-by-step export),
+        sleep acts like step — blocks for a keypress so the exporter can capture
+        the state before and after each sleep boundary.
+        """
         if self._session.instant_sleep:
+            if self._session.auto_step is None:
+                # Step-by-step export: treat sleep as a capture boundary.
+                # Set event BEFORE sending signal to avoid race with the
+                # exporter's keypress arriving before step_event is set.
+                event = asyncio.Event()
+                self._session.step_event = event
+                await self._session.send({"type": "step_complete"})
+                await event.wait()
             return
         await asyncio.sleep(seconds)
 

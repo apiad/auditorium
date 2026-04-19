@@ -95,10 +95,10 @@ async def export_deck(
 
                         step_idx = 0
                         while True:
-                            # Wait a bit for DOM to settle after content renders
-                            await page.wait_for_timeout(150)
+                            # Wait for DOM to settle
+                            await page.wait_for_timeout(200)
 
-                            # Check if slide already completed (no steps, or after last step)
+                            # Check if slide already completed
                             done = await page.evaluate(
                                 "() => window.__auditorium_slide_complete === true"
                             )
@@ -109,17 +109,24 @@ async def export_deck(
                             if done:
                                 break
 
-                            # Advance one step by sending a keypress
-                            prev_steps = await page.evaluate(
+                            # Advance one step/sleep boundary by sending a keypress
+                            await page.keyboard.press("ArrowRight")
+                            # Wait for the step/sleep to resolve and new content to render.
+                            # Use a short poll: either step_count changes, slide completes,
+                            # or we timeout after 2s (handles slides that finish between
+                            # steps without sending step_complete).
+                            prev_count = await page.evaluate(
                                 "() => window.__auditorium_step_count || 0"
                             )
-                            await page.keyboard.press("ArrowRight")
-                            # Wait for either step_complete or slide_complete
-                            await page.wait_for_function(
-                                f"() => (window.__auditorium_step_count || 0) > {prev_steps} "
-                                f"|| window.__auditorium_slide_complete === true",
-                                timeout=60000,
-                            )
+                            try:
+                                await page.wait_for_function(
+                                    f"() => (window.__auditorium_step_count || 0) > {prev_count} "
+                                    f"|| window.__auditorium_slide_complete === true",
+                                    timeout=2000,
+                                )
+                            except Exception:
+                                # Timeout is OK — slide may have completed between checks
+                                pass
 
                         progress.update(task, advance=1)
                     else:
