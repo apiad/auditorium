@@ -94,7 +94,9 @@ class SlideContext:
         await self._session.send({"type": "step_complete"})
 
     async def sleep(self, seconds: float) -> None:
-        """Pause for a duration."""
+        """Pause for a duration. Instant when auto_step is 0 (export mode)."""
+        if self._session.auto_step == 0:
+            return
         await asyncio.sleep(seconds)
 
     # --- Layout ---

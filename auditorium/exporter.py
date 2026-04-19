@@ -262,9 +262,14 @@ async def _build_pdf(
             f'{dom["html"]}</div>\n'
         )
 
+    no_anim = (
+        "*, *::before, *::after { "
+        "animation-duration: 0s !important; animation-delay: 0s !important; "
+        "transition-duration: 0s !important; transition-delay: 0s !important; }"
+    )
     print_html = (
         f'<!DOCTYPE html><html><head><meta charset="UTF-8">'
-        f"<style>{theme_css}\n{katex_css}\n{hljs_css}\nbody {{ margin: 0; }}</style>"
+        f"<style>{theme_css}\n{katex_css}\n{hljs_css}\n{no_anim}\nbody {{ margin: 0; }}</style>"
         f"</head><body>{slides_html}</body></html>"
     )
 
