@@ -83,7 +83,7 @@ def run(
     open_browser: bool = typer.Option(True, "--open/--no-open", help="Open browser automatically"),
     presenter: bool = typer.Option(False, "-p", "--presenter", help="Also open presenter view"),
     public: bool = typer.Option(False, "--public", help="Share via relay for remote viewers"),
-    relay_host: str = typer.Option("auditorium.apiad.net:4243", "--relay", help="Relay server host:port"),
+    relay_host: str = typer.Option("vps.apiad.net:4243", "--relay", help="Relay server host:port"),
     watch: bool = typer.Option(True, "--watch/--no-watch", help="Watch for file changes and hot-reload"),
 ) -> None:
     """Run a presentation deck."""
