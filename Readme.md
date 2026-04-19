@@ -167,10 +167,13 @@ auditorium record talk.py -o talk.webm --live
 Export your presentation to static formats (requires `auditorium[record]`):
 
 ```bash
-auditorium export talk.py -f html -o talk.html   # self-contained HTML
-auditorium export talk.py -f pdf -o talk.pdf     # vector PDF
-auditorium export talk.py -f png -o slides/      # one PNG per slide
+auditorium export talk.py -f html -o talk.html           # self-contained HTML
+auditorium export talk.py -f pdf -o talk.pdf             # vector PDF
+auditorium export talk.py -f png -o slides/              # one PNG per slide
+auditorium export talk.py -f html --step-by-step -o out  # one frame per step
 ```
+
+Step-by-step mode captures each `step()` and `sleep()` boundary as a separate frame. In HTML exports, sleep frames auto-advance at their authored timing while step frames wait for keypress — matching the live presentation.
 
 ## Example
 

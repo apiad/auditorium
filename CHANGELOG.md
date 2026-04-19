@@ -1,5 +1,31 @@
 # Changelog
 
+## 3.1.0
+
+### Added
+
+- **Video recording** (`auditorium record`) with Rich progress bars and ETA.
+- **Step-by-step export** (`--step-by-step`) — captures one frame per `step()` and `sleep()` boundary, not just final slide state.
+- **Timed auto-advance in HTML export** — sleep boundaries auto-play at their authored duration, step boundaries wait for keypress, matching the live presentation behavior.
+- **Live session status** — `auditorium run` shows a Rich Live table of connected sessions with current slide and task status.
+- **Connection status dot** — green/red/blinking orange indicator in bottom-left of presentation.
+- **Rich CLI output** — startup banner panel, styled progress bars, colored messages.
+
+### Fixed
+
+- Export now waits for `slide_complete` signal instead of fixed timeout, fixing slides with `sleep()` that were captured mid-animation.
+- Animations disabled during export (CSS `animation-duration: 0s !important`) — no more half-faded screenshots.
+- `sleep()` is instant in export mode (`instant_sleep` flag) — exports are fast regardless of authored timings.
+- KaTeX fonts fully inlined as base64 in HTML/PDF exports — no 404s for math fonts.
+- Left arrow in exported step-by-step HTML goes to previous slide (consistent with live mode), not previous step.
+- Step-by-step export uses keypress-driven capture (one run per slide) instead of fragile re-run approach.
+
+### Changed
+
+- Replaced tqdm with Rich for all CLI progress output.
+- All assets bundled locally — zero CDN dependencies, fully offline presentations.
+- Per-client sessions — each browser tab runs independently on the server.
+
 ## 3.0.0
 
 ### Breaking

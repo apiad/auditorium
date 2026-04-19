@@ -168,10 +168,13 @@ def _build_html(
 ) -> None:
     """Build a self-contained HTML file with all slides and a JS navigator."""
     theme_css = (static_dir / "theme.css").read_text()
-    katex_css = (static_dir / "vendor" / "katex" / "katex.min.css").read_text()
+    katex_css = _inline_katex_fonts(
+        (static_dir / "vendor" / "katex" / "katex.min.css").read_text(),
+        static_dir / "vendor" / "katex" / "fonts",
+    )
     hljs_css = (static_dir / "vendor" / "hljs" / "styles" / "github.min.css").read_text()
 
-    # Inline fonts as base64 data URLs
+    # Inline Google Fonts as base64 data URLs
     font_faces = ""
     for font_file in sorted((static_dir / "fonts").glob("*.woff2")):
         b64 = base64.b64encode(font_file.read_bytes()).decode()
@@ -183,13 +186,16 @@ def _build_html(
         )
 
     slides_html = ""
+    slide_num = 0
     for i, dom in enumerate(slide_doms):
         active = " active" if i == 0 else ""
         boundary = dom.get("boundary", "initial")
         duration = dom.get("duration", 0)
+        if boundary == "initial":
+            slide_num += 1
         slides_html += (
             f'<div class="export-slide{active} {dom["classes"]}" '
-            f'data-boundary="{boundary}" data-duration="{duration}">'
+            f'data-boundary="{boundary}" data-duration="{duration}" data-slide="{slide_num}">'
             f'{dom["html"]}</div>\n'
         )
 
@@ -255,9 +261,31 @@ body {{ margin: 0; background: #fff; overflow: hidden; }}
         }}
     }}
 
+    function prevSlide() {{
+        // Go to the first frame of the previous slide (consistent with live mode)
+        const curSlide = slides[current].dataset.slide;
+        // Find the first frame of the current slide
+        let firstOfCurrent = current;
+        while (firstOfCurrent > 0 && slides[firstOfCurrent - 1].dataset.slide === curSlide) {{
+            firstOfCurrent--;
+        }}
+        if (firstOfCurrent === current && firstOfCurrent > 0) {{
+            // Already at first frame of this slide — go to first frame of previous slide
+            const prevSlideNum = slides[firstOfCurrent - 1].dataset.slide;
+            let target = firstOfCurrent - 1;
+            while (target > 0 && slides[target - 1].dataset.slide === prevSlideNum) {{
+                target--;
+            }}
+            show(target);
+        }} else {{
+            // Go to first frame of current slide (restart slide)
+            show(firstOfCurrent);
+        }}
+    }}
+
     document.addEventListener('keydown', function(e) {{
         if (e.key === 'ArrowRight' || e.key === ' ') {{ e.preventDefault(); show(current + 1); }}
-        else if (e.key === 'ArrowLeft') {{ e.preventDefault(); show(current - 1); }}
+        else if (e.key === 'ArrowLeft') {{ e.preventDefault(); prevSlide(); }}
     }});
 
     // Start auto-advance chain if the second frame is a sleep
@@ -281,7 +309,10 @@ async def _build_pdf(
     from playwright.async_api import async_playwright
 
     theme_css = (static_dir / "theme.css").read_text()
-    katex_css = (static_dir / "vendor" / "katex" / "katex.min.css").read_text()
+    katex_css = _inline_katex_fonts(
+        (static_dir / "vendor" / "katex" / "katex.min.css").read_text(),
+        static_dir / "vendor" / "katex" / "fonts",
+    )
     hljs_css = (static_dir / "vendor" / "hljs" / "styles" / "github.min.css").read_text()
 
     slides_html = ""
@@ -321,6 +352,26 @@ async def _build_pdf(
             print_background=True,
         )
         await browser.close()
+
+
+def _inline_katex_fonts(katex_css: str, font_dir: Path) -> str:
+    """Replace KaTeX font url() references with base64 data URIs."""
+    import re
+
+    def _replace(match: re.Match) -> str:
+        font_path = font_dir / match.group(1)
+        if font_path.exists():
+            b64 = base64.b64encode(font_path.read_bytes()).decode()
+            ext = font_path.suffix.lstrip(".")
+            mime = {"woff2": "font/woff2", "woff": "font/woff", "ttf": "font/ttf"}.get(ext, "font/woff2")
+            return f"url(data:{mime};base64,{b64})"
+        return match.group(0)
+
+    result = re.sub(r'url\(fonts/([^)]+)\)', _replace, katex_css)
+    # Remove remaining non-inlined font references (woff/ttf fallbacks we don't have)
+    result = re.sub(r',\s*url\(fonts/[^)]+\)\s*format\([^)]+\)', '', result)
+    result = re.sub(r'url\(fonts/[^)]+\)\s*format\([^)]+\)\s*,?', '', result)
+    return result
 
 
 async def _capture(page, fmt: str, output: Path, slide_doms: list[dict], slide_idx: int, step_idx: int | None) -> None:

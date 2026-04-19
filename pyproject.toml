@@ -1,6 +1,6 @@
 [project]
 name = "auditorium"
-version = "1!3.0.0"
+version = "1!3.1.0"
 description = "Python-scripted live slide framework"
 authors = [{name = "Alejandro Piad", email = "apiad@apiad.net"}]
 license = {text = "MIT"}

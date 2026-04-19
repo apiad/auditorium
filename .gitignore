@@ -153,3 +153,7 @@ dmypy.json
 # End of https://www.gitignore.io/api/visualstudiocode,linux,python
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
+*.html
+demo_deck.html
+demo_deck.pdf
+*.webm
