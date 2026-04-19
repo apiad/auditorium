@@ -19,7 +19,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 
 @dataclass
 class Presentation:
-    """Shared presentation state. All audience tabs + presenter share one slide state."""
+    """Presentation state. Used per-tab (independent mode) or shared (presenter mode)."""
 
     audience_clients: list[WebSocket] = field(default_factory=list)
     presenter_ws: WebSocket | None = None
@@ -73,10 +73,14 @@ class Presentation:
         return bool(self.audience_clients) or self.presenter_ws is not None
 
 
-def create_app(deck: Deck | None = None) -> FastAPI:
+def create_app(deck: Deck | None = None, presenter_mode: bool = False) -> FastAPI:
     app = FastAPI()
     app.state.deck = deck
-    app.state.presentation = Presentation()
+    app.state.presenter_mode = presenter_mode
+    # In presenter mode: one shared Presentation for all tabs
+    # In independent mode: one Presentation per tab, stored in a dict
+    app.state.shared_pres = Presentation() if presenter_mode else None
+    app.state.sessions: dict[str, Presentation] = {}
 
     @app.on_event("startup")
     async def _capture_loop() -> None:
@@ -84,7 +88,11 @@ def create_app(deck: Deck | None = None) -> FastAPI:
 
     @app.on_event("shutdown")
     async def _cleanup() -> None:
-        app.state.presentation.cancel_slide()
+        if app.state.shared_pres:
+            app.state.shared_pres.cancel_slide()
+        for pres in app.state.sessions.values():
+            pres.cancel_slide()
+        app.state.sessions.clear()
 
     @app.get("/")
     async def index() -> HTMLResponse:
@@ -93,20 +101,18 @@ def create_app(deck: Deck | None = None) -> FastAPI:
 
     @app.get("/presenter")
     async def presenter_page() -> HTMLResponse:
+        if not app.state.presenter_mode:
+            return HTMLResponse("Presenter mode not enabled. Start with --presenter.", status_code=403)
         html = (STATIC_DIR / "presenter.html").read_text()
         return HTMLResponse(html)
 
-    # Serve all static assets (CSS, JS, fonts, vendor libs)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.websocket("/ws")
     async def websocket_endpoint(ws: WebSocket) -> None:
         await ws.accept()
-        pres = app.state.presentation
-        is_presenter = False
 
         try:
-            # Wait for the client's hello message
             data = await ws.receive_text()
             msg = json.loads(data)
 
@@ -116,81 +122,128 @@ def create_app(deck: Deck | None = None) -> FastAPI:
 
             role = msg.get("role", "audience")
 
-            if role == "presenter":
-                if pres.presenter_ws is not None:
-                    # Already have a presenter — reject
+            if app.state.presenter_mode:
+                await _handle_shared_session(app, ws, msg, role)
+            else:
+                if role == "presenter":
                     await ws.send_text(json.dumps({
                         "type": "error",
-                        "message": "A presenter is already connected",
+                        "message": "Presenter mode not enabled. Start server with --presenter.",
                     }))
-                    await ws.close(1008, "Presenter already connected")
+                    await ws.close(1008, "Presenter mode not enabled")
                     return
-                pres.presenter_ws = ws
-                is_presenter = True
-            else:
-                pres.audience_clients.append(ws)
-
-            # Handle recording/export params (only from first connection)
-            auto_step = msg.get("auto_step")
-            if auto_step is not None:
-                pres.auto_step = float(auto_step)
-            slide_delay = msg.get("slide_delay")
-            if slide_delay is not None:
-                pres.slide_delay = float(slide_delay)
-            if msg.get("instant_sleep"):
-                pres.instant_sleep = True
-
-            # Navigate to the requested slide if no slide task is running
-            requested_slide = msg.get("slide", 0)
-            slide_idle = pres.slide_task is None or pres.slide_task.done()
-
-            if app.state.deck and slide_idle:
-                total = len(app.state.deck.slides)
-                pres.current_slide = max(0, min(requested_slide, total - 1))
-                await asyncio.sleep(0.05)
-                pres.slide_task = asyncio.create_task(
-                    _run_slide(app, pres)
-                )
-            else:
-                # Session already running — send current state to new client
-                if app.state.deck:
-                    total = len(app.state.deck.slides)
-                    await ws.send_text(json.dumps({
-                        "type": "slide",
-                        "index": pres.current_slide,
-                        "total": total,
-                    }))
-
-            # Message loop
-            while True:
-                data = await ws.receive_text()
-                msg = json.loads(data)
-                if msg["type"] == "ack":
-                    event = pres.pending_acks.pop(msg["id"], None)
-                    if event:
-                        event.set()
-                elif msg["type"] == "keypress":
-                    # Audience keypresses ignored when presenter is connected
-                    if is_presenter or pres.presenter_ws is None:
-                        await _handle_keypress(app, pres, msg["key"])
+                await _handle_independent_session(app, ws, msg)
 
         except (WebSocketDisconnect, asyncio.CancelledError):
             pass
-        finally:
-            if is_presenter:
-                pres.presenter_ws = None
-            else:
-                if ws in pres.audience_clients:
-                    pres.audience_clients.remove(ws)
-            # If no clients left, cancel the slide task
-            if not pres.has_clients:
-                pres.cancel_slide()
 
     return app
 
 
+async def _handle_independent_session(app: FastAPI, ws: WebSocket, hello: dict) -> None:
+    """Each tab gets its own Presentation (independent mode)."""
+    session_id = str(uuid.uuid4())
+    pres = Presentation()
+    pres.audience_clients.append(ws)
+    app.state.sessions[session_id] = pres
+
+    # Handle recording/export params
+    auto_step = hello.get("auto_step")
+    if auto_step is not None:
+        pres.auto_step = float(auto_step)
+    slide_delay = hello.get("slide_delay")
+    if slide_delay is not None:
+        pres.slide_delay = float(slide_delay)
+    if hello.get("instant_sleep"):
+        pres.instant_sleep = True
+
+    try:
+        if app.state.deck:
+            total = len(app.state.deck.slides)
+            pres.current_slide = max(0, min(hello.get("slide", 0), total - 1))
+            await asyncio.sleep(0.05)
+            pres.slide_task = asyncio.create_task(_run_slide(app, pres))
+
+        # Message loop
+        while True:
+            data = await ws.receive_text()
+            msg = json.loads(data)
+            if msg["type"] == "ack":
+                event = pres.pending_acks.pop(msg["id"], None)
+                if event:
+                    event.set()
+            elif msg["type"] == "keypress":
+                await _handle_keypress(app, pres, msg["key"])
+    except (WebSocketDisconnect, asyncio.CancelledError):
+        pass
+    finally:
+        pres.cancel_slide()
+        pres.audience_clients.clear()
+        app.state.sessions.pop(session_id, None)
+
+
+async def _handle_shared_session(app: FastAPI, ws: WebSocket, hello: dict, role: str) -> None:
+    """All tabs share one Presentation (presenter mode)."""
+    pres = app.state.shared_pres
+    is_presenter = False
+
+    if role == "presenter":
+        if pres.presenter_ws is not None:
+            await ws.send_text(json.dumps({
+                "type": "error",
+                "message": "A presenter is already connected",
+            }))
+            await ws.close(1008, "Presenter already connected")
+            return
+        pres.presenter_ws = ws
+        is_presenter = True
+    else:
+        pres.audience_clients.append(ws)
+
+    try:
+        # Start slide if no task running
+        slide_idle = pres.slide_task is None or pres.slide_task.done()
+        if app.state.deck and slide_idle:
+            total = len(app.state.deck.slides)
+            requested = hello.get("slide", 0)
+            pres.current_slide = max(0, min(requested, total - 1))
+            await asyncio.sleep(0.05)
+            pres.slide_task = asyncio.create_task(_run_slide(app, pres))
+        elif app.state.deck:
+            # Already running — send current state to new client
+            total = len(app.state.deck.slides)
+            await ws.send_text(json.dumps({
+                "type": "slide",
+                "index": pres.current_slide,
+                "total": total,
+            }))
+
+        # Message loop
+        while True:
+            data = await ws.receive_text()
+            msg = json.loads(data)
+            if msg["type"] == "ack":
+                event = pres.pending_acks.pop(msg["id"], None)
+                if event:
+                    event.set()
+            elif msg["type"] == "keypress":
+                # Audience keypresses ignored when presenter is connected
+                if is_presenter or pres.presenter_ws is None:
+                    await _handle_keypress(app, pres, msg["key"])
+    except (WebSocketDisconnect, asyncio.CancelledError):
+        pass
+    finally:
+        if is_presenter:
+            pres.presenter_ws = None
+        else:
+            if ws in pres.audience_clients:
+                pres.audience_clients.remove(ws)
+        if not pres.has_clients:
+            pres.cancel_slide()
+
+
 async def _run_slide(app: FastAPI, pres: Presentation) -> None:
-    """Run a slide function for the shared presentation."""
+    """Run a slide function for a presentation."""
     deck = app.state.deck
     index = pres.current_slide
     if not deck or index >= len(deck.slides):
@@ -201,7 +254,6 @@ async def _run_slide(app: FastAPI, pres: Presentation) -> None:
 
         slide_fn = deck.slides[index]
 
-        # Send presenter notes (docstring rendered as markdown)
         notes_html = ""
         if slide_fn.func.__doc__:
             import textwrap
@@ -212,7 +264,6 @@ async def _run_slide(app: FastAPI, pres: Presentation) -> None:
             )
         await pres.send({"type": "notes", "html": notes_html})
 
-        # Send next slide preview
         if index < len(deck.slides) - 1:
             next_fn = deck.slides[index + 1]
             next_excerpt = ""
@@ -230,15 +281,12 @@ async def _run_slide(app: FastAPI, pres: Presentation) -> None:
         else:
             await pres.send({"type": "next_preview", "title": None, "excerpt": ""})
 
-        # Execute the slide body
         from auditorium.slide import SlideContext
         ctx = SlideContext(pres)
         await slide_fn.func(ctx)
 
-        # Signal that the slide function has finished (for exporters)
         await pres.send({"type": "slide_complete", "index": index})
 
-        # Auto-advance in recording mode
         if pres.auto_step is not None:
             await asyncio.sleep(pres.slide_delay)
             if index < len(deck.slides) - 1:
@@ -251,7 +299,7 @@ async def _run_slide(app: FastAPI, pres: Presentation) -> None:
 
 
 async def _handle_keypress(app: FastAPI, pres: Presentation, key: str) -> None:
-    """Handle navigation keypress for the shared presentation."""
+    """Handle navigation keypress."""
     deck = app.state.deck
     if not deck:
         return
@@ -281,7 +329,7 @@ async def _handle_keypress(app: FastAPI, pres: Presentation, key: str) -> None:
 
 
 async def _go_to_slide(app: FastAPI, pres: Presentation, index: int) -> None:
-    """Navigate the presentation to a specific slide index."""
+    """Navigate to a specific slide index."""
     deck = app.state.deck
     if not deck:
         return
@@ -292,12 +340,18 @@ async def _go_to_slide(app: FastAPI, pres: Presentation, index: int) -> None:
 
 
 async def reload_deck(app: FastAPI, new_deck) -> None:
-    """Hot-reload: swap the deck and restart the presentation."""
+    """Hot-reload: swap the deck and restart all presentations."""
     app.state.deck = new_deck
-    pres = app.state.presentation
     total = len(new_deck.slides)
-    pres.cancel_slide()
-    pres.current_slide = max(0, min(pres.current_slide, total - 1))
-    await pres.send({"type": "reload", "slide": pres.current_slide})
-    await asyncio.sleep(0.05)
-    pres.slide_task = asyncio.create_task(_run_slide(app, pres))
+
+    all_pres = list(app.state.sessions.values())
+    if app.state.shared_pres:
+        all_pres.append(app.state.shared_pres)
+
+    for pres in all_pres:
+        pres.cancel_slide()
+        pres.current_slide = max(0, min(pres.current_slide, total - 1))
+        await pres.send({"type": "reload", "slide": pres.current_slide})
+        await asyncio.sleep(0.05)
+        if pres.has_clients:
+            pres.slide_task = asyncio.create_task(_run_slide(app, pres))

@@ -50,7 +50,7 @@ def _load_deck(deck_path: Path):
     raise typer.Exit(1)
 
 
-def _print_banner(deck, host: str, port: int) -> None:
+def _print_banner(deck, host: str, port: int, presenter: bool = False) -> None:
     """Print a startup banner with deck info."""
     from rich.panel import Panel
     from rich.text import Text
@@ -64,6 +64,12 @@ def _print_banner(deck, host: str, port: int) -> None:
     body.append("\n")
     body.append("URL:    ", style="dim")
     body.append(f"http://{host}:{port}", style="bold cyan")
+    body.append("\n")
+    body.append("Mode:   ", style="dim")
+    if presenter:
+        body.append("presenter (shared navigation)", style="yellow")
+    else:
+        body.append("independent (per-tab)", style="dim")
 
     console.print(Panel(body, title="[bold]Auditorium[/]", border_style="dim"))
 
@@ -86,8 +92,8 @@ def run(
     deck = _load_deck(deck_path)
     from auditorium.server import create_app
 
-    application = create_app(deck)
-    _print_banner(deck, host, port)
+    application = create_app(deck, presenter_mode=presenter)
+    _print_banner(deck, host, port, presenter)
 
     if watch:
         _setup_watcher(application, deck_path)
@@ -182,34 +188,43 @@ def _start_live_status(application, deck) -> None:
 
     def _render():
         table = Table(show_header=True, header_style="dim", box=None, padding=(0, 1))
-        table.add_column("Audience", width=10)
-        table.add_column("Slide", width=24)
-        table.add_column("Status", width=10)
-        table.add_column("Presenter", width=14)
 
-        pres = getattr(application.state, "presentation", None)
-        if not pres or not pres.has_clients:
-            table.add_row("", "[dim]No connections[/]", "", "")
+        if application.state.presenter_mode:
+            # Shared mode: one row with audience count + presenter status
+            table.add_column("Audience", width=10)
+            table.add_column("Slide", width=24)
+            table.add_column("Status", width=10)
+            table.add_column("Presenter", width=14)
+
+            pres = application.state.shared_pres
+            if not pres.has_clients:
+                table.add_row("", "[dim]No connections[/]", "", "")
+            else:
+                n_audience = len(pres.audience_clients)
+                slide_idx = pres.current_slide
+                total = len(deck.slides) if deck else 0
+                slide_name = deck.slides[slide_idx].name if deck and slide_idx < len(deck.slides) else ""
+                task_status = "[green]running[/]" if pres.slide_task and not pres.slide_task.done() else "[yellow]waiting[/]" if pres.step_event else "idle"
+                presenter_status = "[green]connected[/]" if pres.presenter_ws else "[dim]none[/]"
+                audience_label = f"{n_audience} tab{'s' if n_audience != 1 else ''}" if n_audience else "[dim]none[/]"
+                table.add_row(audience_label, f"{slide_idx + 1}/{total} [dim]{slide_name}[/]", task_status, presenter_status)
         else:
-            n_audience = len(pres.audience_clients)
-            slide_idx = pres.current_slide
-            total = len(deck.slides) if deck else 0
-            slide_name = ""
-            if deck and slide_idx < len(deck.slides):
-                slide_name = deck.slides[slide_idx].name
-            task_status = "idle"
-            if pres.slide_task and not pres.slide_task.done():
-                task_status = "[green]running[/]"
-            elif pres.step_event:
-                task_status = "[yellow]waiting[/]"
-            presenter_status = "[green]connected[/]" if pres.presenter_ws else "[dim]none[/]"
-            audience_label = f"{n_audience} tab{'s' if n_audience != 1 else ''}" if n_audience else "[dim]none[/]"
-            table.add_row(
-                audience_label,
-                f"{slide_idx + 1}/{total} [dim]{slide_name}[/]",
-                task_status,
-                presenter_status,
-            )
+            # Independent mode: one row per session
+            table.add_column("Session", style="dim", width=8)
+            table.add_column("Slide", width=24)
+            table.add_column("Status", width=10)
+
+            sessions = application.state.sessions
+            if not sessions:
+                table.add_row("", "[dim]No connections[/]", "")
+            else:
+                for i, pres in enumerate(sessions.values()):
+                    slide_idx = pres.current_slide
+                    total = len(deck.slides) if deck else 0
+                    slide_name = deck.slides[slide_idx].name if deck and slide_idx < len(deck.slides) else ""
+                    task_status = "[green]running[/]" if pres.slide_task and not pres.slide_task.done() else "[yellow]waiting[/]" if pres.step_event else "idle"
+                    table.add_row(f"#{i + 1}", f"{slide_idx + 1}/{total} [dim]{slide_name}[/]", task_status)
+
         return table
 
     def _run():
