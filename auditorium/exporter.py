@@ -65,6 +65,17 @@ async def export_deck(
 
             from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 
+            # CSS that kills all animations/transitions so exports capture
+            # final state without mid-animation artifacts.
+            DISABLE_ANIM_CSS = """
+                *, *::before, *::after {
+                    animation-duration: 0s !important;
+                    animation-delay: 0s !important;
+                    transition-duration: 0s !important;
+                    transition-delay: 0s !important;
+                }
+            """
+
             # Use auto_step=0 for instant steps (default) or small delay for step-by-step
             auto_step_val = 0.1 if step_by_step else 0
 
@@ -80,6 +91,8 @@ async def export_deck(
                 for i in range(total):
                     url = f"http://127.0.0.1:{port}/?auto_step={auto_step_val}&slide_delay=9999&_s={i}#slide-{i}"
                     await page.goto(url, wait_until="load")
+                    # Kill animations/transitions on this fresh page load
+                    await page.add_style_tag(content=DISABLE_ANIM_CSS)
 
                     # Wait for the slide function to actually complete
                     await page.wait_for_function(
@@ -99,6 +112,7 @@ async def export_deck(
                             for s in range(final_steps + 1):
                                 step_url = f"http://127.0.0.1:{port}/?auto_step=0.1&slide_delay=9999&_s={i}.{s}#slide-{i}"
                                 await page.goto(step_url, wait_until="load")
+                                await page.add_style_tag(content=DISABLE_ANIM_CSS)
                                 # Wait for step s to complete (or slide_complete for the last one)
                                 if s < final_steps:
                                     await page.wait_for_function(
@@ -274,6 +288,8 @@ async def _build_pdf(
 
 async def _capture(page, fmt: str, output: Path, slide_doms: list[dict], slide_idx: int, step_idx: int | None) -> None:
     """Capture the current DOM state as PNG or DOM dict."""
+    # Let the browser finish any remaining layout/paint work
+    await page.wait_for_timeout(100)
     if fmt == "png":
         suffix = f"-step{step_idx + 1:02d}" if step_idx is not None else ""
         await page.screenshot(path=str(output / f"slide-{slide_idx + 1:03d}{suffix}.png"))
