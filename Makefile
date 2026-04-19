@@ -33,7 +33,7 @@ relay-install:
 
 relay-update:
 	git pull
-	pip install -e .
+	uv sync
 	sudo systemctl restart $(RELAY_SERVICE)
 	@sudo systemctl status $(RELAY_SERVICE) --no-pager
 
