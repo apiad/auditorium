@@ -1,4 +1,4 @@
-# Auditorium
+# 🎓 Auditorium
 
 [<img alt="PyPI - License" src="https://img.shields.io/pypi/l/auditorium.svg">](https://github.com/apiad/auditorium/blob/master/LICENSE)
 [<img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/auditorium.svg">](https://pypi.org/project/auditorium/)
@@ -33,19 +33,24 @@ pip install auditorium
 auditorium run talk.py
 ```
 
-## Why Auditorium?
+---
+
+## ✨ Why Auditorium?
 
 Most presentation tools treat slides as static documents. Auditorium treats them as **programs**.
 
-- **Run algorithms live** — sort arrays, traverse graphs, train models, all animated on stage
-- **Compute content** — generate plots, tables, or LaTeX from data, not screenshots
-- **Use any Python library** — numpy, matplotlib, pandas, whatever you import works
-- **Share with students worldwide** — presenter mode syncs your slides to every connected browser in real time
-- **Export everywhere** — record to video, export to PDF, or share as a self-contained HTML that replays your talk with original timing
+- 🐍 **Run algorithms live** — sort arrays, traverse graphs, train models, all animated on stage
+- 📊 **Compute content** — generate plots, tables, or LaTeX from data, not screenshots
+- 📦 **Use any Python library** — numpy, matplotlib, pandas, whatever you import works
+- 🌍 **Share with students worldwide** — presenter mode syncs your slides to every connected browser in real time
+- 🔗 **Go public** — `--public` gives you an instant shareable URL, no deployment needed
+- 📤 **Export everywhere** — record to video, export to PDF, or share as a self-contained HTML that replays your talk with original timing
 
 If you've ever wished you could `await` inside a PowerPoint slide, this is for you.
 
-## Quick Start
+---
+
+## 🚀 Quick Start
 
 ```bash
 pip install auditorium    # or: uv add auditorium
@@ -82,26 +87,70 @@ Run it:
 auditorium run talk.py
 ```
 
-## Features
+---
 
-|                 | Feature                  | Description                                                                             |
-| --------------- | ------------------------ | --------------------------------------------------------------------------------------- |
-| **Code**        | Imperative Python slides | Each slide is an `async def` — loops, conditionals, imports, anything                   |
-| **Reveal**      | Progressive reveals      | `await ctx.step()` pauses for keypress, `await ctx.sleep(n)` auto-advances              |
-| **Math**        | LaTeX math               | KaTeX bundled — `$inline$` and `$$display$$` in any markdown                            |
-| **Code**        | Syntax highlighting      | Fenced code blocks with highlight.js (bundled)                                          |
-| **Layout**      | Flexible layouts         | `columns`, `rows` with `"auto"` sizing, arbitrarily nested                              |
-| **Presenter**   | Presenter mode           | `--presenter` opens a second tab with notes, timer, next-slide preview                  |
-| **Sync**        | Shared navigation        | Presenter drives all audience tabs — students see what you show                         |
-| **Late join**   | Mid-slide sync           | Late-joining viewers see the full slide state immediately                               |
-| **Export**      | PDF / HTML / PNG         | `auditorium export` — vector PDF, self-contained interactive HTML, or PNG per slide     |
-| **Record**      | Video capture            | `auditorium record` — headless or live recording via Playwright                         |
-| **Step export** | Step-by-step             | `--step-by-step` captures each reveal as a separate frame with original timing          |
-| **Reload**      | Hot reload               | Edit your `.py` and the browser updates — stays on the same slide                       |
-| **Offline**     | Fully bundled            | All assets (fonts, KaTeX, highlight.js) ship with the package — zero CDN, zero internet |
-| **Reconnect**   | Server restart           | Client auto-reconnects and resumes at the same slide                                    |
+## 📋 Features
 
-## Presenter Mode
+| | Feature | Description |
+|---|---------|-------------|
+| 🐍 | **Imperative Python slides** | Each slide is an `async def` — loops, conditionals, imports, anything |
+| 👁️ | **Progressive reveals** | `await ctx.step()` pauses for keypress, `await ctx.sleep(n)` auto-advances |
+| 🧮 | **LaTeX math** | KaTeX bundled — `$inline$` and `$$display$$` in any markdown |
+| 💻 | **Syntax highlighting** | Fenced code blocks with highlight.js (bundled) |
+| 📐 | **Flexible layouts** | `columns`, `rows` with `"auto"` sizing, arbitrarily nested |
+| 🎤 | **Presenter mode** | `--presenter` — notes, timer, slide mirror, next-slide preview |
+| 🔄 | **Shared navigation** | Presenter drives all audience tabs — students see what you show |
+| 🌍 | **Public sharing** | `--public` bridges to a relay — instant shareable URL, no deployment |
+| 🕐 | **Late-join sync** | New viewers see the full slide state immediately |
+| 📄 | **PDF / HTML / PNG export** | Vector PDF, self-contained interactive HTML, or PNG per slide |
+| 🎬 | **Video recording** | Headless or live recording via Playwright |
+| 🔀 | **Step-by-step export** | Each reveal as a separate frame with original timing |
+| ♻️ | **Hot reload** | Edit your `.py` and the browser updates instantly |
+| 📡 | **Offline** | All assets bundled — zero CDN, zero internet required |
+| 🔌 | **Auto-reconnect** | Survives server restarts without losing your place |
+
+---
+
+## 🌍 Share Publicly
+
+Present from your laptop, share with the world:
+
+```bash
+auditorium run talk.py --public
+```
+
+```
+╭───────────────────────── Auditorium ─────────────────────────╮
+│ Deck:   My Talk                                               │
+│ Slides: 15                                                    │
+│ URL:    http://127.0.0.1:8000                                 │
+│ Mode:   independent (per-tab)                                 │
+╰──────────────────────────────────────────────────────────────╯
+
+Public URL: http://vps.apiad.net:4243/r/my-talk/
+```
+
+Anyone with the link sees your presentation in real time. No deployment, no hosting — your laptop runs the deck, a lightweight relay forwards it.
+
+```bash
+# Choose your own URL slug
+auditorium run talk.py --public --name my-talk
+
+# Use your own relay server
+auditorium run talk.py --public --relay myserver.com:4243
+```
+
+**Self-host a relay** (it's one command):
+
+```bash
+auditorium relay                    # run directly
+make relay-install                  # install as systemd service
+make relay-update                   # pull + sync + restart
+```
+
+---
+
+## 🎤 Presenter Mode
 
 Start with `--presenter` to sync all audience tabs to your navigation:
 
@@ -109,15 +158,17 @@ Start with `--presenter` to sync all audience tabs to your navigation:
 auditorium run talk.py --presenter
 ```
 
-Two tabs open: your **presenter view** (notes + timer + slide mirror) and the **audience view** (projected/shared). Navigate from the presenter tab — every connected browser follows in real time.
+Two tabs open: your **presenter view** (notes + timer + slide mirror + next-slide preview) and the **audience view**. Navigate from the presenter tab — every connected browser follows in real time.
 
-- Docstrings become **speaker notes** (never shown to the audience)
-- Late-joining tabs catch up instantly (full slide state replayed)
-- Audience keyboards are locked — only the presenter navigates
+- 📝 Docstrings become **speaker notes** (never shown to the audience)
+- ⚡ Late-joining tabs catch up instantly (full slide state replayed)
+- 🔒 Audience keyboards are locked — only the presenter navigates
 
 Without `--presenter`, each tab navigates independently.
 
-## Layouts
+---
+
+## 📐 Layouts
 
 ```python
 @deck.slide
@@ -139,7 +190,9 @@ Use `"auto"` for natural-size regions:
 header, body, footer = await ctx.rows(["auto", 1, "auto"])
 ```
 
-## Recording & Export
+---
+
+## 🎬 Recording & Export
 
 Requires `pip install auditorium[record]` and `playwright install chromium`.
 
@@ -156,17 +209,21 @@ auditorium export talk.py -f png -o slides/
 auditorium export talk.py -f html --step-by-step -o talk.html
 ```
 
-## Navigation
+---
 
-| Key                 | Action                     |
-| ------------------- | -------------------------- |
-| Right arrow / Space | Advance step or next slide |
-| Page Down           | Skip to next slide         |
-| Left arrow          | Previous slide             |
-| `r`                 | Restart current slide      |
-| Digits + Enter      | Jump to slide N            |
+## ⌨️ Navigation
 
-## Example
+| Key | Action |
+|-----|--------|
+| → / Space | Advance step or next slide |
+| Page Down | Skip to next slide |
+| ← | Previous slide |
+| `r` | Restart current slide |
+| Digits + Enter | Jump to slide N |
+
+---
+
+## 📚 Example
 
 See [`examples/demo_deck.py`](examples/demo_deck.py) for a full 11-slide deck exercising every feature.
 
@@ -174,6 +231,8 @@ See [`examples/demo_deck.py`](examples/demo_deck.py) for a full 11-slide deck ex
 auditorium run examples/demo_deck.py
 ```
 
-## License
+---
+
+## 📜 License
 
 MIT

@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.3.0
+
+### Added
+
+- **Public relay** (`--public`) — share your presentation with anyone via an instant public URL. Your laptop runs the deck, a lightweight relay forwards WebSocket messages to viewers worldwide.
+- **Custom URL names** (`--name`) — `auditorium run talk.py --public --name my-talk` gives you `http://relay/r/my-talk/` instead of a random hash. Duplicate names are rejected.
+- **`auditorium relay`** — run your own relay server. Self-hostable, one command. Includes systemd service file and Makefile targets (`relay-install`, `relay-update`, `relay-uninstall`, `relay-status`, `relay-logs`).
+- Default relay at `vps.apiad.net:4243`, configurable via `--relay host:port`.
+- Relay features: late-join message replay, viewer acks forwarded, viewer keypresses dropped (audience is read-only).
+
 ## 3.2.0
 
 ### Added
