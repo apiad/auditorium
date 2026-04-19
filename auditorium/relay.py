@@ -54,11 +54,27 @@ def create_relay_app() -> FastAPI:
     async def upstream_endpoint(ws: WebSocket) -> None:
         """Presenter connects here. Relay assigns an ID and forwards messages."""
         await ws.accept()
-        session_id = secrets.token_urlsafe(6)
+
+        # Read optional registration request with a custom name
+        data = await ws.receive_text()
+        msg = json.loads(data)
+        requested_name = msg.get("name") if msg.get("type") == "register" else None
+
+        if requested_name:
+            if requested_name in app.state.sessions:
+                await ws.send_text(json.dumps({
+                    "type": "error",
+                    "message": f"Name '{requested_name}' is already taken",
+                }))
+                await ws.close(1008, "Name taken")
+                return
+            session_id = requested_name
+        else:
+            session_id = secrets.token_urlsafe(6)
+
         session = RelaySession(upstream_ws=ws)
         app.state.sessions[session_id] = session
 
-        # Tell the presenter their session ID
         await ws.send_text(json.dumps({"type": "registered", "id": session_id}))
 
         try:

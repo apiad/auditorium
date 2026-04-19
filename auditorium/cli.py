@@ -84,6 +84,7 @@ def run(
     presenter: bool = typer.Option(False, "-p", "--presenter", help="Also open presenter view"),
     public: bool = typer.Option(False, "--public", help="Share via relay for remote viewers"),
     relay_host: str = typer.Option("vps.apiad.net:4243", "--relay", help="Relay server host:port"),
+    public_name: str = typer.Option(None, "--name", help="Custom name for the public URL (e.g. --name my-talk)"),
     watch: bool = typer.Option(True, "--watch/--no-watch", help="Watch for file changes and hot-reload"),
 ) -> None:
     """Run a presentation deck."""
@@ -102,7 +103,7 @@ def run(
         _setup_watcher(application, deck_path)
 
     if public:
-        _start_relay_bridge(relay_host, port)
+        _start_relay_bridge(relay_host, port, public_name)
 
     if open_browser:
         import webbrowser
@@ -260,7 +261,7 @@ def relay(
     uvicorn.run(relay_app, host=host, port=port, log_level="warning")
 
 
-def _start_relay_bridge(relay_host: str, local_port: int) -> None:
+def _start_relay_bridge(relay_host: str, local_port: int, name: str | None = None) -> None:
     """Connect to a relay server and bridge the local presentation to it."""
     import threading
 
@@ -276,7 +277,17 @@ def _start_relay_bridge(relay_host: str, local_port: int) -> None:
         try:
             # Connect to the relay as an upstream presenter
             relay_ws = ws_connect(f"{relay_protocol}://{relay_host}/upstream")
+
+            # Send registration with optional custom name
+            register_msg = {"type": "register"}
+            if name:
+                register_msg["name"] = name
+            relay_ws.send(json.dumps(register_msg))
+
             reg = json.loads(relay_ws.recv())
+            if reg.get("type") == "error":
+                console.print(f"[red]Relay error:[/] {reg.get('message')}")
+                return
             if reg.get("type") != "registered":
                 console.print("[red]Relay error:[/] unexpected response")
                 return
