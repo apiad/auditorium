@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.4.0
+
+### Added
+
+- **Jupyter display protocol** — `ctx.show(obj)` now accepts any object that implements `_repr_html_`, `_repr_svg_`, `_repr_png_`, or `_repr_jpeg_`. Pass a matplotlib figure, pandas DataFrame, altair chart, tesserax Canvas, IPython rich object, etc. directly — no `str(...)` call, no bundling, no adapters. Strings pass through unchanged.
+- `examples/tesserax_demo.py` showcasing the pattern with live SVG via [tesserax](https://github.com/apiad/tesserax). Install the optional group with `uv sync --extra examples` to run it.
+
 ## 3.3.0
 
 ### Added

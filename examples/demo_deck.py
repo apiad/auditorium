@@ -174,6 +174,39 @@ async def nested_layout(ctx):
 
 
 @deck.slide
+async def jupyter_display(ctx):
+    """Show that ctx.show honors the Jupyter display protocol.
+
+    Any object that implements `_repr_html_`, `_repr_svg_`, `_repr_png_`, or
+    `_repr_jpeg_` renders automatically — matplotlib figures, pandas
+    DataFrames, altair charts, tesserax canvases, and any custom class.
+    """
+
+    class Badge:
+        """Tiny demo class with a _repr_html_ method."""
+
+        def __init__(self, label: str, color: str) -> None:
+            self.label, self.color = label, color
+
+        def _repr_html_(self) -> str:
+            return (
+                f'<span style="display:inline-block;padding:0.3em 0.8em;'
+                f"margin:0.2em;border-radius:999px;background:{self.color};"
+                f'color:white;font-weight:600">{self.label}</span>'
+            )
+
+    await ctx.md("## Jupyter Display Protocol")
+    await ctx.md("`ctx.show(obj)` honors `_repr_html_` / `_repr_svg_` / `_repr_png_` automatically.")
+    await ctx.step()
+    await ctx.show(Badge("matplotlib", "#1f77b4"))
+    await ctx.show(Badge("pandas", "#ff7f0e"))
+    await ctx.show(Badge("altair", "#2ca02c"))
+    await ctx.show(Badge("tesserax", "#d62728"))
+    await ctx.step()
+    await ctx.md("Any Jupyter-aware object works — no adapters, no bundling.")
+
+
+@deck.slide
 async def fin(ctx):
     """Thank the audience. Mention the GitHub repo."""
     await ctx.md("# Thank You")

@@ -94,6 +94,7 @@ auditorium run talk.py
 | | Feature | Description |
 |---|---------|-------------|
 | 🐍 | **Imperative Python slides** | Each slide is an `async def` — loops, conditionals, imports, anything |
+| 🧪 | **Jupyter display protocol** | `ctx.show(obj)` renders any `_repr_html_` / `_repr_svg_` / `_repr_png_` object — matplotlib, pandas, altair, tesserax, … |
 | 👁️ | **Progressive reveals** | `await ctx.step()` pauses for keypress, `await ctx.sleep(n)` auto-advances |
 | 🧮 | **LaTeX math** | KaTeX bundled — `$inline$` and `$$display$$` in any markdown |
 | 💻 | **Syntax highlighting** | Fenced code blocks with highlight.js (bundled) |
@@ -189,6 +190,39 @@ Use `"auto"` for natural-size regions:
 ```python
 header, body, footer = await ctx.rows(["auto", 1, "auto"])
 ```
+
+---
+
+## 🧪 Show Any Jupyter Object
+
+`ctx.show(...)` speaks the **Jupyter display protocol**. Pass any object that implements `_repr_html_`, `_repr_svg_`, `_repr_png_`, or `_repr_jpeg_` and it just renders — no adapters, no bundling, no glue code.
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+from tesserax import Canvas, Circle, Square
+from tesserax.layout import RowLayout
+
+@deck.slide
+async def live_data(ctx):
+    # A pandas DataFrame — _repr_html_
+    df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
+    await ctx.show(df)
+
+    # A matplotlib figure — _repr_png_ (or _repr_svg_ with the svg backend)
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [4, 5, 6])
+    await ctx.show(fig)
+
+    # A tesserax Canvas — _repr_svg_
+    with Canvas() as canvas:
+        with RowLayout():
+            Square(30, fill="green")
+            Circle(20, fill="red")
+    await ctx.show(canvas.fit(padding=10))
+```
+
+This works with **matplotlib** figures, **pandas** DataFrames, **altair** charts, **plotly** figures, **tesserax** canvases, **sympy** expressions, **IPython** rich objects, and anything else in the Jupyter ecosystem. Plain strings are still passed through as HTML. Runnable example: [`examples/tesserax_demo.py`](examples/tesserax_demo.py).
 
 ---
 

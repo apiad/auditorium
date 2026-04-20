@@ -1,14 +1,55 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import markdown
 
 if TYPE_CHECKING:
     from auditorium.server import Presentation
+
+
+def _jupyter_to_html(obj: Any) -> str:
+    """Render an object to HTML via the Jupyter display protocol.
+
+    Strings pass through. Otherwise, priority order: ``_repr_html_``,
+    ``_repr_svg_``, ``_repr_png_``, ``_repr_jpeg_``. Falls back to ``str(obj)``.
+    PNG/JPEG bytes are wrapped in a base64 data-URI ``<img>``. Methods that
+    return ``(data, metadata)`` tuples have the ``data`` element used.
+    """
+    if isinstance(obj, str):
+        return obj
+
+    def _unwrap(result: Any) -> Any:
+        if isinstance(result, tuple) and len(result) == 2:
+            return result[0]
+        return result
+
+    if hasattr(obj, "_repr_html_"):
+        html = _unwrap(obj._repr_html_())
+        if html is not None:
+            return html
+
+    if hasattr(obj, "_repr_svg_"):
+        svg = _unwrap(obj._repr_svg_())
+        if svg is not None:
+            return svg
+
+    for attr, mime in (("_repr_png_", "png"), ("_repr_jpeg_", "jpeg")):
+        if hasattr(obj, attr):
+            data = _unwrap(getattr(obj, attr)())
+            if data is not None:
+                if isinstance(data, str):
+                    # Already base64-encoded (IPython convention when metadata is set).
+                    b64 = data
+                else:
+                    b64 = base64.b64encode(data).decode("ascii")
+                return f'<img src="data:image/{mime};base64,{b64}" alt="">'
+
+    return str(obj)
 
 
 class SlideContext:
@@ -20,8 +61,17 @@ class SlideContext:
 
     # --- Content ---
 
-    async def show(self, html: str, *, element_id: str | None = None) -> None:
-        """Append HTML content to the current insertion target."""
+    async def show(self, content: Any, *, element_id: str | None = None) -> None:
+        """Append content to the current insertion target.
+
+        Accepts any object. Strings are appended as HTML directly. Objects
+        implementing the Jupyter display protocol (``_repr_html_``,
+        ``_repr_svg_``, ``_repr_png_``, ``_repr_jpeg_``) are rendered via
+        those methods — so matplotlib figures, pandas DataFrames, altair
+        charts, tesserax canvases, IPython rich objects all work natively.
+        Anything else falls back to ``str(content)``.
+        """
+        html = _jupyter_to_html(content)
         mutation: dict = {
             "action": "append",
             "html": f"<div>{html}</div>",
