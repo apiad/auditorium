@@ -21,12 +21,18 @@
 /* ---- Theme knobs (override via Deck(margin=..., extra_css=...) or :root override) ---- */
 
 :root {
-    --aud-slide-padding: 3rem 4rem;
+    --aud-slide-padding: 3rem 5rem;
     --aud-content-max-width: 56rem;
     --aud-list-bullet-indent: 1.5em;
-    --aud-block-gap: 0.9em;
+    --aud-block-gap: 1.1em;
     --aud-line-height: 1.7;
-    --aud-font-size: 1.5rem;
+    --aud-aspect-ratio: 16 / 9;
+    /* Font size scales with the slide's actual rendered size (which is bounded
+       by aspect-ratio inside the viewport), so text stays proportional whether
+       the window is wide or narrow. The multiplier is tuned for a 16:9 slide. */
+    --aud-font-size: calc(min(100vw, 100vh * 16 / 9) * 0.022);
+    --aud-letterbox-bg: #f4f4f3;
+    --aud-slide-bg: #ffffff;
 }
 
 /* ---- Reset / base (replaces Tailwind) ---- */
@@ -40,16 +46,23 @@
 body {
     font-family: 'Source Serif 4', Georgia, serif;
     -webkit-font-smoothing: antialiased;
-    background: #fff;
+    background: var(--aud-letterbox-bg);
     color: #111827;
     overflow: hidden;
-}
-
-/* ---- Slide root ---- */
-
-#slide-root {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100vw;
     height: 100vh;
+}
+
+/* ---- Slide root: 16:9 frame letterboxed in the viewport ---- */
+
+#slide-root {
+    aspect-ratio: var(--aud-aspect-ratio);
+    width: min(100vw, calc(100vh * 16 / 9));
+    height: min(100vh, calc(100vw * 9 / 16));
+    background: var(--aud-slide-bg);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -58,6 +71,7 @@ body {
     font-size: var(--aud-font-size);
     line-height: var(--aud-line-height);
     gap: var(--aud-block-gap);
+    overflow: hidden;
 }
 
 /* Each `.md()` call produces a wrapping <div> that becomes a flex item.
@@ -169,25 +183,36 @@ body {
     padding-left: var(--aud-list-bullet-indent);
 }
 
-/* Tables: centered block, comfortable padding. */
+/* Tables: booktabs-style — top rule, mid rule under the header, bottom rule.
+   No vertical lines, no per-row separators. Generous vertical breathing. */
 #slide-root table {
     border-collapse: collapse;
     margin: 0 auto;
     max-width: 100%;
-    font-size: 0.85em;
+    font-size: 0.78em;
+    border-top: 2px solid #111827;
+    border-bottom: 2px solid #111827;
 }
 
 #slide-root th,
 #slide-root td {
-    padding: 0.4em 0.8em;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 0.55em 1.1em;
     text-align: left;
     vertical-align: top;
+    line-height: 1.4;
 }
 
 #slide-root th {
     font-weight: 600;
-    border-bottom: 2px solid #111827;
+    border-bottom: 1px solid #111827;
+}
+
+#slide-root tbody tr:first-child td {
+    padding-top: 0.7em;
+}
+
+#slide-root tbody tr:last-child td {
+    padding-bottom: 0.7em;
 }
 
 /* ---- Code ---- */
@@ -238,15 +263,14 @@ body {
 
 /* ---- Layout utility classes ---- */
 
-/* Applied by JS on clear/reset to restore default centered mode */
+/* Applied by JS on clear/reset to restore default centered mode.
+   Width/height come from the #slide-root id-level rules (16:9 framed). */
 .aud-slide-root {
-    width: 100vw;
-    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 3rem;
+    padding: var(--aud-slide-padding);
 }
 
 /* Applied when a top-level layout (rows/columns) is used — overrides centering */
