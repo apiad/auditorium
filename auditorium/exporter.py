@@ -145,10 +145,10 @@ async def export_deck(
             await browser.close()
 
         if fmt == "html":
-            _build_html(slide_doms, output, width, height, STATIC_DIR)
+            _build_html(slide_doms, output, width, height, STATIC_DIR, deck.theme_style_block())
             console.print(f"[green]✓[/] HTML saved to [bold]{output}[/]")
         elif fmt == "pdf":
-            await _build_pdf(slide_doms, output, width, height, STATIC_DIR, tmpdir)
+            await _build_pdf(slide_doms, output, width, height, STATIC_DIR, tmpdir, deck.theme_style_block())
             console.print(f"[green]✓[/] PDF saved to [bold]{output}[/]")
         elif fmt == "png":
             console.print(f"[green]✓[/] PNG slides saved to [bold]{output}/[/]")
@@ -165,6 +165,7 @@ def _build_html(
     width: int,
     height: int,
     static_dir: Path,
+    theme_overrides: str = "",
 ) -> None:
     """Build a self-contained HTML file with all slides and a JS navigator."""
     theme_css = (static_dir / "theme.css").read_text()
@@ -228,6 +229,7 @@ body {{ margin: 0; background: #fff; overflow: hidden; }}
 .export-slide.active {{ opacity: 1; pointer-events: auto; }}
 #counter {{ position: fixed; bottom: 1rem; right: 1rem; font: 0.875rem monospace; color: #9ca3af; z-index: 10; }}
 </style>
+{theme_overrides}
 </head>
 <body>
 {slides_html}
@@ -304,6 +306,7 @@ async def _build_pdf(
     height: int,
     static_dir: Path,
     tmpdir: str,
+    theme_overrides: str = "",
 ) -> None:
     """Build a vector PDF by rendering slides in a print-optimized page."""
     from playwright.async_api import async_playwright
@@ -333,6 +336,7 @@ async def _build_pdf(
     print_html = (
         f'<!DOCTYPE html><html><head><meta charset="UTF-8">'
         f"<style>{theme_css}\n{katex_css}\n{hljs_css}\n{no_anim}\nbody {{ margin: 0; }}</style>"
+        f"{theme_overrides}"
         f"</head><body>{slides_html}</body></html>"
     )
 

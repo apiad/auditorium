@@ -18,6 +18,17 @@
     font-display: block;
 }
 
+/* ---- Theme knobs (override via Deck(margin=..., extra_css=...) or :root override) ---- */
+
+:root {
+    --aud-slide-padding: 3rem 4rem;
+    --aud-content-max-width: 56rem;
+    --aud-list-bullet-indent: 1.5em;
+    --aud-block-gap: 0.9em;
+    --aud-line-height: 1.7;
+    --aud-font-size: 1.5rem;
+}
+
 /* ---- Reset / base (replaces Tailwind) ---- */
 
 *, *::before, *::after {
@@ -34,7 +45,7 @@ body {
     overflow: hidden;
 }
 
-/* ---- Slide root (was Tailwind: w-screen h-screen flex flex-col items-center justify-center p-12) ---- */
+/* ---- Slide root ---- */
 
 #slide-root {
     width: 100vw;
@@ -43,9 +54,19 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 3rem;
-    font-size: 1.5rem;
-    line-height: 1.8;
+    padding: var(--aud-slide-padding);
+    font-size: var(--aud-font-size);
+    line-height: var(--aud-line-height);
+    gap: var(--aud-block-gap);
+}
+
+/* Each `.md()` call produces a wrapping <div> that becomes a flex item.
+   Shrink to content so centering works naturally, and let its inner content
+   determine the visible width. */
+#slide-root > div,
+#slide-root [id^="cols-"] > div > div,
+#slide-root [id^="rows-"] > div > div {
+    max-width: var(--aud-content-max-width);
 }
 
 /* ---- Slide indicator ---- */
@@ -104,26 +125,69 @@ body {
 #slide-root h3 {
     font-family: 'Playfair Display', Georgia, serif;
     font-weight: 600;
-    margin-bottom: 0.5em;
+    text-align: center;
 }
 
-#slide-root h1 { font-size: 3rem; }
-#slide-root h2 { font-size: 2.25rem; }
-#slide-root h3 { font-size: 1.75rem; }
+#slide-root h1 { font-size: 3rem; letter-spacing: -0.01em; }
+#slide-root h2 { font-size: 2.25rem; letter-spacing: -0.005em; }
+#slide-root h3 { font-size: 1.6rem; }
 
 #slide-root p {
-    margin-bottom: 0.75em;
-    max-width: 48rem;
+    max-width: var(--aud-content-max-width);
 }
 
+/* Lists: visual block centered on the slide (or aligned to start in column
+   regions), bullets line up vertically inside, text left-aligned. */
 #slide-root ul,
 #slide-root ol {
-    margin-left: 1.5em;
-    margin-bottom: 0.75em;
+    display: inline-block;
+    text-align: left;
+    padding-left: var(--aud-list-bullet-indent);
+    max-width: var(--aud-content-max-width);
+    list-style-position: outside;
 }
 
 #slide-root li {
-    margin-bottom: 0.25em;
+    padding-left: 0.25em;
+    margin-bottom: 0.2em;
+}
+
+#slide-root li:last-child {
+    margin-bottom: 0;
+}
+
+#slide-root li::marker {
+    color: #6b7280;
+}
+
+#slide-root ul ul,
+#slide-root ol ol,
+#slide-root ul ol,
+#slide-root ol ul {
+    display: block;
+    margin-top: 0.2em;
+    padding-left: var(--aud-list-bullet-indent);
+}
+
+/* Tables: centered block, comfortable padding. */
+#slide-root table {
+    border-collapse: collapse;
+    margin: 0 auto;
+    max-width: 100%;
+    font-size: 0.85em;
+}
+
+#slide-root th,
+#slide-root td {
+    padding: 0.4em 0.8em;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    vertical-align: top;
+}
+
+#slide-root th {
+    font-weight: 600;
+    border-bottom: 2px solid #111827;
 }
 
 /* ---- Code ---- */

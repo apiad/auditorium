@@ -111,6 +111,8 @@ def create_app(deck: Deck | None = None, presenter_mode: bool = False) -> FastAP
     @app.get("/")
     async def index() -> HTMLResponse:
         html = (STATIC_DIR / "index.html").read_text()
+        overrides = deck.theme_style_block() if deck else ""
+        html = html.replace("<!--AUDITORIUM_THEME_OVERRIDES-->", overrides)
         return HTMLResponse(html)
 
     @app.get("/presenter")
