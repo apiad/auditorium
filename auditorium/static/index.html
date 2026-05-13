@@ -134,40 +134,67 @@
                         el.id = msg.element_id;
                     }
                     if (target) {
-                        // FLIP: snapshot positions of existing siblings before DOM change
-                        const siblings = Array.from(target.children);
-                        const beforeRects = new Map();
-                        siblings.forEach(s => beforeRects.set(s, s.getBoundingClientRect()));
-
-                        target.appendChild(el);
-
-                        // Animate the new element in
-                        el.classList.add('aud-enter');
-                        el.addEventListener('animationend', () => el.classList.remove('aud-enter'), { once: true });
-
-                        // FLIP: animate existing siblings from old position to new
-                        siblings.forEach(s => {
-                            const before = beforeRects.get(s);
-                            const after = s.getBoundingClientRect();
-                            const dx = before.left - after.left;
-                            const dy = before.top - after.top;
-                            if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
-                                s.style.transition = 'none';
-                                s.style.transform = `translate(${dx}px, ${dy}px)`;
-                                requestAnimationFrame(() => {
-                                    requestAnimationFrame(() => {
-                                        s.style.transition = 'transform 0.3s ease';
-                                        s.style.transform = '';
-                                        s.addEventListener('transitionend', () => {
-                                            s.style.transition = '';
-                                        }, { once: true });
-                                    });
-                                });
+                        // Coalesce consecutive list wrappers: when the new wrapper
+                        // contains a single <ol>/<ul> and the previous sibling
+                        // wrapper contains the same kind of list, move the new
+                        // <li>s into the existing list so numbering and visual
+                        // grouping stay continuous across separate .md() calls.
+                        const newList = (el.children.length === 1 &&
+                                         (el.children[0].tagName === 'OL' || el.children[0].tagName === 'UL'))
+                                        ? el.children[0] : null;
+                        const prevWrap = target.lastElementChild;
+                        const prevList = (newList && prevWrap && !msg.element_id &&
+                                          prevWrap.children.length === 1 &&
+                                          prevWrap.children[0].tagName === newList.tagName)
+                                         ? prevWrap.children[0] : null;
+                        if (prevList) {
+                            const newItems = Array.from(newList.children);
+                            for (const li of newItems) {
+                                prevList.appendChild(li);
+                                li.classList.add('aud-enter');
+                                li.addEventListener('animationend', () => li.classList.remove('aud-enter'), { once: true });
                             }
-                        });
+                            renderMath(prevList);
+                            renderCode(prevList);
+                        } else {
+                            // FLIP: snapshot positions of existing siblings before DOM change
+                            const siblings = Array.from(target.children);
+                            const beforeRects = new Map();
+                            siblings.forEach(s => beforeRects.set(s, s.getBoundingClientRect()));
+
+                            target.appendChild(el);
+
+                            // Animate the new element in
+                            el.classList.add('aud-enter');
+                            el.addEventListener('animationend', () => el.classList.remove('aud-enter'), { once: true });
+
+                            // FLIP: animate existing siblings from old position to new
+                            siblings.forEach(s => {
+                                const before = beforeRects.get(s);
+                                const after = s.getBoundingClientRect();
+                                const dx = before.left - after.left;
+                                const dy = before.top - after.top;
+                                if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                                    s.style.transition = 'none';
+                                    s.style.transform = `translate(${dx}px, ${dy}px)`;
+                                    requestAnimationFrame(() => {
+                                        requestAnimationFrame(() => {
+                                            s.style.transition = 'transform 0.3s ease';
+                                            s.style.transform = '';
+                                            s.addEventListener('transitionend', () => {
+                                                s.style.transition = '';
+                                            }, { once: true });
+                                        });
+                                    });
+                                }
+                            });
+                            renderMath(el);
+                            renderCode(el);
+                        }
+                    } else {
+                        renderMath(el);
+                        renderCode(el);
                     }
-                    renderMath(el);
-                    renderCode(el);
                     break;
                 }
                 case 'remove': {
