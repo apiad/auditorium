@@ -183,36 +183,54 @@ body {
     padding-left: var(--aud-list-bullet-indent);
 }
 
-/* Tables: booktabs-style — top rule, mid rule under the header, bottom rule.
-   No vertical lines, no per-row separators. Generous vertical breathing. */
+/* Tables: booktabs-style — toprule + midrule (around the header) + bottomrule.
+   No vertical lines. Generous column gap and vertical breathing. */
 #slide-root table {
     border-collapse: collapse;
     margin: 0 auto;
     max-width: 100%;
     font-size: 0.78em;
-    border-top: 2px solid #111827;
-    border-bottom: 2px solid #111827;
+    border-top: 2.5px solid #000;
+    border-bottom: 2.5px solid #000;
 }
 
 #slide-root th,
 #slide-root td {
-    padding: 0.55em 1.1em;
+    padding: 0.55em 1.4em;
     text-align: left;
     vertical-align: top;
-    line-height: 1.4;
+    line-height: 1.45;
+}
+
+/* Rules tightly extend to content edges — first/last cells skip side gap. */
+#slide-root th:first-child,
+#slide-root td:first-child {
+    padding-left: 0;
+}
+
+#slide-root th:last-child,
+#slide-root td:last-child {
+    padding-right: 0;
+}
+
+/* Midrule sits below the header. The toprule (table border-top) already
+   acts as the upper edge of the header band, framing the header row. */
+#slide-root thead tr {
+    border-bottom: 1.5px solid #000;
 }
 
 #slide-root th {
     font-weight: 600;
-    border-bottom: 1px solid #111827;
+    padding-top: 0.55em;
+    padding-bottom: 0.55em;
 }
 
 #slide-root tbody tr:first-child td {
-    padding-top: 0.7em;
+    padding-top: 0.75em;
 }
 
 #slide-root tbody tr:last-child td {
-    padding-bottom: 0.7em;
+    padding-bottom: 0.75em;
 }
 
 /* ---- Code ---- */
