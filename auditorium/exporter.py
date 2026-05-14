@@ -338,9 +338,15 @@ async def _build_pdf(
         "animation-duration: 0s !important; animation-delay: 0s !important; "
         "transition-duration: 0s !important; transition-delay: 0s !important; }"
     )
+    # theme.css sets body to `display: flex; height: 100vh; overflow: hidden`
+    # — for print, every slide must be a block-level page, so reset body.
+    body_reset = (
+        "body { margin: 0; display: block; width: auto; height: auto; "
+        "overflow: visible; background: #fff; }"
+    )
     print_html = (
         f'<!DOCTYPE html><html><head><meta charset="UTF-8">'
-        f"<style>{theme_css}\n{katex_css}\n{hljs_css}\n{no_anim}\nbody {{ margin: 0; }}</style>"
+        f"<style>{theme_css}\n{katex_css}\n{hljs_css}\n{no_anim}\n{body_reset}</style>"
         f"{theme_overrides}"
         f"</head><body>{slides_html}</body></html>"
     )
