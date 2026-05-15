@@ -17,7 +17,7 @@ app = typer.Typer(name="auditorium", help="Python-scripted live slide framework"
 
 def _version_callback(value: bool) -> None:
     if value:
-        console.print("auditorium [bold]1!3.5.0[/]")
+        console.print("auditorium [bold]1!3.6.0[/]")
         raise typer.Exit()
 
 
@@ -29,23 +29,28 @@ def main(
     pass
 
 
-def _apply_theme_override(deck, theme: list[str] | None) -> None:
-    """Replace the deck's resolved theme stack with the CLI list (if any).
+def _apply_theme_override(
+    deck,
+    theme: list[str] | None,
+    transition: str | None = None,
+) -> None:
+    """Replace the deck's resolved theme stack and/or transition with CLI values.
 
-    CLI values override the deck's ``theme=`` kwarg entirely — so
-    ``--theme dark`` on a deck declared with ``theme=["academic", "neon"]``
+    CLI values override the deck's ``theme=`` / ``transition=`` kwargs entirely
+    — so ``--theme dark`` on a deck declared with ``theme=["academic", "neon"]``
     yields just ``dark``. Pass nothing to keep the deck's defaults.
     """
-    if not theme:
-        return
     from auditorium.deck import resolve_themes
 
-    try:
-        deck.theme_css = resolve_themes(list(theme))
-        deck.themes = list(theme)
-    except ValueError as e:
-        console.print(f"[red]Error:[/] {e}")
-        raise typer.Exit(1) from None
+    if theme:
+        try:
+            deck.theme_css = resolve_themes(list(theme))
+            deck.themes = list(theme)
+        except ValueError as e:
+            console.print(f"[red]Error:[/] {e}")
+            raise typer.Exit(1) from None
+    if transition is not None:
+        deck.transition = transition
 
 
 def _load_deck(deck_path: Path):
@@ -106,6 +111,7 @@ def run(
     public_name: str = typer.Option(None, "--name", help="Custom name for the public URL (e.g. --name my-talk)"),
     watch: bool = typer.Option(True, "--watch/--no-watch", help="Watch for file changes and hot-reload"),
     theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack: e.g. --theme academic --theme dark. Each value is a builtin preset name or a path to a .css file."),
+    transition: str = typer.Option(None, "--transition", help="Override the slide transition: fade, slide-left, slide-up, zoom, none (or a custom @keyframes name)."),
 ) -> None:
     """Run a presentation deck."""
     deck_path = deck_path.resolve()
@@ -114,14 +120,14 @@ def run(
         raise typer.Exit(1)
 
     deck = _load_deck(deck_path)
-    _apply_theme_override(deck, theme)
+    _apply_theme_override(deck, theme, transition)
     from auditorium.server import create_app
 
     application = create_app(deck, presenter_mode=presenter)
     _print_banner(deck, host, port, presenter)
 
     if watch:
-        _setup_watcher(application, deck_path, theme)
+        _setup_watcher(application, deck_path, theme, transition)
 
     if public:
         _start_relay_bridge(relay_host, port, public_name)
@@ -156,6 +162,7 @@ def record(
     live: bool = typer.Option(False, "--live", help="Launch visible browser for manual recording"),
     port: int = typer.Option(0, help="Server port (0 = random)"),
     theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack."),
+    transition: str = typer.Option(None, "--transition", help="Override the slide transition: fade, slide-left, slide-up, zoom, none (or a custom @keyframes name)."),
 ) -> None:
     """Record a presentation to video."""
     deck_path = deck_path.resolve()
@@ -170,7 +177,7 @@ def record(
             port = s.getsockname()[1]
 
     from auditorium.recorder import record as do_record
-    asyncio.run(do_record(deck_path, output, resolution, auto_step, slide_delay, live, port, theme))
+    asyncio.run(do_record(deck_path, output, resolution, auto_step, slide_delay, live, port, theme, transition))
 
 
 @app.command()
@@ -182,6 +189,7 @@ def export(
     step_by_step: bool = typer.Option(False, "-s", "--step-by-step", help="One page/frame per step instead of per slide"),
     port: int = typer.Option(0, help="Server port (0 = random)"),
     theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack."),
+    transition: str = typer.Option(None, "--transition", help="Override the slide transition: fade, slide-left, slide-up, zoom, none (or a custom @keyframes name)."),
 ) -> None:
     """Export presentation to PDF, HTML, or PNG."""
     deck_path = deck_path.resolve()
@@ -207,7 +215,7 @@ def export(
             port = s.getsockname()[1]
 
     from auditorium.exporter import export_deck
-    asyncio.run(export_deck(deck_path, output, fmt, resolution, step_by_step, port, theme))
+    asyncio.run(export_deck(deck_path, output, fmt, resolution, step_by_step, port, theme, transition))
 
 
 def _start_live_status(application, deck) -> None:
@@ -353,7 +361,12 @@ def _start_relay_bridge(relay_host: str, local_port: int, name: str | None = Non
     thread.start()
 
 
-def _setup_watcher(application, deck_path: Path, theme: list[str] | None = None) -> None:
+def _setup_watcher(
+    application,
+    deck_path: Path,
+    theme: list[str] | None = None,
+    transition: str | None = None,
+) -> None:
     """Set up a file watcher that hot-reloads the deck on changes."""
     import threading
     from watchfiles import watch as watch_files
@@ -364,7 +377,7 @@ def _setup_watcher(application, deck_path: Path, theme: list[str] | None = None)
             console.print("[yellow]⟳[/] Change detected, reloading...")
             try:
                 new_deck = _load_deck(deck_path)
-                _apply_theme_override(new_deck, theme)
+                _apply_theme_override(new_deck, theme, transition)
                 loop = getattr(application.state, "loop", None)
                 if loop and loop.is_running():
                     from auditorium.server import reload_deck

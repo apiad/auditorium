@@ -1,0 +1,42 @@
+/* Auditorium theme: solarized (color axis)
+ * Solarized Light palette by Ethan Schoonover. Warm base, blue accent. */
+
+:root {
+    --aud-letterbox-bg: #eee8d5;
+    --aud-slide-bg: #fdf6e3;
+    --aud-fg: #586e75;
+    --aud-muted: #93a1a1;
+    --aud-accent: #268bd2;        /* blue */
+    --aud-accent-2: #2aa198;      /* cyan */
+    --aud-accent-3: #d33682;      /* magenta */
+    --aud-rule: #93a1a1;
+    --aud-code-bg: #eee8d5;
+}
+body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
+#slide-root {
+    background: var(--aud-slide-bg);
+    color: var(--aud-fg);
+    box-shadow: 0 1px 3px rgba(101, 123, 131, 0.12);
+}
+#slide-root a { color: var(--aud-accent); }
+#slide-root strong { color: #073642; }
+#slide-root h1, #slide-root h2, #slide-root h3,
+#slide-root .aud-slide-title { color: #073642; }
+#slide-root .aud-slide-subtitle { color: var(--aud-accent); }
+#slide-root hr { border-color: var(--aud-rule); opacity: 0.4; }
+#slide-root code, #slide-root pre {
+    background: var(--aud-code-bg);
+    color: var(--aud-accent-3);
+}
+#slide-root blockquote {
+    border-left-color: var(--aud-accent);
+    color: var(--aud-muted);
+}
+#slide-root table th, #slide-root table td {
+    border-color: var(--aud-rule);
+}
+#slide-root .aud-block {
+    background: rgba(101, 123, 131, 0.05);
+    border-color: var(--aud-rule);
+}
+:root { --aud-transition: aud-fade; }

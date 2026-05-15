@@ -14,3 +14,4 @@ body, #slide-root {
 #slide-root code, #slide-root pre code {
     font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 }
+:root { --aud-transition: aud-fade; }

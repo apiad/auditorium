@@ -33,3 +33,4 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     background: rgba(255, 255, 255, 0.03);
     border-color: var(--aud-rule);
 }
+:root { --aud-transition: aud-fade; }

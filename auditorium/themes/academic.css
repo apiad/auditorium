@@ -49,3 +49,4 @@ body, #slide-root {
 }
 .aud-chrome-footer::before { content: var(--aud-deck-title, ""); }
 .aud-chrome-footer::after  { content: var(--aud-slide-number) " / " var(--aud-slide-total); }
+:root { --aud-transition: aud-fade; }

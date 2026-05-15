@@ -1,15 +1,15 @@
-/* Auditorium theme: print (color axis)
- * Pure white slide on white letterbox, pure black text, no shadows, no
- * gradients, no glow. Use when exporting to PDF for a clean printed look. */
+/* Auditorium theme: mono (color axis)
+ * Pure greyscale palette. No accent colors — emphasis comes from weight,
+ * size, and rules. */
 
 :root {
-    --aud-letterbox-bg: #ffffff;
+    --aud-letterbox-bg: #f5f5f4;
     --aud-slide-bg: #ffffff;
-    --aud-fg: #000000;
-    --aud-muted: #333333;
-    --aud-accent: #000000;
-    --aud-rule: #000000;
-    --aud-code-bg: #f5f5f5;
+    --aud-fg: #1a1a1a;
+    --aud-muted: #6b6b6b;
+    --aud-accent: #2a2a2a;
+    --aud-rule: #d1d1d1;
+    --aud-code-bg: #f0f0f0;
 }
 body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
 #slide-root {
@@ -18,6 +18,12 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     box-shadow: none;
 }
 #slide-root a { color: var(--aud-fg); text-decoration: underline; }
+#slide-root strong { color: var(--aud-fg); font-weight: 700; }
+#slide-root h1, #slide-root h2, #slide-root h3,
+#slide-root .aud-slide-title, #slide-root .aud-slide-subtitle {
+    color: var(--aud-fg);
+}
+#slide-root .aud-slide-subtitle { color: var(--aud-muted); }
 #slide-root hr { border-color: var(--aud-rule); }
 #slide-root code, #slide-root pre {
     background: var(--aud-code-bg);
@@ -25,7 +31,7 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     border: 1px solid var(--aud-rule);
 }
 #slide-root blockquote {
-    border-left: 3px solid var(--aud-fg);
+    border-left-color: var(--aud-fg);
     color: var(--aud-muted);
 }
 #slide-root table th, #slide-root table td {
@@ -33,7 +39,7 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
 }
 #slide-root .aud-block {
     background: transparent;
-    border: 1px solid var(--aud-rule);
+    border-color: var(--aud-rule);
 }
 #slide-root .aud-slide-title { text-shadow: none; }
-:root { --aud-transition: none; }
+:root { --aud-transition: aud-fade; }

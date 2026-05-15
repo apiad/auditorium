@@ -20,6 +20,7 @@ async def export_deck(
     step_by_step: bool,
     port: int,
     theme: list[str] | None = None,
+    transition: str | None = None,
 ) -> None:
     """Export a presentation to PDF, HTML, or PNG.
 
@@ -43,7 +44,7 @@ async def export_deck(
     from auditorium.cli import _apply_theme_override
 
     deck = _load_deck(deck_path)
-    _apply_theme_override(deck, theme)
+    _apply_theme_override(deck, theme, transition)
     app = create_app(deck)
     total = len(deck.slides)
 

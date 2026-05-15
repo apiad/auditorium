@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.6.0
+
+### Added
+
+- **Six more theme presets**, expanding both axes:
+  - layout: `minimalist`, `magazine`, `terminal`
+  - color: `solarized`, `pastel`, `mono`
+- **Slide transitions** — CSS-only, theme-declared. Each theme can set `--aud-transition` to one of `aud-fade`, `aud-slide-left`, `aud-slide-up`, `aud-zoom`, or `none`. Overridable per-deck with `Deck(transition="fade")` or per-run with `--transition fade`. The client toggles `.aud-slide-enter` on `#slide-root` after each `clear` event; a reflow dance guarantees the animation re-fires on every slide.
+- **Section dividers** — `ctx.section("Name", number="01")` renders a large centred title (with optional number above) for slide-level chapter breaks. Themes can hook `.aud-section-divider` / `.aud-section-number` / `.aud-section-title` for custom decoration.
+- **Showcase decks** in `examples/showcase/` — seven short combos each exhibiting one layout × one colour theme. Rendered to `docs/examples/*.html` and published to GitHub Pages.
+- Expanded `examples/demo_deck.py` into a sectioned tour: Intro / Layouts / Animations / Blocks / Typography / Themes.
+
 ## 3.5.0
 
 ### Added

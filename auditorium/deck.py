@@ -42,6 +42,25 @@ def _css_string_literal(s: str) -> str:
     return json.dumps(s)
 
 
+_TRANSITION_ALIASES = {
+    "fade": "aud-fade",
+    "slide-left": "aud-slide-left",
+    "slide-up": "aud-slide-up",
+    "zoom": "aud-zoom",
+    "none": "none",
+}
+
+
+def _resolve_transition(value: str) -> str:
+    """Resolve a short transition name to a CSS animation-name value.
+
+    Bare aliases like ``"fade"`` become ``"aud-fade"``. Anything that already
+    looks like a CSS keyframe identifier (contains ``-`` or matches ``none``)
+    passes through unchanged, so users can plug in custom keyframes.
+    """
+    return _TRANSITION_ALIASES.get(value, value)
+
+
 @dataclass
 class SlideInfo:
     """Metadata for a registered slide."""
@@ -61,6 +80,10 @@ class Deck:
         theme: name of a builtin theme preset (e.g. "academic"), a path to a
             ``.css`` file, or a list combining either. Themes cascade in order;
             later entries override earlier ones via standard CSS rules.
+        transition: per-deck override for slide transitions. Accepts a short
+            name (``"fade"``, ``"slide-left"``, ``"slide-up"``, ``"zoom"``,
+            ``"none"``) or a raw CSS animation name. Overrides any
+            ``--aud-transition`` set by the theme stack.
         margin: CSS shorthand for slide padding — "3rem" or "2rem 4rem".
             Maps to the --aud-slide-padding CSS variable.
         content_max_width: cap on text/list block width — "56rem".
@@ -76,6 +99,7 @@ class Deck:
         title: str = "Untitled",
         *,
         theme: str | list[str] | None = None,
+        transition: str | None = None,
         margin: str | None = None,
         content_max_width: str | None = None,
         font_size: str | None = None,
@@ -83,6 +107,7 @@ class Deck:
         extra_css: str | None = None,
     ) -> None:
         self.title = title
+        self.transition = transition
         self.margin = margin
         self.content_max_width = content_max_width
         self.font_size = font_size
@@ -118,6 +143,10 @@ class Deck:
         parts.append(
             f":root {{ --aud-deck-title: {_css_string_literal(self.title)}; }}"
         )
+        if self.transition is not None:
+            parts.append(
+                f":root {{ --aud-transition: {_resolve_transition(self.transition)}; }}"
+            )
         if self.extra_css:
             parts.append(self.extra_css)
         return "<style>\n" + "\n\n".join(parts) + "\n</style>"

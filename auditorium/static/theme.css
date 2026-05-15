@@ -83,6 +83,40 @@ body {
     max-width: var(--aud-content-max-width);
 }
 
+/* ---- Slide transitions ----
+ * Themes opt in by setting --aud-transition to a named animation
+ * (aud-fade, aud-slide-left, aud-slide-up, aud-zoom, or any keyframe of
+ * their own). Default is "none" — no transition. The client toggles
+ * .aud-slide-enter on #slide-root after each "clear" event; the reflow
+ * dance in the JS guarantees the animation re-fires on every slide.
+ */
+
+:root { --aud-transition: none; --aud-transition-duration: 0.32s; }
+
+#slide-root.aud-slide-enter {
+    animation-name: var(--aud-transition);
+    animation-duration: var(--aud-transition-duration);
+    animation-timing-function: ease-out;
+    animation-fill-mode: both;
+}
+
+@keyframes aud-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes aud-slide-left {
+    from { transform: translateX(3vw); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+}
+@keyframes aud-slide-up {
+    from { transform: translateY(2vh); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+}
+@keyframes aud-zoom {
+    from { transform: scale(0.97); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+
 /* ---- Theme chrome slots ----
  * Empty fixed-position regions themes can fill via ::before / ::after content.
  * Pointer-events are disabled so the chrome never intercepts clicks.
@@ -294,6 +328,37 @@ body {
     color: #6b7280;
     line-height: 1.3;
     text-align: center;
+}
+
+/* ---- Section dividers ----
+ * Used for slide-level chapter breaks: large centered title, optional
+ * number above. Themes can hook .aud-section-divider for custom decoration. */
+
+#slide-root .aud-section-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4em;
+    text-align: center;
+    width: 100%;
+}
+
+#slide-root .aud-section-number {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.1em;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    color: #6b7280;
+    text-transform: uppercase;
+}
+
+#slide-root .aud-section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 3.2em;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
 }
 
 /* ---- Information / academic blocks ---- */

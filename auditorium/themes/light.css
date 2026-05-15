@@ -30,3 +30,4 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
 #slide-root table th, #slide-root table td {
     border-color: var(--aud-rule);
 }
+:root { --aud-transition: aud-fade; }

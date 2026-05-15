@@ -154,6 +154,29 @@ class SlideContext:
             mutation["target"] = f"#{self._target_stack[-1]}"
         await self._pres.send_mutation(mutation)
 
+    async def section(self, text: str, *, number: str | int | None = None) -> None:
+        """Render a section divider — a large centered title used to break up a deck.
+
+        Intended as the only call in a divider slide. Themes can hook
+        ``.aud-section-divider``, ``.aud-section-number``, and
+        ``.aud-section-title`` for custom decoration.
+        """
+        num_html = (
+            f'<div class="aud-section-number">{number}</div>'
+            if number is not None
+            else ""
+        )
+        html = (
+            '<div class="aud-section-divider">'
+            f'{num_html}'
+            f'<div class="aud-section-title">{text}</div>'
+            '</div>'
+        )
+        mutation: dict = {"action": "append", "html": html}
+        if self._target_stack:
+            mutation["target"] = f"#{self._target_stack[-1]}"
+        await self._pres.send_mutation(mutation)
+
     # --- Info / academic blocks ---
 
     _BLOCK_KINDS = {

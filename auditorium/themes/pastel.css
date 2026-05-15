@@ -1,0 +1,44 @@
+/* Auditorium theme: pastel (color axis)
+ * Soft pinks, mauves, mint. Friendly and casual. */
+
+:root {
+    --aud-letterbox-bg: #fce7f3;
+    --aud-slide-bg: #fffafc;
+    --aud-fg: #4a3f55;
+    --aud-muted: #9d8aa8;
+    --aud-accent: #c084fc;        /* mauve */
+    --aud-accent-2: #6ee7b7;      /* mint */
+    --aud-accent-3: #fb7185;      /* coral pink */
+    --aud-rule: #f5d0e8;
+    --aud-code-bg: #f5ecf7;
+}
+body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
+#slide-root {
+    background: var(--aud-slide-bg);
+    color: var(--aud-fg);
+    border-radius: 0.5em;
+    box-shadow: 0 4px 18px rgba(192, 132, 252, 0.18);
+}
+#slide-root a { color: var(--aud-accent); }
+#slide-root h1, #slide-root h2, #slide-root h3,
+#slide-root .aud-slide-title { color: var(--aud-accent); }
+#slide-root .aud-slide-subtitle { color: var(--aud-accent-3); }
+#slide-root strong { color: var(--aud-accent-3); }
+#slide-root hr { border-color: var(--aud-rule); }
+#slide-root code, #slide-root pre {
+    background: var(--aud-code-bg);
+    color: var(--aud-accent);
+}
+#slide-root blockquote {
+    border-left-color: var(--aud-accent-2);
+    color: var(--aud-muted);
+}
+#slide-root table th, #slide-root table td {
+    border-color: var(--aud-rule);
+}
+#slide-root .aud-block {
+    background: rgba(192, 132, 252, 0.06);
+    border-color: var(--aud-rule);
+    border-radius: 0.6em;
+}
+:root { --aud-transition: aud-zoom; }
