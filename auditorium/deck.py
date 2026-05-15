@@ -1,7 +1,45 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable
+
+_THEMES_DIR = Path(__file__).parent / "themes"
+
+
+def _resolve_theme_value(value: str) -> str:
+    """Resolve a single theme value to CSS content.
+
+    A value is treated as a filesystem path when it contains a path separator
+    or ends in ``.css``; otherwise it's looked up as a builtin preset under
+    ``auditorium/themes/<name>.css``. Raises ``ValueError`` on miss.
+    """
+    candidate = Path(value)
+    if candidate.suffix == ".css" or "/" in value:
+        if not candidate.exists():
+            raise ValueError(f"theme file {value!r} not found")
+        return candidate.read_text()
+    builtin = _THEMES_DIR / f"{value}.css"
+    if not builtin.exists():
+        available = sorted(p.stem for p in _THEMES_DIR.glob("*.css"))
+        listing = ", ".join(available) if available else "(none)"
+        raise ValueError(f"unknown theme {value!r}. Available: {listing}")
+    return builtin.read_text()
+
+
+def resolve_themes(values: list[str]) -> str:
+    """Resolve a list of theme values and concatenate the CSS in order.
+
+    Later values cascade over earlier ones via normal CSS rules.
+    """
+    parts = [_resolve_theme_value(v) for v in values if v]
+    return "\n\n".join(parts)
+
+
+def _css_string_literal(s: str) -> str:
+    """Quote a Python string for use as a CSS string value (in custom prop)."""
+    return json.dumps(s)
 
 
 @dataclass
@@ -20,6 +58,9 @@ class Deck:
     """Top-level object holding slides and presentation metadata.
 
     Theme knobs (all optional):
+        theme: name of a builtin theme preset (e.g. "academic"), a path to a
+            ``.css`` file, or a list combining either. Themes cascade in order;
+            later entries override earlier ones via standard CSS rules.
         margin: CSS shorthand for slide padding — "3rem" or "2rem 4rem".
             Maps to the --aud-slide-padding CSS variable.
         content_max_width: cap on text/list block width — "56rem".
@@ -34,6 +75,7 @@ class Deck:
         self,
         title: str = "Untitled",
         *,
+        theme: str | list[str] | None = None,
         margin: str | None = None,
         content_max_width: str | None = None,
         font_size: str | None = None,
@@ -46,11 +88,24 @@ class Deck:
         self.font_size = font_size
         self.line_height = line_height
         self.extra_css = extra_css
-        self.runtime_theme_css: str | None = None
+        if isinstance(theme, str):
+            theme = [theme]
+        self.themes: list[str] = list(theme) if theme else []
+        self.theme_css: str = resolve_themes(self.themes) if self.themes else ""
         self._slides: list[SlideInfo] = []
 
     def theme_style_block(self) -> str:
-        """Render this deck's theme overrides as an HTML <style> block."""
+        """Render the full theme override as an HTML <style> block.
+
+        Order (last wins via cascade):
+            1. resolved theme list (from ``theme=`` or CLI ``--theme``)
+            2. per-deck variable overrides (margin, font_size, etc.)
+            3. ``--aud-deck-title`` exposed for themes to use in ``content:``
+            4. ``extra_css`` — most explicit, wins over everything
+        """
+        parts: list[str] = []
+        if self.theme_css:
+            parts.append(self.theme_css)
         vars_map = {
             "--aud-slide-padding": self.margin,
             "--aud-content-max-width": self.content_max_width,
@@ -58,16 +113,14 @@ class Deck:
             "--aud-line-height": self.line_height,
         }
         decls = "\n".join(f"    {k}: {v};" for k, v in vars_map.items() if v)
-        parts: list[str] = []
         if decls:
             parts.append(f":root {{\n{decls}\n}}")
+        parts.append(
+            f":root {{ --aud-deck-title: {_css_string_literal(self.title)}; }}"
+        )
         if self.extra_css:
             parts.append(self.extra_css)
-        if self.runtime_theme_css:
-            parts.append(self.runtime_theme_css)
-        if not parts:
-            return ""
-        return "<style>\n" + "\n".join(parts) + "\n</style>"
+        return "<style>\n" + "\n\n".join(parts) + "\n</style>"
 
     def slide(
         self,

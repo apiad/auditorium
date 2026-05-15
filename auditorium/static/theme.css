@@ -83,6 +83,21 @@ body {
     max-width: var(--aud-content-max-width);
 }
 
+/* ---- Theme chrome slots ----
+ * Empty fixed-position regions themes can fill via ::before / ::after content.
+ * Pointer-events are disabled so the chrome never intercepts clicks.
+ */
+
+.aud-chrome {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5;
+}
+.aud-chrome-header { top: 0; left: 0; right: 0; }
+.aud-chrome-footer { bottom: 0; left: 0; right: 0; }
+.aud-chrome-left   { top: 0; bottom: 0; left: 0; width: auto; }
+.aud-chrome-right  { top: 0; bottom: 0; right: 0; width: auto; }
+
 /* ---- Slide indicator ---- */
 
 #slide-indicator {

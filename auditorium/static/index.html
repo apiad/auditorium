@@ -17,6 +17,12 @@
 <body>
     <div id="slide-root"></div>
 
+    <!-- Theme chrome slots. Empty by default; themes fill via ::before/::after. -->
+    <div class="aud-chrome aud-chrome-header"></div>
+    <div class="aud-chrome aud-chrome-footer"></div>
+    <div class="aud-chrome aud-chrome-left"></div>
+    <div class="aud-chrome aud-chrome-right"></div>
+
     <div id="slide-indicator"></div>
     <div id="connection-status"></div>
 
@@ -101,6 +107,12 @@
                 case 'slide':
                     location.hash = `#slide-${msg.index}`;
                     indicator.textContent = msg.total ? `${msg.index + 1} / ${msg.total}` : `${msg.index + 1}`;
+                    document.documentElement.style.setProperty('--aud-slide-number', JSON.stringify(String(msg.index + 1)));
+                    document.documentElement.style.setProperty('--aud-slide-total', JSON.stringify(String(msg.total || '')));
+                    document.documentElement.style.setProperty('--aud-slide-name', JSON.stringify(msg.name || ''));
+                    document.body.dataset.slide = String(msg.index + 1);
+                    document.body.dataset.total = String(msg.total || '');
+                    document.body.dataset.slideName = msg.name || '';
                     break;
                 case 'reload':
                     location.hash = `#slide-${msg.slide}`;

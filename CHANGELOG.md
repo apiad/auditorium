@@ -9,7 +9,11 @@
   - generic: `note`, `info`, `success`, `warning`, `error`, `tip`
   - academic: `definition`, `theorem`, `lemma`, `corollary`, `proof`, `example`, `remark`, `quote`
 - Demo deck (`examples/demo_deck.py`) updated with `info_blocks` and `academic_blocks` slides.
-- **Runtime `--theme` override** — `auditorium run|record|export` now accept `--theme <name|path.css>`. A builtin preset name resolves to `auditorium/themes/<name>.css`; anything that looks like a file path (contains `/` or ends in `.css`) is read from disk. The CSS is appended after the deck's `extra_css`, so the flag wins. First builtin preset shipped: `dark`.
+- **Stackable themes** — `Deck(theme=...)` and `--theme` accept either a single value or a list and compose orthogonally. Two axes shipped:
+  - **layout/typography**: `simple`, `academic`, `comic`, `compact`
+  - **color/transitions**: `light`, `dark`, `neon`, `print`
+  Values are looked up under `auditorium/themes/<name>.css` or treated as a filesystem path. Resolved CSS is concatenated in declaration order; later entries override earlier via standard cascade. CLI `--theme` (repeatable) **replaces** the deck's `theme=` list entirely so any base can be swapped at runtime.
+- **Theme chrome slots** — the HTML shell now carries empty `.aud-chrome-header`, `.aud-chrome-footer`, `.aud-chrome-left`, `.aud-chrome-right` fixed-position regions that themes fill via `::before`/`::after content:`. Themes can read `--aud-deck-title`, `--aud-slide-name`, `--aud-slide-number`, `--aud-slide-total` CSS custom properties (the last three are updated live on every slide change), so chrome content stays purely CSS-driven.
 
 ## 3.4.0
 

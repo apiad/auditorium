@@ -19,7 +19,7 @@ async def record(
     slide_delay: float,
     live: bool,
     port: int,
-    theme_css: str | None = None,
+    theme: list[str] | None = None,
 ) -> None:
     """Record a presentation to video."""
     try:
@@ -35,9 +35,10 @@ async def record(
     from auditorium.cli import _load_deck
     from auditorium.server import create_app
 
+    from auditorium.cli import _apply_theme_override
+
     deck = _load_deck(deck_path)
-    if theme_css is not None:
-        deck.runtime_theme_css = theme_css
+    _apply_theme_override(deck, theme)
     app = create_app(deck)
 
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")

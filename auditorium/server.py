@@ -262,9 +262,8 @@ async def _run_slide(app: FastAPI, pres: Presentation) -> None:
         return
     try:
         await pres.send({"type": "clear"})
-        await pres.send({"type": "slide", "index": index, "total": len(deck.slides)})
-
         slide_fn = deck.slides[index]
+        await pres.send({"type": "slide", "index": index, "total": len(deck.slides), "name": slide_fn.name})
 
         notes_html = ""
         if slide_fn.func.__doc__:

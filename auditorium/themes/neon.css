@@ -1,0 +1,67 @@
+/* Auditorium theme: neon (color axis)
+ * Pure-black backdrop. Saturated cyan / magenta / lime accents with soft
+ * glow on titles. Animated underline on the slide title. */
+
+:root {
+    --aud-letterbox-bg: #000000;
+    --aud-slide-bg: #06070a;
+    --aud-fg: #e6f7ff;
+    --aud-muted: #7d93a6;
+    --aud-accent: #00e5ff;        /* electric cyan */
+    --aud-accent-2: #ff2bd6;      /* hot magenta */
+    --aud-accent-3: #b4ff39;      /* lime */
+    --aud-rule: #1c2230;
+    --aud-code-bg: #0c1219;
+}
+body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
+#slide-root {
+    background: var(--aud-slide-bg);
+    color: var(--aud-fg);
+}
+#slide-root h1, #slide-root h2, #slide-root h3,
+#slide-root .aud-slide-title {
+    color: var(--aud-accent);
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.45), 0 0 2px rgba(0, 229, 255, 0.6);
+}
+#slide-root .aud-slide-subtitle {
+    color: var(--aud-accent-2);
+    text-shadow: 0 0 10px rgba(255, 43, 214, 0.35);
+}
+#slide-root strong { color: var(--aud-accent-3); }
+#slide-root a { color: var(--aud-accent); }
+#slide-root a:hover {
+    text-shadow: 0 0 8px var(--aud-accent);
+}
+#slide-root code, #slide-root pre {
+    background: var(--aud-code-bg);
+    color: var(--aud-accent-3);
+    border: 1px solid var(--aud-rule);
+}
+#slide-root hr { border-color: var(--aud-accent); opacity: 0.4; }
+#slide-root blockquote {
+    border-left-color: var(--aud-accent-2);
+    color: var(--aud-muted);
+}
+#slide-root table th, #slide-root table td {
+    border-color: var(--aud-rule);
+}
+#slide-root .aud-block {
+    background: rgba(0, 229, 255, 0.04);
+    border-color: var(--aud-rule);
+}
+
+/* Animated cursor under the slide title. */
+#slide-root .aud-slide-title::after {
+    content: "";
+    display: inline-block;
+    width: 0.6em;
+    height: 0.85em;
+    margin-left: 0.15em;
+    vertical-align: -0.05em;
+    background: var(--aud-accent);
+    box-shadow: 0 0 10px var(--aud-accent);
+    animation: aud-neon-blink 1.1s steps(2, end) infinite;
+}
+@keyframes aud-neon-blink {
+    50% { opacity: 0; }
+}

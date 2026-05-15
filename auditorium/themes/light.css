@@ -1,20 +1,21 @@
-/* Auditorium theme: dark (color axis)
- * Near-black slide on warm-black letterbox, off-white text, amber accent.
- * Pure color override — pairs with any layout theme. */
+/* Auditorium theme: light (color axis)
+ * Cream letterbox, paper-white slide, graphite text, muted indigo accent.
+ * Explicit re-assertion of the framework default look. */
 
 :root {
-    --aud-letterbox-bg: #07080a;
-    --aud-slide-bg: #14171c;
-    --aud-fg: #e8e6e3;
-    --aud-muted: #9a958d;
-    --aud-accent: #f7c873;
-    --aud-rule: #2a2e36;
-    --aud-code-bg: #1c2026;
+    --aud-letterbox-bg: #f4f3ee;
+    --aud-slide-bg: #ffffff;
+    --aud-fg: #1a1a1a;
+    --aud-muted: #6b7280;
+    --aud-accent: #4f46e5;
+    --aud-rule: #d1d5db;
+    --aud-code-bg: #f3f4f6;
 }
 body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
 #slide-root {
     background: var(--aud-slide-bg);
     color: var(--aud-fg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 #slide-root a { color: var(--aud-accent); }
 #slide-root hr { border-color: var(--aud-rule); }
@@ -27,9 +28,5 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     color: var(--aud-muted);
 }
 #slide-root table th, #slide-root table td {
-    border-color: var(--aud-rule);
-}
-#slide-root .aud-block {
-    background: rgba(255, 255, 255, 0.03);
     border-color: var(--aud-rule);
 }

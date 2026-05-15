@@ -29,27 +29,23 @@ def main(
     pass
 
 
-def _resolve_theme(theme: str | None) -> str | None:
-    """Resolve a --theme value into CSS content.
+def _apply_theme_override(deck, theme: list[str] | None) -> None:
+    """Replace the deck's resolved theme stack with the CLI list (if any).
 
-    Accepts either a builtin preset name (`auditorium/themes/<name>.css`) or a
-    path to a `.css` file on disk. Returns the CSS as a string, or None.
+    CLI values override the deck's ``theme=`` kwarg entirely — so
+    ``--theme dark`` on a deck declared with ``theme=["academic", "neon"]``
+    yields just ``dark``. Pass nothing to keep the deck's defaults.
     """
     if not theme:
-        return None
-    candidate = Path(theme)
-    if candidate.suffix == ".css" or "/" in theme or candidate.exists():
-        if not candidate.exists():
-            console.print(f"[red]Error:[/] theme file [bold]{theme}[/] not found")
-            raise typer.Exit(1)
-        return candidate.read_text()
-    builtin = Path(__file__).parent / "themes" / f"{theme}.css"
-    if not builtin.exists():
-        available = sorted(p.stem for p in builtin.parent.glob("*.css"))
-        listing = ", ".join(available) if available else "(none)"
-        console.print(f"[red]Error:[/] unknown theme [bold]{theme}[/]. Available: {listing}")
-        raise typer.Exit(1)
-    return builtin.read_text()
+        return
+    from auditorium.deck import resolve_themes
+
+    try:
+        deck.theme_css = resolve_themes(list(theme))
+        deck.themes = list(theme)
+    except ValueError as e:
+        console.print(f"[red]Error:[/] {e}")
+        raise typer.Exit(1) from None
 
 
 def _load_deck(deck_path: Path):
@@ -109,7 +105,7 @@ def run(
     relay_host: str = typer.Option("vps.apiad.net:4243", "--relay", help="Relay server host:port"),
     public_name: str = typer.Option(None, "--name", help="Custom name for the public URL (e.g. --name my-talk)"),
     watch: bool = typer.Option(True, "--watch/--no-watch", help="Watch for file changes and hot-reload"),
-    theme: str = typer.Option(None, "--theme", help="Override the deck theme: builtin preset name (e.g. 'dark') or path to a .css file"),
+    theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack: e.g. --theme academic --theme dark. Each value is a builtin preset name or a path to a .css file."),
 ) -> None:
     """Run a presentation deck."""
     deck_path = deck_path.resolve()
@@ -117,17 +113,15 @@ def run(
         console.print(f"[red]Error:[/] {deck_path} not found")
         raise typer.Exit(1)
 
-    theme_css = _resolve_theme(theme)
     deck = _load_deck(deck_path)
-    if theme_css is not None:
-        deck.runtime_theme_css = theme_css
+    _apply_theme_override(deck, theme)
     from auditorium.server import create_app
 
     application = create_app(deck, presenter_mode=presenter)
     _print_banner(deck, host, port, presenter)
 
     if watch:
-        _setup_watcher(application, deck_path, theme_css)
+        _setup_watcher(application, deck_path, theme)
 
     if public:
         _start_relay_bridge(relay_host, port, public_name)
@@ -161,15 +155,13 @@ def record(
     slide_delay: float = typer.Option(3.0, "-d", "--slide-delay", help="Seconds to linger on completed slide before advancing"),
     live: bool = typer.Option(False, "--live", help="Launch visible browser for manual recording"),
     port: int = typer.Option(0, help="Server port (0 = random)"),
-    theme: str = typer.Option(None, "--theme", help="Override the deck theme: builtin preset name (e.g. 'dark') or path to a .css file"),
+    theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack."),
 ) -> None:
     """Record a presentation to video."""
     deck_path = deck_path.resolve()
     if not deck_path.exists():
         console.print(f"[red]Error:[/] {deck_path} not found")
         raise typer.Exit(1)
-
-    theme_css = _resolve_theme(theme)
 
     if port == 0:
         import socket
@@ -178,7 +170,7 @@ def record(
             port = s.getsockname()[1]
 
     from auditorium.recorder import record as do_record
-    asyncio.run(do_record(deck_path, output, resolution, auto_step, slide_delay, live, port, theme_css))
+    asyncio.run(do_record(deck_path, output, resolution, auto_step, slide_delay, live, port, theme))
 
 
 @app.command()
@@ -189,15 +181,13 @@ def export(
     resolution: str = typer.Option("1920x1080", "-r", "--resolution", help="Viewport size, e.g. 1280x720"),
     step_by_step: bool = typer.Option(False, "-s", "--step-by-step", help="One page/frame per step instead of per slide"),
     port: int = typer.Option(0, help="Server port (0 = random)"),
-    theme: str = typer.Option(None, "--theme", help="Override the deck theme: builtin preset name (e.g. 'dark') or path to a .css file"),
+    theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack."),
 ) -> None:
     """Export presentation to PDF, HTML, or PNG."""
     deck_path = deck_path.resolve()
     if not deck_path.exists():
         console.print(f"[red]Error:[/] {deck_path} not found")
         raise typer.Exit(1)
-
-    theme_css = _resolve_theme(theme)
 
     if fmt not in ("pdf", "html", "png"):
         console.print(f"[red]Error:[/] unknown format [bold]'{fmt}'[/]. Use pdf, html, or png.")
@@ -217,7 +207,7 @@ def export(
             port = s.getsockname()[1]
 
     from auditorium.exporter import export_deck
-    asyncio.run(export_deck(deck_path, output, fmt, resolution, step_by_step, port, theme_css))
+    asyncio.run(export_deck(deck_path, output, fmt, resolution, step_by_step, port, theme))
 
 
 def _start_live_status(application, deck) -> None:
@@ -363,7 +353,7 @@ def _start_relay_bridge(relay_host: str, local_port: int, name: str | None = Non
     thread.start()
 
 
-def _setup_watcher(application, deck_path: Path, theme_css: str | None = None) -> None:
+def _setup_watcher(application, deck_path: Path, theme: list[str] | None = None) -> None:
     """Set up a file watcher that hot-reloads the deck on changes."""
     import threading
     from watchfiles import watch as watch_files
@@ -374,8 +364,7 @@ def _setup_watcher(application, deck_path: Path, theme_css: str | None = None) -
             console.print("[yellow]⟳[/] Change detected, reloading...")
             try:
                 new_deck = _load_deck(deck_path)
-                if theme_css is not None:
-                    new_deck.runtime_theme_css = theme_css
+                _apply_theme_override(new_deck, theme)
                 loop = getattr(application.state, "loop", None)
                 if loop and loop.is_running():
                     from auditorium.server import reload_deck

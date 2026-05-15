@@ -1,0 +1,38 @@
+/* Auditorium theme: print (color axis)
+ * Pure white slide on white letterbox, pure black text, no shadows, no
+ * gradients, no glow. Use when exporting to PDF for a clean printed look. */
+
+:root {
+    --aud-letterbox-bg: #ffffff;
+    --aud-slide-bg: #ffffff;
+    --aud-fg: #000000;
+    --aud-muted: #333333;
+    --aud-accent: #000000;
+    --aud-rule: #000000;
+    --aud-code-bg: #f5f5f5;
+}
+body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
+#slide-root {
+    background: var(--aud-slide-bg);
+    color: var(--aud-fg);
+    box-shadow: none;
+}
+#slide-root a { color: var(--aud-fg); text-decoration: underline; }
+#slide-root hr { border-color: var(--aud-rule); }
+#slide-root code, #slide-root pre {
+    background: var(--aud-code-bg);
+    color: var(--aud-fg);
+    border: 1px solid var(--aud-rule);
+}
+#slide-root blockquote {
+    border-left: 3px solid var(--aud-fg);
+    color: var(--aud-muted);
+}
+#slide-root table th, #slide-root table td {
+    border-color: var(--aud-rule);
+}
+#slide-root .aud-block {
+    background: transparent;
+    border: 1px solid var(--aud-rule);
+}
+#slide-root .aud-slide-title { text-shadow: none; }
