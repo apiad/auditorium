@@ -19,6 +19,7 @@ async def export_deck(
     resolution: str,
     step_by_step: bool,
     port: int,
+    theme_css: str | None = None,
 ) -> None:
     """Export a presentation to PDF, HTML, or PNG.
 
@@ -40,6 +41,8 @@ async def export_deck(
     from auditorium.server import STATIC_DIR, create_app
 
     deck = _load_deck(deck_path)
+    if theme_css is not None:
+        deck.runtime_theme_css = theme_css
     app = create_app(deck)
     total = len(deck.slides)
 

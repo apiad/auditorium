@@ -1,0 +1,30 @@
+/* Auditorium preset: dark — inverted palette on a near-black backdrop. */
+
+:root {
+    --aud-bg: #0f1115;
+    --aud-fg: #e8e6e3;
+    --aud-muted: #9a958d;
+    --aud-accent: #f7c873;
+    --aud-rule: #2a2e36;
+    --aud-code-bg: #181c22;
+}
+
+body {
+    background: var(--aud-bg);
+    color: var(--aud-fg);
+}
+
+#slide-root a { color: var(--aud-accent); }
+#slide-root hr { border-color: var(--aud-rule); }
+#slide-root code,
+#slide-root pre {
+    background: var(--aud-code-bg);
+    color: var(--aud-fg);
+}
+#slide-root blockquote {
+    border-left-color: var(--aud-accent);
+    color: var(--aud-muted);
+}
+#slide-root table th,
+#slide-root table td { border-color: var(--aud-rule); }
+#slide-root .aud-block { background: rgba(255, 255, 255, 0.03); }

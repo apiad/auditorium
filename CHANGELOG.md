@@ -9,6 +9,7 @@
   - generic: `note`, `info`, `success`, `warning`, `error`, `tip`
   - academic: `definition`, `theorem`, `lemma`, `corollary`, `proof`, `example`, `remark`, `quote`
 - Demo deck (`examples/demo_deck.py`) updated with `info_blocks` and `academic_blocks` slides.
+- **Runtime `--theme` override** — `auditorium run|record|export` now accept `--theme <name|path.css>`. A builtin preset name resolves to `auditorium/themes/<name>.css`; anything that looks like a file path (contains `/` or ends in `.css`) is read from disk. The CSS is appended after the deck's `extra_css`, so the flag wins. First builtin preset shipped: `dark`.
 
 ## 3.4.0
 

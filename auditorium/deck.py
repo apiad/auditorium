@@ -46,6 +46,7 @@ class Deck:
         self.font_size = font_size
         self.line_height = line_height
         self.extra_css = extra_css
+        self.runtime_theme_css: str | None = None
         self._slides: list[SlideInfo] = []
 
     def theme_style_block(self) -> str:
@@ -62,6 +63,8 @@ class Deck:
             parts.append(f":root {{\n{decls}\n}}")
         if self.extra_css:
             parts.append(self.extra_css)
+        if self.runtime_theme_css:
+            parts.append(self.runtime_theme_css)
         if not parts:
             return ""
         return "<style>\n" + "\n".join(parts) + "\n</style>"
