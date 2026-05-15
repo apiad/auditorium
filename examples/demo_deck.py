@@ -8,8 +8,8 @@ deck = Deck(title="Auditorium Demo")
 @deck.slide
 async def title_slide(ctx):
     """Welcome the audience. Mention this is a demo of Auditorium 3.0."""
-    await ctx.md("# Auditorium 3.0")
-    await ctx.md("*Python-scripted live presentations*")
+    await ctx.title("Auditorium 3.0")
+    await ctx.subtitle("Python-scripted live presentations")
 
 
 @deck.slide
@@ -207,8 +207,55 @@ async def jupyter_display(ctx):
 
 
 @deck.slide
+async def info_blocks(ctx):
+    """Demonstrate the generic info blocks: note, info, success, warning, error, tip."""
+    await ctx.title("Info Blocks")
+    await ctx.subtitle("Coloured callouts for the common cases")
+    await ctx.block("note", "A neutral aside that doesn't fit the main flow.")
+    await ctx.step()
+    await ctx.block("info", "Useful background context the reader may not know.")
+    await ctx.step()
+    await ctx.block("success", "The migration completed; **42 rows** updated.")
+    await ctx.step()
+    await ctx.block("warning", "This API will be deprecated in `v3.0`.")
+    await ctx.step()
+    await ctx.block("error", "Connection refused — check that the server is running.")
+
+
+@deck.slide
+async def academic_blocks(ctx):
+    """Demonstrate the academic blocks: definition, theorem, proof, example, remark."""
+    await ctx.title("Academic Blocks")
+    await ctx.subtitle("For papers, lectures, and seminar talks")
+    await ctx.block(
+        "definition",
+        "A function $f: X \\to Y$ is **continuous** at $x_0$ if for every "
+        "$\\varepsilon > 0$ there exists $\\delta > 0$ such that "
+        "$|x - x_0| < \\delta$ implies $|f(x) - f(x_0)| < \\varepsilon$.",
+        title="Definition 2.1 (Continuity)",
+    )
+    await ctx.step()
+    await ctx.block(
+        "theorem",
+        "Every continuous function on a compact set attains its maximum.",
+        title="Theorem 2.3 (Extreme Value)",
+    )
+    await ctx.step()
+    await ctx.block(
+        "proof",
+        "By compactness, the image $f(K)$ is compact in $\\mathbb{R}$, hence "
+        "closed and bounded — so $\\sup f(K) \\in f(K)$. $\\blacksquare$",
+    )
+    await ctx.step()
+    await ctx.block(
+        "example",
+        "$f(x) = x^2$ on $[-1, 1]$ attains its max value $1$ at $x = \\pm 1$.",
+    )
+
+
+@deck.slide
 async def fin(ctx):
     """Thank the audience. Mention the GitHub repo."""
-    await ctx.md("# Thank You")
-    await ctx.md("Built with **Auditorium 3.0**")
+    await ctx.title("Thank You")
+    await ctx.subtitle("Built with Auditorium 3.0")
     await ctx.md("*github.com/apiad/auditorium*")

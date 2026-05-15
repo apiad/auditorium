@@ -127,6 +127,91 @@ class SlideContext:
         text = Path(path).read_text()
         await self.md(text, element_id=element_id)
 
+    # --- Semantic chrome ---
+
+    async def title(self, text: str) -> None:
+        """Render the slide title.
+
+        Semantic equivalent of ``md('# text')`` but emits an element with
+        ``class="aud-slide-title"`` so themes can target it for chrome,
+        decoration, or running-head injection.
+        """
+        mutation: dict = {
+            "action": "append",
+            "html": f'<h1 class="aud-slide-title">{text}</h1>',
+        }
+        if self._target_stack:
+            mutation["target"] = f"#{self._target_stack[-1]}"
+        await self._pres.send_mutation(mutation)
+
+    async def subtitle(self, text: str) -> None:
+        """Render the slide subtitle as an ``<h2>`` with class ``aud-slide-subtitle``."""
+        mutation: dict = {
+            "action": "append",
+            "html": f'<h2 class="aud-slide-subtitle">{text}</h2>',
+        }
+        if self._target_stack:
+            mutation["target"] = f"#{self._target_stack[-1]}"
+        await self._pres.send_mutation(mutation)
+
+    # --- Info / academic blocks ---
+
+    _BLOCK_KINDS = {
+        # generic info
+        "note": "Note",
+        "info": "Info",
+        "success": "Success",
+        "warning": "Warning",
+        "error": "Error",
+        "tip": "Tip",
+        # academic
+        "definition": "Definition",
+        "theorem": "Theorem",
+        "lemma": "Lemma",
+        "corollary": "Corollary",
+        "proof": "Proof",
+        "example": "Example",
+        "remark": "Remark",
+        "quote": "Quote",
+    }
+
+    async def block(
+        self,
+        kind: str,
+        body: str,
+        *,
+        title: str | None = None,
+    ) -> None:
+        """Render a styled information / academic block.
+
+        Kinds: ``note``, ``info``, ``success``, ``warning``, ``error``, ``tip``,
+        ``definition``, ``theorem``, ``lemma``, ``corollary``, ``proof``,
+        ``example``, ``remark``, ``quote``.
+
+        ``body`` is rendered as markdown. ``title`` overrides the default
+        label (e.g. pass ``title="Lemma 1.2 (Convergence)"``).
+        """
+        if kind not in self._BLOCK_KINDS:
+            raise ValueError(
+                f"unknown block kind {kind!r}; "
+                f"expected one of {sorted(self._BLOCK_KINDS)}"
+            )
+        label = title if title is not None else self._BLOCK_KINDS[kind]
+        body_html = markdown.markdown(
+            textwrap.dedent(body).strip(),
+            extensions=["fenced_code", "tables"],
+        )
+        html = (
+            f'<div class="aud-block aud-block-{kind}">'
+            f'<div class="aud-block-title">{label}</div>'
+            f'<div class="aud-block-body">{body_html}</div>'
+            f'</div>'
+        )
+        mutation: dict = {"action": "append", "html": html}
+        if self._target_stack:
+            mutation["target"] = f"#{self._target_stack[-1]}"
+        await self._pres.send_mutation(mutation)
+
     # --- Timing ---
 
     async def step(self) -> None:

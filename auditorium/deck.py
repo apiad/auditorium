@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Callable, Any
+from dataclasses import dataclass
+from typing import Callable
 
 
 @dataclass

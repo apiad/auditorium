@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.5.0
+
+### Added
+
+- **Semantic title primitives** — `ctx.title("…")` / `ctx.subtitle("…")` render an `<h1 class="aud-slide-title">` / `<h2 class="aud-slide-subtitle">`. Themes can target these for chrome, running heads, or decorations without parsing markdown.
+- **Information & academic blocks** — `ctx.block(kind, body_md, *, title=None)` renders a styled callout with a coloured left border and tinted title bar. Kinds:
+  - generic: `note`, `info`, `success`, `warning`, `error`, `tip`
+  - academic: `definition`, `theorem`, `lemma`, `corollary`, `proof`, `example`, `remark`, `quote`
+- Demo deck (`examples/demo_deck.py`) updated with `info_blocks` and `academic_blocks` slides.
+
 ## 3.4.0
 
 ### Added
