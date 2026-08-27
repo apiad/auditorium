@@ -167,6 +167,28 @@ class Deck:
             return decorator(func)
         return decorator
 
+    def scene(
+        self,
+        func: Callable | None = None,
+        *,
+        order: float | None = None,
+        title: str | None = None,
+    ) -> Callable:
+        """Register an async function as a scene.
+
+        Identical registration to ``slide``; the difference is which context
+        object the compiler passes in — a full SceneContext rather than the
+        restricted slide shim.
+        """
+        def decorator(fn: Callable) -> Callable:
+            fn._auditorium_scene = True
+            self._slides.append(SlideInfo(func=fn, title=title, order=order))
+            return fn
+
+        if func is not None:
+            return decorator(func)
+        return decorator
+
     @property
     def slides(self) -> list[SlideInfo]:
         """Return slides in presentation order.
