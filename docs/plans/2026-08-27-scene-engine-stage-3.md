@@ -700,9 +700,9 @@ def render(
     console.print(f"[green]✓[/] Rendered to [bold]{output}[/]")
 ```
 
-Then thread `start_frame`/`end_frame` through `render_video` to `render_frames` (add the two keyword arguments to `render_video`'s signature and pass them down).
-
 Delete `auditorium/recorder.py`.
+
+`render_video` already accepts `start_frame`/`end_frame` (declared in Task 3) — do NOT edit `render.py` in this task. Another agent owns it.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
