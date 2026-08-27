@@ -7,7 +7,6 @@ whole value of a preview is that it shows what the renderer will produce.
 import asyncio
 import threading
 
-import pytest
 import pytest_asyncio
 import uvicorn
 

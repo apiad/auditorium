@@ -9,7 +9,6 @@ itself is the shipped bug, not the fix.
 import asyncio
 import threading
 
-import pytest
 import pytest_asyncio
 import uvicorn
 

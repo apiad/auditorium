@@ -1,7 +1,6 @@
 import hashlib
 from pathlib import Path
 
-import pytest
 
 from auditorium.deck import Deck
 from auditorium.render import render_frames

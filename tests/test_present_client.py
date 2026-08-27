@@ -1,7 +1,6 @@
 import asyncio
 import threading
 
-import pytest
 import pytest_asyncio
 import uvicorn
 

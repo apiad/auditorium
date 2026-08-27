@@ -7,6 +7,13 @@ produce the same frames by construction rather than by luck.
 """
 from __future__ import annotations
 
+import asyncio
+import shutil
+import subprocess
+import tempfile
+import threading
+from pathlib import Path
+
 from auditorium.timeline import Timeline
 
 
@@ -46,10 +53,6 @@ def frame_count(timeline: Timeline, fps: int) -> int:
     """Number of frames a render of this timeline will produce."""
     return len(render_schedule(timeline, fps))
 
-
-import asyncio
-import threading
-from pathlib import Path
 
 FRAME_NAME = "frame-{:06d}.png"
 
@@ -162,10 +165,6 @@ async def render_frames(
 
     return written
 
-
-import shutil
-import subprocess
-import tempfile
 
 SIZE_PRESETS = {
     "1080p": (1920, 1080),

@@ -1,5 +1,4 @@
 import asyncio
-from pathlib import Path
 
 import pytest
 
@@ -56,7 +55,6 @@ async def test_exported_frames_do_not_all_carry_the_same_page_number(
     while every other assertion stayed green. Counting files cannot catch this;
     only looking at what is in them can.
     """
-    import re
 
     out = tmp_path / "png3"
     await export_deck(deck_file, out, "png", "320x240", False, 0)
