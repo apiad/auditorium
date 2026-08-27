@@ -21,22 +21,15 @@ class Region:
         self.id = region_id
 
     async def __aenter__(self) -> Region:
+        # Purely compile-time bookkeeping. push_target/pop_target used to be
+        # messages steering a dumb client's insertion point; a compiled op
+        # already carries its own parent, resolved here, so there is nothing
+        # to tell the browser about.
         self._ctx._target_stack.append(self.id)
-        await self._ctx._pres.send({
-            "type": "mutation",
-            "action": "push_target",
-            "selector": f"#{self.id}",
-            "id": str(uuid.uuid4()),
-        })
         return self
 
     async def __aexit__(self, *exc) -> None:
         self._ctx._target_stack.pop()
-        await self._ctx._pres.send({
-            "type": "mutation",
-            "action": "pop_target",
-            "id": str(uuid.uuid4()),
-        })
 
 
 def _flex_style(item: SizingItem) -> str:
@@ -55,7 +48,7 @@ def _normalize_sizing(sizing: Sizing) -> list[SizingItem]:
 
 async def _switch_to_layout_mode(ctx: SlideContext) -> None:
     """Switch slide root from centered mode to layout mode."""
-    await ctx._pres.send_mutation({
+    await ctx._scene._emit_op({
         "action": "set_class",
         "selector": "#slide-root",
         "cls": "aud-layout-mode",
@@ -84,7 +77,7 @@ async def columns(ctx: SlideContext, sizing: Sizing = 2) -> list[Region]:
     mutation: dict = {"action": "append", "html": html}
     if ctx._target_stack:
         mutation["target"] = f"#{ctx._target_stack[-1]}"
-    await ctx._pres.send_mutation(mutation)
+    await ctx._scene._emit_op(mutation)
     return regions
 
 
@@ -110,7 +103,7 @@ async def rows(ctx: SlideContext, sizing: Sizing = 2) -> list[Region]:
     mutation: dict = {"action": "append", "html": html}
     if ctx._target_stack:
         mutation["target"] = f"#{ctx._target_stack[-1]}"
-    await ctx._pres.send_mutation(mutation)
+    await ctx._scene._emit_op(mutation)
     return regions
 
 
@@ -118,4 +111,4 @@ async def place(ctx: SlideContext, html: str, x: int, y: int, *, element_id: str
     """Absolutely position an element at pixel coordinates."""
     eid = element_id or f"placed-{uuid.uuid4().hex[:8]}"
     full_html = f'<div id="{eid}" style="position: absolute; left: {x}px; top: {y}px;">{html}</div>'
-    await ctx._pres.send_mutation({"action": "append", "html": full_html})
+    await ctx._scene._emit_op({"action": "append", "html": full_html})
