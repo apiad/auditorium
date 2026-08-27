@@ -21,6 +21,24 @@
 - All times in the timeline are integer **milliseconds**. Python-facing APIs take seconds (floats) and convert at the boundary.
 - English for code, comments, identifiers, commit messages, and test names.
 
+**Committing in a shared checkout.** This plan is executed by concurrent agents
+against one working tree and one index. Every task's commit step is overridden by
+this form:
+
+```bash
+git add <explicit paths> && git commit -m "message" -- <the same explicit paths>
+```
+
+The trailing pathspec restricts the commit to those paths even if a peer has
+staged something else in the meantime. Both halves are required: `git commit --
+<path>` alone fails on a **new** file (`pathspec did not match any file(s) known
+to git` — partial-path commit only covers tracked paths), and `-m` must come
+*before* `--` or git reads the message as a pathspec.
+
+Never `git add -A`, `git add .`, `git add -u`, `--amend`, `git stash`, or
+`git checkout`/`git restore` on a path your task did not create. Peers are
+editing this tree right now.
+
 ---
 
 ### Task 0: Unblock the browser toolchain and establish test infrastructure
@@ -1753,7 +1771,25 @@ Expected: FAIL — `index.html` still runs the old mutation client and never def
 
 - [ ] **Step 3: Replace the client script in index.html**
 
-In `auditorium/static/index.html`, delete the entire inline `<script>` block that implements the WebSocket mutation applier — it begins at the line containing `window.__auditorium_finished = false;` and runs to the matching `</script>`. Locate its bounds with:
+**STOP AND READ BEFORE DELETING ANYTHING.** A peer is building live font
+scaling (`--aud-font-scale`, driven by Ctrl+A / Ctrl+D / Ctrl+0) against this
+same working tree. As of 2026-08-27 their work is CSS-only — the variable is
+declared in `theme.css` but the keybindings are not yet in `index.html`. If they
+have landed by the time you run this task, the block you are about to delete
+contains their feature. Check first:
+
+```bash
+grep -n "aud-font-scale\|ctrlKey" auditorium/static/index.html
+```
+
+If that returns anything, **port those handlers into the new client's `keydown`
+listener rather than dropping them**, and say so in your report. Deleting a
+peer's in-flight feature because it happened to live in a block you were
+rewriting is the failure this note exists to prevent.
+
+Then delete the inline `<script>` block that implements the WebSocket mutation
+applier — it begins at the line containing `window.__auditorium_finished = false;`
+and runs to the matching `</script>`. Locate its bounds with:
 
 ```bash
 grep -n "<script\|</script>\|__auditorium_finished" auditorium/static/index.html
