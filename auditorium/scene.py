@@ -48,7 +48,7 @@ class AnimSpec:
 
 
 class AnimateProxy:
-    """Turns ``handle.animate.move_to(x, y)`` into AnimSpec objects.
+    """Turns ``handle.animate.move_by(x, y)`` into AnimSpec objects.
 
     Returns descriptions; mutates nothing. ``play()`` decides when they run.
     """
@@ -62,7 +62,20 @@ class AnimateProxy:
     def fade_out(self) -> list[AnimSpec]:
         return [AnimSpec(self._node, "opacity", 1.0, 0.0)]
 
-    def move_to(self, x: float, y: float) -> list[AnimSpec]:
+    def move_by(self, x: float, y: float) -> list[AnimSpec]:
+        """Translate a node by (x, y) pixels from wherever it currently is.
+
+        A delta, not a destination, and named that way deliberately. Transform
+        tracks composite additively -- they have to, because this emits one
+        animation per axis and under the default ``composite: "replace"`` the
+        second would win outright and the node would only ever move vertically.
+        The consequence is that repeated calls accumulate: two ``move_by(100, 0)``
+        leave the node 200px along, which is exactly what a sequence of swaps
+        in a sort wants, and is not what a method called ``move_to`` would mean.
+
+        Offsets are in CSS pixels of the rendered stage, so a deck with
+        hand-tuned motion is authored against one size.
+        """
         return [
             AnimSpec(self._node, "transform.x", None, x),
             AnimSpec(self._node, "transform.y", None, y),

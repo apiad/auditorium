@@ -22,7 +22,7 @@ def _deck():
         await s.show("<p style='font-size:60px'>STATIC</p>")
         h = await s.show("<p style='font-size:80px'>HELLO</p>")
         await s.play(h.animate.fade_in(), run_time=0.5)
-        await s.play(h.animate.move_to(200, 0), run_time=0.5)
+        await s.play(h.animate.move_by(200, 0), run_time=0.5)
 
     return deck
 

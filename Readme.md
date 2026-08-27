@@ -237,7 +237,7 @@ async def wiring(s):
     wire = await s.draw(Arrow(from_=a.bottom, to=b.top, stroke="#2563eb", width=3))
     await s.play(wire.animate.draw_on(), run_time=0.6, ease="out-cubic")
 
-    await s.play(a.animate.move_to(160, 0), run_time=0.8)   # the arrow follows
+    await s.play(a.animate.move_by(160, 0), run_time=0.8)   # the arrow follows
 ```
 
 **Anchors are symbolic.** `a.bottom` is not a coordinate — it is a promise the

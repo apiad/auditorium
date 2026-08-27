@@ -21,7 +21,7 @@ def _deck():
     async def one(s):
         h = await s.show("<p id='mover'>first</p>")
         await s.play(h.animate.fade_in(), run_time=0.5)
-        await s.play(h.animate.move_to(300, 0), run_time=1.0)
+        await s.play(h.animate.move_by(300, 0), run_time=1.0)
         await s.beat()
         h2 = await s.show("<p>second</p>")
         await s.play(h2.animate.fade_in(), run_time=0.5)

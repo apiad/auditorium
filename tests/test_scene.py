@@ -93,10 +93,10 @@ async def test_ease_names_map_to_css_easing_functions():
     assert tl.tracks[0].ease == "cubic-bezier(0.33, 1, 0.68, 1)"
 
 
-async def test_move_to_emits_two_tracks_one_per_axis():
+async def test_move_by_emits_two_tracks_one_per_axis():
     s, tl = make_scene()
     h = await s.show("<p>hi</p>")
-    await s.play(h.animate.move_to(400, 200), run_time=0.8)
+    await s.play(h.animate.move_by(400, 200), run_time=0.8)
     props = sorted(t.prop for t in tl.tracks)
     assert props == ["transform.x", "transform.y"]
 

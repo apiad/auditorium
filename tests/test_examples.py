@@ -38,7 +38,7 @@ async def test_the_demo_actually_animates():
     source = (EXAMPLES / "demo.py").read_text()
     assert "@deck.slide" not in source, "the demo is scenes, not slides"
     assert "@deck.scene" in source
-    for primitive in ("s.play(", "move_to(", "draw_on()", "lag=", "s.draw(", "ease="):
+    for primitive in ("s.play(", "move_by(", "draw_on()", "lag=", "s.draw(", "ease="):
         assert primitive in source, f"the demo no longer exercises {primitive}"
 
 

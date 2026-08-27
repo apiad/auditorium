@@ -37,6 +37,14 @@
 - **Page Up / Page Down** in the audience view, because that is what a
   presentation clicker sends.
 
+### Changed
+
+- **`animate.move_to()` is now `animate.move_by()`.** It always was a delta:
+  transform tracks composite additively (they must, or the per-axis animations
+  overwrite each other and nothing moves horizontally), so two `move_to(100, 0)`
+  calls left a node 200px along. The behaviour is right and the name was wrong.
+  Renamed before 4.0 published rather than after.
+
 ### Fixed
 
 - **A scene boundary clears the geometry overlay.** `clear` only emptied

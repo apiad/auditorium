@@ -67,7 +67,7 @@ async def test_python_computation_drives_the_timeline():
             for j in range(len(arr) - i - 1):
                 if arr[j] > arr[j + 1]:
                     arr[j], arr[j + 1] = arr[j + 1], arr[j]
-                    await s.play(handles[j].animate.move_to(j * 50, 0), run_time=0.2)
+                    await s.play(handles[j].animate.move_by(j * 50, 0), run_time=0.2)
 
     tl = await compile_deck(deck)
     assert len(tl.tracks) > 0

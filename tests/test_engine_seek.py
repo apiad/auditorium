@@ -234,8 +234,8 @@ async def test_flex_sizing_propagates_to_appended_content(browser_page):
 
 
 @pytest.fixture
-def move_to_timeline():
-    """A node with BOTH transform axes animated, as move_to() actually emits."""
+def move_by_timeline():
+    """A node with BOTH transform axes animated, as move_by() actually emits."""
     tl = Timeline(meta={"title": "move"})
     tl.nodes.append(Node(id="m1", layer="dom", html="<div>M</div>"))
     tl.ops.append(Op(t=0, action="append", node="m1"))
@@ -248,17 +248,17 @@ def move_to_timeline():
     return tl.to_dict()
 
 
-async def test_move_to_actually_moves_when_both_axes_are_animated(
-    browser_page, move_to_timeline
+async def test_move_by_actually_moves_when_both_axes_are_animated(
+    browser_page, move_by_timeline
 ):
     """Two tracks on one CSS property must compose, not overwrite.
 
-    move_to() emits transform.x and transform.y. With WAAPI's default
+    move_by() emits transform.x and transform.y. With WAAPI's default
     composite:"replace" the second animation wins outright and the element
     renders translateY(0px) -- it never moves, silently. Every stage-1 test
     passed because the harness only ever had a single transform track.
     """
-    await serve(browser_page, move_to_timeline)
+    await serve(browser_page, move_by_timeline)
     await browser_page.evaluate("() => window.AuditoriumEngine.seek(1000)")
     assert await x_of(browser_page, "#m1") == 200
 

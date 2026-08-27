@@ -24,7 +24,7 @@ def _svg_deck():
         await s.draw(Arrow(from_=a.right, to=b.left, stroke="#c00", width=4))
         line = await s.draw(Line(from_=(20, 20), to=(300, 20), stroke="#06c", width=6))
         await s.play(line.animate.draw_on(), run_time=0.5)
-        await s.play(a.animate.move_to(120, 0), run_time=0.5)
+        await s.play(a.animate.move_by(120, 0), run_time=0.5)
 
     return deck
 
@@ -55,7 +55,7 @@ async def test_the_draw_on_changes_the_pixels(tmp_path):
 
 
 async def test_the_anchored_arrow_moves_with_its_box(tmp_path):
-    """Frames spanning the move_to must differ.
+    """Frames spanning the move_by must differ.
 
     The arrow is anchored to A, so this is also the render-side check that
     anchors resolve per frame rather than once at append.

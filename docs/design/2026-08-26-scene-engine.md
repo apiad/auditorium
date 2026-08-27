@@ -89,7 +89,7 @@ in milliseconds and appends to the timeline:
 async def pricing(s):
     box = await s.show(Box("$29/mo"), at=(100, 200))
     await s.play(FadeIn(box), run_time=0.5)
-    await s.play(box.animate.move_to(400, 200), run_time=0.8, ease="out-cubic")
+    await s.play(box.animate.move_by(400, 200), run_time=0.8, ease="out-cubic")
     await s.beat()
     await s.play(CountUp(box.label, 0, 1_000_000), run_time=2.0)
 ```

@@ -37,6 +37,14 @@ PITCH = 197
 # content an explicit stage height and centres within that.
 STAGE = 820
 
+# Time to actually look at what just happened. wait() rather than beat(hold=)
+# on purpose: a wait is real timeline duration, so it is identical in the
+# render, in the preview scrubber and in live playback. A beat hold only
+# dwells when rendering, which makes the preview's duration disagree with the
+# video's -- the same split that made the frame counter lie.
+BEAT = 1.6
+READ = 2.6
+
 INK = "#0f172a"
 BLUE = "#2563eb"
 RED = "#dc2626"
@@ -108,6 +116,7 @@ async def opening(s):
     await s.play(title.animate.fade_in(), run_time=0.7, ease="out-cubic")
     await s.play(rule.animate.draw_on(), run_time=0.7, ease="out-cubic")
     await s.play(tag.animate.fade_in(), run_time=0.6)
+    await s.wait(BEAT)
     await s.beat()
 
 
@@ -145,6 +154,7 @@ async def thesis(s):
 
     await s.play(code.animate.fade_in(), run_time=0.6)
     await s.play(note.animate.fade_in(), run_time=0.6)
+    await s.wait(READ)
     await s.beat()
 
 
@@ -171,9 +181,10 @@ async def sorting(s):
                 bars.append(await s.show(bar(value)))
 
     await s.play(*[b.animate.fade_in() for b in bars], run_time=0.6, lag=0.07)
+    await s.wait(1.0)
     await s.beat()
 
-    # move_to composites additively, so each call moves a bar BY one slot
+    # move_by composites additively, so each call moves a bar BY one slot
     # rather than to an absolute position -- which is exactly what a sequence
     # of swaps needs.
     order = list(VALUES)
@@ -183,13 +194,15 @@ async def sorting(s):
             if order[j] > order[j + 1]:
                 order[j], order[j + 1] = order[j + 1], order[j]
                 await s.play(
-                    slots[j].animate.move_to(PITCH, 0),
-                    slots[j + 1].animate.move_to(-PITCH, 0),
+                    slots[j].animate.move_by(PITCH, 0),
+                    slots[j + 1].animate.move_by(-PITCH, 0),
                     run_time=0.26,
                     ease="out-cubic",
                 )
                 slots[j], slots[j + 1] = slots[j + 1], slots[j]
 
+    # Hold on the sorted result: the payoff is the last frame, not the motion.
+    await s.wait(2.0)
     await s.beat()
 
 
@@ -217,13 +230,16 @@ async def anchors(s):
     first = await s.draw(Arrow(from_=boxes[0].right, to=boxes[1].left, stroke=BLUE, width=4))
     second = await s.draw(Arrow(from_=boxes[1].right, to=boxes[2].left, stroke=RED, width=4))
     await s.play(first.animate.draw_on(), second.animate.draw_on(), run_time=0.7, lag=0.25)
+    await s.wait(1.2)
     await s.beat()
 
     # The arrows were never told where the box is -- they re-resolve every
     # frame, so they stay attached while it moves.
-    await s.play(boxes[1].animate.move_to(0, -170), run_time=0.9, ease="out-back")
+    await s.play(boxes[1].animate.move_by(0, -170), run_time=0.9, ease="out-back")
+    await s.wait(1.4)
     await s.beat()
-    await s.play(boxes[1].animate.move_to(0, 170), run_time=0.7, ease="out-cubic")
+    await s.play(boxes[1].animate.move_by(0, 170), run_time=0.7, ease="out-cubic")
+    await s.wait(BEAT)
 
 
 # --- 5. Stagger --------------------------------------------------------
@@ -247,10 +263,11 @@ async def overlap(s):
                 )))
 
     await s.play(*[d.animate.fade_in() for d in dots], run_time=0.5, lag=0.06)
-    await s.play(*[d.animate.move_to(0, -130) for d in dots],
+    await s.play(*[d.animate.move_by(0, -130) for d in dots],
                  run_time=0.5, ease="out-cubic", lag=0.05)
-    await s.play(*[d.animate.move_to(0, 130) for d in dots],
+    await s.play(*[d.animate.move_by(0, 130) for d in dots],
                  run_time=0.5, ease="out-cubic", lag=0.05)
+    await s.wait(BEAT)
     await s.beat()
 
 
@@ -275,5 +292,6 @@ async def close(s):
     await s.play(line.animate.fade_in(), run_time=0.5)
     await s.play(rule.animate.draw_on(), run_time=0.8)
     await s.play(dot.animate.fade_in(), run_time=0.4)
-    await s.play(dot.animate.move_to(430, 0), run_time=1.2, ease="in-out")
+    await s.play(dot.animate.move_by(430, 0), run_time=1.2, ease="in-out")
+    await s.wait(READ)
     await s.beat()
