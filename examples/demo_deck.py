@@ -2,13 +2,14 @@
 
 Organised by section dividers so the tour is easy to follow:
 
-    Intro → Layouts → Animations → Blocks → Typography → Themes → Scenes
+    Intro → Layouts → Animations → Blocks → Typography → Themes → Scenes → Geometry
 
 Use as living documentation: every primitive should appear at least once,
 and every change to behaviour should be reflected here.
 """
 
 from auditorium import Deck
+from auditorium.nodes import Arrow, Circle, Line
 
 deck = Deck(title="Auditorium 4.0 Tour", theme=["simple", "light"])
 
@@ -254,6 +255,7 @@ async def code_example(ctx):
 
 ```python
 from auditorium import Deck
+from auditorium.nodes import Arrow, Circle, Line
 
 deck = Deck(title="My Talk")
 
@@ -406,6 +408,36 @@ async def overlap(s):
         ease="out-cubic",
         lag=0.08,
     )
+
+
+# --- Geometry (4.0) ----------------------------------------------------
+
+@deck.scene(title="Geometry")
+async def geometry(s):
+    """The SVG layer: what CSS cannot express.
+
+    Arrows take *symbolic* anchors, so they track their boxes through
+    motion and through flex reflow. Python never computes a coordinate.
+    """
+    await s.title("Geometry")
+    await s.subtitle("Lines, arrows and paths that follow their nodes")
+
+    a = await s.show("<div class='aud-block aud-block-info'>compile</div>")
+    b = await s.show("<div class='aud-block aud-block-success'>seek(t)</div>")
+
+    # from_=a.bottom is a promise, not a point: the browser resolves it on
+    # every frame, which is why the arrow keeps up when `a` moves below.
+    wire = await s.draw(Arrow(from_=a.bottom, to=b.top, stroke="#2563eb", width=3))
+    await s.play(wire.animate.draw_on(), run_time=0.6, ease="out-cubic")
+    await s.beat()
+
+    await s.play(a.animate.move_to(160, 0), run_time=0.8, ease="out-cubic")
+    await s.beat()
+
+    rule = await s.draw(Line(from_=(160, 880), to=(1760, 880),
+                             stroke="#9ca3af", width=2, dash="0.02 0.01"))
+    dot = await s.draw(Circle(at=(960, 880), r=18, stroke="#dc2626", width=4))
+    await s.play(rule.animate.draw_on(), dot.animate.fade_in(), run_time=0.8, lag=0.2)
 
 
 # --- Outro -------------------------------------------------------------

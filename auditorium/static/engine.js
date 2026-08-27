@@ -72,17 +72,23 @@ export const AuditoriumEngine = {
       root.innerHTML = "";
       root.className = ROOT_BASE_CLASS;
     }
+    this._clearOverlay();
+    this._applied = 0;
+    this._t = 0;
+  },
+
+  /** Empty the SVG overlay and forget its anchors.
+   *
+   * Everything except <defs>: wiping the whole overlay would delete the
+   * arrowhead marker, and every arrow drawn afterwards would render headless.
+   */
+  _clearOverlay() {
     const layer = document.getElementById(SVG_LAYER_ID);
     if (layer) {
-      // Everything except <defs>. Wiping the whole overlay would delete the
-      // arrowhead marker on the first rewind, and every arrow drawn after
-      // that would render headless.
       for (const child of Array.from(layer.children)) {
         if (child.tagName.toLowerCase() !== "defs") child.remove();
       }
     }
-    this._applied = 0;
-    this._t = 0;
     this._anchored = [];
   },
 
@@ -120,6 +126,10 @@ export const AuditoriumEngine = {
     if (op.action === "clear") {
       root.innerHTML = "";
       root.className = ROOT_BASE_CLASS;
+      // Geometry is part of the stage, so a scene boundary wipes it too.
+      // It did not, once: the Geometry scene's arrow, rule and circle stayed
+      // drawn over every slide that followed it to the end of the deck.
+      this._clearOverlay();
     } else if (op.action === "append") {
       const node = this._tl.nodes.find((n) => n.id === op.node);
       if (!node) return;

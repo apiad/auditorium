@@ -303,3 +303,29 @@ async def test_a_dash_pattern_is_normalized_to_the_shape_length(browser_page):
     await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
     assert await _attr(browser_page, "#s1", "stroke-dasharray") == "0.05 0.02"
     assert await _attr(browser_page, "#s1", "pathLength") == "1"
+
+
+async def test_clear_empties_the_overlay_too(browser_page):
+    """A scene boundary must wipe geometry, not just the DOM layer.
+
+    Found by looking at demo_deck rather than by a test: the arrow, rule and
+    circle from the Geometry scene were still drawn over the "Thank You"
+    slide, because `clear` only ever emptied #slide-root. The overlay
+    accumulated for the rest of the deck.
+    """
+    tl = _box_and_line()
+    tl.ops.append(Op(t=500, action="clear"))
+    await serve(browser_page, tl.to_dict())
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+    assert await browser_page.evaluate(
+        "() => document.querySelectorAll('#svg-layer > line').length"
+    ) == 1
+
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(600)")
+    assert await browser_page.evaluate(
+        "() => document.querySelectorAll('#svg-layer > line').length"
+    ) == 0
+    # The arrowhead marker still has to survive, as it does on reset.
+    assert await browser_page.evaluate(
+        "() => !!document.querySelector('#svg-layer defs #aud-arrowhead')"
+    )
