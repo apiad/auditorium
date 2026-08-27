@@ -19,7 +19,7 @@ auditorium = "auditorium.cli:app"
 
 [project.optional-dependencies]
 record = [
-    "playwright>=1.40",
+    "playwright>=1.62",
     "tqdm>=4.67.3",
 ]
 examples = [
@@ -42,3 +42,13 @@ packages = ["auditorium"]
 include = [
     "/auditorium",
 ]
+
+[dependency-groups]
+dev = [
+    "playwright>=1.62",
+    "pytest-asyncio>=0.24",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
