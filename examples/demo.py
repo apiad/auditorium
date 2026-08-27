@@ -131,55 +131,109 @@ async def opening(s):
 
 # --- 2. Fourier --------------------------------------------------------
 
+# The wheel: arm k turns at frequency 2k+1 with radius proportional to
+# 1/(2k+1), and the tip traces a square wave. Four arms is where the shape
+# becomes unmistakable while each circle is still individually readable.
+HARMONICS = 4
+WHEEL_X, WHEEL_Y = 450, 690      # centre of the wheel, on the trace's axis
+WHEEL_R = 175
+TURNS = 2
+
+
+def arm(radius: float, series: int, parent_radius: float, root: bool = False) -> str:
+    """One epicycle arm: a spoke, its circle, and a hub at the far end.
+
+    Positioned at its parent's tip and rotating about its own origin, so
+    nesting arm k+1 inside arm k composes the rotations -- which is the
+    entire mechanism. transform-origin is 0 0 rather than the default centre,
+    because an arm pivots at its root, not at its middle.
+    """
+    # The root arm is fixed to the stage so its centre is a known point in the
+    # same pixel space as the SVG trace; every arm after it is absolute inside
+    # its parent, which is what makes the rotations compose.
+    place = (
+        f"position:fixed;left:{WHEEL_X}px;top:{WHEEL_Y}px" if root
+        else f"position:absolute;left:{parent_radius:.1f}px;top:0"
+    )
+    return (
+        f"<div style='{place};"
+        "width:0;height:0;transform-origin:0 0'>"
+        f"<div style='position:absolute;left:{-radius:.1f}px;top:{-radius:.1f}px;"
+        f"width:{2 * radius:.1f}px;height:{2 * radius:.1f}px;border-radius:50%;"
+        "border:1px solid var(--aud-geom-muted);opacity:.75'></div>"
+        f"<div style='position:absolute;left:0;top:-1.5px;width:{radius:.1f}px;"
+        f"height:3px;background:var(--aud-geom-{series})'></div>"
+        f"<div style='position:absolute;left:{radius - 6:.1f}px;top:-6px;"
+        "width:12px;height:12px;border-radius:50%;"
+        f"background:var(--aud-geom-{series})'></div>"
+        "</div>"
+    )
+
+
 @deck.scene(title="Fourier")
 async def fourier(s):
-    """The centrepiece. Every curve is computed before a frame is drawn.
+    """The centrepiece: the machine that makes the wave, not the wave.
 
-    Successive partial sums cross-fade into each other, so the approximation
-    visibly tightens onto the square wave and the Gibbs overshoot appears at
-    the discontinuities on its own -- nobody drew it, the mathematics did.
+    Four nested arms turn at 1, 3, 5 and 7 times the base frequency with
+    radii 1, 1/3, 1/5, 1/7 -- the Fourier coefficients of a square wave, as
+    rotation. Their tip traces the curve drawn alongside, and the Gibbs
+    overshoot appears at the corners because the mathematics puts it there.
+
+    Nothing here is keyframed. Python computes the trace, and the arms are
+    four `rotate_by` calls in one `play()`.
     """
     header, body = await s.rows(["auto", 1])
     async with header:
-        await s.title("A square wave, one harmonic at a time")
+        await s.title("A square wave, drawn by rotation")
+        await s.subtitle("Four arms turning at 1, 3, 5 and 7 times the base frequency.")
 
-    x0, x1 = -math.pi, 3 * math.pi
+    x0, x1 = 0.0, TURNS * 2 * math.pi
 
-    def square(x):
-        return 1.0 if math.sin(x) >= 0 else -1.0
-
-    def partial(n):
-        return lambda x: 4 / math.pi * sum(
-            math.sin((2 * k + 1) * x) / (2 * k + 1) for k in range(n + 1)
+    def partial(x):
+        return 4 / math.pi * sum(
+            math.sin((2 * k + 1) * x) / (2 * k + 1) for k in range(HARMONICS)
         )
 
     async with body:
-        formula = await s.show(centred(
-            r"<div>$\displaystyle f(x)=\frac{4}{\pi}\sum_{k=0}^{n}"
-            r"\frac{\sin\big((2k+1)x\big)}{2k+1}$</div>"
-        ))
+        stage = await s.show(
+            "<div style='position:relative;width:100%;height:620px'></div>"
+        )
 
-    axis = await s.draw(Line(from_=(PLOT_L, PLOT_MID), to=(PLOT_R, PLOT_MID),
+    # The wheel, nested arm inside arm: each one's rotation composes onto its
+    # parent's, which is the entire mechanism.
+    radii = [WHEEL_R / (2 * k + 1) for k in range(HARMONICS)]
+    arms, parent = [], stage
+    for k, radius in enumerate(radii):
+        parent_radius = radii[k - 1] if k else 0.0
+        parent = await s.show(
+            arm(radius, 1 + (k % 2), parent_radius, root=(k == 0)), into=parent
+        )
+        arms.append(parent)
+
+    # The trace, to the right of the wheel and on the same vertical scale.
+    trace_l = WHEEL_X + WHEEL_R + 140
+    curve = await s.draw(Path(
+        "M" + " L".join(
+            f"{trace_l + (x - x0) / (x1 - x0) * (PLOT_R - trace_l):.1f},"
+            f"{PLOT_MID - partial(x) * WHEEL_R * 0.72:.1f}"
+            for x in (x0 + (x1 - x0) * i / 600 for i in range(601))
+        ),
+        series=1, width=4,
+    ))
+    axis = await s.draw(Line(from_=(trace_l, PLOT_MID), to=(PLOT_R, PLOT_MID),
                              muted=True, width=2))
-    target = await s.draw(Path(polyline(square, x0, x1, 600), muted=True, width=3))
 
-    await s.play(formula.animate.fade_in(), run_time=0.5)
-    await s.play(axis.animate.draw_on(), run_time=0.5)
-    await s.play(target.animate.draw_on(), run_time=0.9, ease="out-cubic")
-    await s.wait(0.6)
+    await s.play(*[a.animate.fade_in() for a in arms], run_time=0.6, lag=0.12)
+    await s.play(axis.animate.draw_on(), run_time=0.4)
+    await s.wait(0.4)
 
-    previous = None
-    for n in range(6):
-        curve = await s.draw(Path(polyline(partial(n), x0, x1), series=1, width=5))
-        if previous is None:
-            await s.play(curve.animate.draw_on(), run_time=0.9, ease="out-cubic")
-        else:
-            # Cross-fade: the new sum arrives as the old one leaves, so the eye
-            # follows one curve tightening rather than a pile of curves.
-            await s.play(curve.animate.fade_in(), previous.animate.fade_out(),
-                         run_time=0.55, ease="out-cubic")
-        previous = curve
-        await s.wait(0.35)
+    # One play(): every arm turns, and the trace draws, over the same span.
+    spin = 4.6
+    await s.play(
+        *[a.animate.rotate_by(360 * TURNS * (2 * k + 1)) for k, a in enumerate(arms)],
+        curve.animate.draw_on(),
+        run_time=spin,
+    )
 
     await s.wait(READ)
     await s.beat()
@@ -345,10 +399,6 @@ async def anchors(s):
         await s.draw(Arrow(from_=timeline.bottom, to=seek.top, series=1, width=3)),
         await s.draw(Arrow(from_=seek.left, to=present.right, series=3, width=3)),
         await s.draw(Arrow(from_=seek.right, to=render.left, series=3, width=3)),
-        await s.draw(Line(from_=compile_.bottom, to=seek.top, muted=True, width=2,
-                          dash="0.03 0.03")),
-        await s.draw(Line(from_=deck_py.bottom, to=present.top, muted=True, width=2,
-                          dash="0.03 0.03")),
     ]
     await s.play(*[e.animate.draw_on() for e in edges], run_time=0.8, lag=0.08)
     await s.wait(1.4)

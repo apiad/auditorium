@@ -37,6 +37,18 @@
 - **Page Up / Page Down** in the audience view, because that is what a
   presentation clicker sends.
 
+### Added (continued)
+
+- **`animate.rotate_by(degrees)`.** Rotation was simply absent: the engine knew
+  translate and scale only, which is a strange gap in an animation framework
+  and the one thing standing between it and an epicycle. Composes down the DOM,
+  so a rotating child inside a rotating parent traces one.
+- **`show(..., into=handle)`** parents a node under another node rather than
+  under the current layout region, which is how composed structures are built.
+  Unlike the region path it does **not** wrap content in a div: the handle has
+  to refer to the author's own element, or every absolute coordinate inside it
+  resolves against a wrapper nobody asked for.
+
 ### Changed
 
 - **`animate.move_to()` is now `animate.move_by()`.** It always was a delta:

@@ -21,6 +21,13 @@ const PROP_SETTERS = {
     { transform: `translateY(${from_}px)` },
     { transform: `translateY(${to}px)` },
   ],
+  // Composes with translate rather than replacing it, because transform
+  // tracks composite additively -- which is also what nests an epicycle arm
+  // inside its parent's rotation.
+  "transform.rotate": (from_, to) => [
+    { transform: `rotate(${from_}deg)` },
+    { transform: `rotate(${to}deg)` },
+  ],
   "transform.scale": (from_, to) => [
     { transform: `scale(${from_})` },
     { transform: `scale(${to})` },

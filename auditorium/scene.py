@@ -81,6 +81,16 @@ class AnimateProxy:
             AnimSpec(self._node, "transform.y", None, y),
         ]
 
+    def rotate_by(self, degrees: float) -> list[AnimSpec]:
+        """Rotate a node by an angle, about its own transform-origin.
+
+        A delta like ``move_by``, and for the same reason: transform tracks
+        composite additively, so repeated calls accumulate. Rotation also
+        composes down the DOM -- a rotating child inside a rotating parent
+        traces an epicycle, which is the whole point of having it.
+        """
+        return [AnimSpec(self._node, "transform.rotate", 0.0, degrees)]
+
     def scale_to(self, factor: float) -> list[AnimSpec]:
         return [AnimSpec(self._node, "transform.scale", None, factor)]
 
@@ -160,13 +170,39 @@ class SceneContext(ConstructionVocabulary):
         self._counter += 1
         return f"n{self._counter}"
 
-    async def show(self, content: Any, *, element_id: str | None = None) -> NodeHandle:
+    async def show(
+        self,
+        content: Any,
+        *,
+        element_id: str | None = None,
+        into: NodeHandle | None = None,
+    ) -> NodeHandle:
         """Append content and return a handle you can animate.
 
         Routes through the inherited vocabulary so region scoping
         (``async with column:``) applies here exactly as it does on a slide;
         the only difference is that a scene gets a handle back.
+
+        ``into=`` parents the new node under another node rather than under
+        the current region, which is how composed structures are built -- a
+        rotating arm inside a rotating arm, say. It beats the region stack on
+        purpose: an explicit parent is explicit.
         """
+        if into is not None:
+            # Deliberately unwrapped, unlike the region path. show() normally
+            # wraps content in a div, which is invisible in flow layout but
+            # fatal to composition: the handle would refer to the wrapper, so
+            # `into=` would parent the child into THAT rather than into the
+            # element the author positioned, and every absolute coordinate
+            # would resolve against the wrong box. Explicit composition means
+            # the author owns the markup.
+            node_id = await self._emit_op({
+                "action": "append",
+                "html": str(content),
+                "element_id": element_id,
+                "target": f"#{into.id}",
+            })
+            return NodeHandle(id=node_id)
         node_id = await super().show(content, element_id=element_id)
         return NodeHandle(id=node_id)
 

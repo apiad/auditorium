@@ -272,3 +272,39 @@ async def test_opacity_is_not_composited_additively(browser_page, timeline_dict)
     await serve(browser_page, timeline_dict)
     await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
     assert await opacity_of(browser_page) == pytest.approx(0.0, abs=0.05)
+
+
+async def test_rotation_composes_through_nesting(browser_page):
+    """The epicycle property: a rotating child inside a rotating parent.
+
+    If rotation replaced rather than composed, or if nesting did not parent
+    the child inside the parent's transformed box, the inner element would
+    trace a circle instead of an epicycle -- and the difference is invisible
+    in the timeline. It has to be checked against a real layout.
+    """
+    tl = Timeline(meta={"title": "epicycle"})
+    tl.nodes.append(Node(
+        id="outer", layer="dom",
+        html="<div style='position:absolute;left:400px;top:300px;width:0;height:0;"
+             "transform-origin:0 0'><div id='marker' style='position:absolute;"
+             "left:100px;top:0;width:0;height:0'></div></div>",
+    ))
+    tl.ops.append(Op(t=0, action="append", node="outer"))
+    tl.tracks.append(
+        Track(node="outer", prop="transform.rotate", from_=0, to=180, start=0, end=1000)
+    )
+    await serve(browser_page, tl.to_dict())
+
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+    start = await browser_page.evaluate(
+        "() => Math.round(document.getElementById('marker').getBoundingClientRect().left)"
+    )
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(1000)")
+    end = await browser_page.evaluate(
+        "() => Math.round(document.getElementById('marker').getBoundingClientRect().left)"
+    )
+    # Half a turn about the arm's origin swings a marker 100px out to 100px
+    # back: a 200px sweep. The marker is zero-width on purpose -- give it a
+    # size and rotation flips which edge `left` reports, adding its width to
+    # the answer and making the arithmetic ambiguous.
+    assert start - end == pytest.approx(200, abs=3), f"{start} -> {end}"

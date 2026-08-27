@@ -157,3 +157,52 @@ async def test_an_svg_node_ignores_region_scoping():
         line = await s.draw(Line(from_=(0, 0), to=(10, 10)))
     node = next(n for n in tl.nodes if n.id == line.id)
     assert node.parent == "svg-layer"
+
+
+async def test_rotate_by_emits_a_rotation_track():
+    """Rotation was simply absent: the engine knew x, y and scale only."""
+    tl = Timeline()
+    s = SceneContext(tl)
+    h = await s.show("<div>x</div>")
+    await s.play(h.animate.rotate_by(720), run_time=2.0)
+    track = next(t for t in tl.tracks if t.prop == "transform.rotate")
+    assert (track.from_, track.to) == (0.0, 720)
+    assert (track.start, track.end) == (0, 2000)
+
+
+async def test_show_into_parents_a_node_under_another():
+    """Epicycle arms nest: each arm's rotation composes onto its parent's."""
+    tl = Timeline()
+    s = SceneContext(tl)
+    outer = await s.show("<div>outer</div>")
+    inner = await s.show("<div>inner</div>", into=outer)
+    node = next(n for n in tl.nodes if n.id == inner.id)
+    assert node.parent == outer.id
+
+
+async def test_show_into_beats_the_region_stack():
+    """An explicit parent is explicit; region scoping must not override it."""
+    tl = Timeline()
+    s = SceneContext(tl)
+    host = await s.show("<div>host</div>")
+    cols = await s.columns(2)
+    async with cols[0]:
+        child = await s.show("<div>child</div>", into=host)
+    node = next(n for n in tl.nodes if n.id == child.id)
+    assert node.parent == host.id
+
+
+async def test_show_into_does_not_wrap_the_content():
+    """Composition needs the author's element, not a wrapper around it.
+
+    A wrapper is invisible in flow layout and fatal here: the handle would
+    refer to the wrapper, so the next `into=` would parent into that instead
+    of the positioned element, and absolute coordinates would resolve against
+    the wrong box.
+    """
+    tl = Timeline()
+    s = SceneContext(tl)
+    host = await s.show("<div>host</div>")
+    child = await s.show("<b id='inner'>x</b>", into=host)
+    node = next(n for n in tl.nodes if n.id == child.id)
+    assert node.html == "<b id='inner'>x</b>"
