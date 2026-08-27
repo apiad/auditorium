@@ -210,6 +210,12 @@ async def fourier(s):
     # The formula, built term by term. `into=` gives each term its own node so
     # it can fade in on its own; a single KaTeX block could only be replaced
     # wholesale, and `replace` does not re-run the maths renderer.
+    #
+    # Both brackets are present from the first frame and terms expand between
+    # them, so the expression is well-formed at every instant rather than
+    # spending twenty seconds with an unclosed bracket. The row is flex, so
+    # `order` decides what sits where -- new terms are appended to the DOM but
+    # ordered ahead of the closing bracket, which needs no insert-before op.
     async with body:
         holder = await s.show("<div style='padding-top:0.5rem'></div>")
     row = await s.show(
@@ -217,11 +223,16 @@ async def fourier(s):
         "gap:0.15rem;font-size:1.05em'></div>",
         into=holder,
     )
-    lead = await s.show(r"<span>$f(x)=\tfrac{4}{\pi}\Big[$</span>", into=row)
+    lead = await s.show(
+        r"<span style='order:0'>$f(x)=\tfrac{4}{\pi}\Big[$</span>", into=row
+    )
+    ellipsis = await s.show(r"<span style='order:98'>$+\cdots$</span>", into=row)
+    close = await s.show(r"<span style='order:99'>$\Big]$</span>", into=row)
 
     axis = await s.draw(Line(from_=(trace_l, PLOT_MID), to=(PLOT_R, PLOT_MID),
                              muted=True, width=2))
-    await s.play(lead.animate.fade_in(), axis.animate.draw_on(), run_time=0.5)
+    await s.play(lead.animate.fade_in(), close.animate.fade_in(),
+                 axis.animate.draw_on(), run_time=0.5)
 
     radii = [WHEEL_R / (2 * k + 1) for k in range(HARMONICS)]
     arms, parent, previous = [], None, None
@@ -236,8 +247,15 @@ async def fourier(s):
         arms.append(node)
         parent = node
 
-        term = await s.show(f"<span>${TERMS[k]}$</span>", into=row)
-        await s.play(node.animate.fade_in(), term.animate.fade_in(), run_time=0.45)
+        term = await s.show(
+            f"<span style='order:{k + 1}'>${TERMS[k]}$</span>", into=row
+        )
+        appearing = [node.animate.fade_in(), term.animate.fade_in()]
+        if k == 0:
+            # The ellipsis waits for a term to trail: "[ + ... ]" is not a
+            # thing, and the series really is infinite once one term exists.
+            appearing.append(ellipsis.animate.fade_in())
+        await s.play(*appearing, run_time=0.45)
 
         # One round: every arm turns once at its own frequency while the new
         # partial sum draws. rotate_by accumulates, so each round carries on
