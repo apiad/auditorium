@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 import base64
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import markdown
-
-if TYPE_CHECKING:
-    from auditorium.server import Presentation
 
 
 def _jupyter_to_html(obj: Any) -> str:
@@ -53,10 +49,15 @@ def _jupyter_to_html(obj: Any) -> str:
 
 
 class SlideContext:
-    """Context object passed to each slide function, exposing the async vocabulary."""
+    """Restricted SceneContext preserving the 3.x slide vocabulary.
 
-    def __init__(self, pres: Presentation) -> None:
-        self._pres = pres
+    Construction methods are timing-agnostic and carry over verbatim; only
+    step() and sleep() differ, and both now map onto timeline operations
+    rather than blocking on a wall clock.
+    """
+
+    def __init__(self, scene) -> None:
+        self._scene = scene
         self._target_stack: list[str] = []
 
     # --- Content ---
@@ -79,18 +80,18 @@ class SlideContext:
         }
         if self._target_stack:
             mutation["target"] = f"#{self._target_stack[-1]}"
-        await self._pres.send_mutation(mutation)
+        await self._scene._emit_op(mutation)
 
     async def hide(self, selector: str) -> None:
         """Remove an element from the DOM by CSS selector."""
-        await self._pres.send_mutation({
+        await self._scene._emit_op({
             "action": "remove",
             "selector": selector,
         })
 
     async def replace(self, selector: str, html: str) -> None:
         """Replace the inner HTML of an element matched by selector."""
-        await self._pres.send_mutation({
+        await self._scene._emit_op({
             "action": "replace",
             "selector": selector,
             "html": html,
@@ -98,7 +99,7 @@ class SlideContext:
 
     async def set_class(self, selector: str, cls: str) -> None:
         """Add CSS class(es) to an element."""
-        await self._pres.send_mutation({
+        await self._scene._emit_op({
             "action": "set_class",
             "selector": selector,
             "cls": cls,
@@ -106,7 +107,7 @@ class SlideContext:
 
     async def remove_class(self, selector: str, cls: str) -> None:
         """Remove CSS class(es) from an element."""
-        await self._pres.send_mutation({
+        await self._scene._emit_op({
             "action": "remove_class",
             "selector": selector,
             "cls": cls,
@@ -142,7 +143,7 @@ class SlideContext:
         }
         if self._target_stack:
             mutation["target"] = f"#{self._target_stack[-1]}"
-        await self._pres.send_mutation(mutation)
+        await self._scene._emit_op(mutation)
 
     async def subtitle(self, text: str) -> None:
         """Render the slide subtitle as an ``<h2>`` with class ``aud-slide-subtitle``."""
@@ -152,7 +153,7 @@ class SlideContext:
         }
         if self._target_stack:
             mutation["target"] = f"#{self._target_stack[-1]}"
-        await self._pres.send_mutation(mutation)
+        await self._scene._emit_op(mutation)
 
     async def section(self, text: str, *, number: str | int | None = None) -> None:
         """Render a section divider — a large centered title used to break up a deck.
@@ -175,7 +176,7 @@ class SlideContext:
         mutation: dict = {"action": "append", "html": html}
         if self._target_stack:
             mutation["target"] = f"#{self._target_stack[-1]}"
-        await self._pres.send_mutation(mutation)
+        await self._scene._emit_op(mutation)
 
     # --- Info / academic blocks ---
 
@@ -233,44 +234,17 @@ class SlideContext:
         mutation: dict = {"action": "append", "html": html}
         if self._target_stack:
             mutation["target"] = f"#{self._target_stack[-1]}"
-        await self._pres.send_mutation(mutation)
+        await self._scene._emit_op(mutation)
 
     # --- Timing ---
 
     async def step(self) -> None:
-        """Wait for a keypress to continue, or auto-advance if auto_step is set."""
-        event = asyncio.Event()
-        self._pres.step_event = event
-        if self._pres.auto_step is not None:
-            try:
-                await asyncio.wait_for(event.wait(), timeout=self._pres.auto_step)
-            except asyncio.TimeoutError:
-                pass  # auto-advance
-        else:
-            await event.wait()
-        # Signal step completion (for step-by-step export)
-        await self._pres.send({"type": "step_complete"})
+        """Mark a keypress-gated pause point."""
+        await self._scene.beat()
 
     async def sleep(self, seconds: float) -> None:
-        """Pause for a duration. Instant when instant_sleep is set (export mode).
-
-        When auto_step is None but instant_sleep is True (step-by-step export),
-        sleep acts like step — blocks for a keypress so the exporter can capture
-        the state before and after each sleep boundary.
-        """
-        if self._pres.instant_sleep:
-            if self._pres.auto_step is None:
-                # Step-by-step export: treat sleep as a capture boundary.
-                # Send sleep_complete (not step_complete) so the exporter
-                # knows this is a timed boundary with the original duration.
-                # Set event BEFORE sending signal to avoid race with the
-                # exporter's keypress arriving before step_event is set.
-                event = asyncio.Event()
-                self._pres.step_event = event
-                await self._pres.send({"type": "sleep_complete", "duration": seconds})
-                await event.wait()
-            return
-        await asyncio.sleep(seconds)
+        """Advance the timeline by ``seconds``. Does not block."""
+        await self._scene.wait(seconds)
 
     # --- Layout ---
 

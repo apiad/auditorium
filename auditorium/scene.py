@@ -144,3 +144,23 @@ class SceneContext:
     async def wait(self, seconds: float) -> None:
         """Advance the clock with nothing animating."""
         self._t += int(seconds * 1000)
+
+    async def _emit_op(self, mutation: dict) -> None:
+        """Bridge for the slide shim: turn a 3.x mutation dict into an Op.
+
+        The shim's construction vocabulary was written against a mutation
+        protocol; rather than rewrite all of it, translate at this boundary.
+        """
+        action = mutation["action"]
+        if action == "append":
+            node_id = mutation.get("element_id") or self._next_id()
+            self._tl.nodes.append(
+                Node(id=node_id, layer="dom", html=mutation["html"],
+                     parent=mutation.get("target", "root").lstrip("#"))
+            )
+            self._tl.ops.append(Op(t=self._t, action="append", node=node_id))
+        else:
+            self._tl.ops.append(
+                Op(t=self._t, action=action, selector=mutation.get("selector"),
+                   html=mutation.get("html"), cls=mutation.get("cls"))
+            )
