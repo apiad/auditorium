@@ -46,7 +46,6 @@ async def export_deck(
     deck = _load_deck(deck_path)
     _apply_theme_override(deck, theme, transition)
     app = create_app(deck)
-    total = len(deck.slides)
 
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
     server = uvicorn.Server(config)
@@ -54,6 +53,9 @@ async def export_deck(
 
     while not server.started:
         await asyncio.sleep(0.05)
+
+    # port=0 asks the OS for a free port; the URL needs the one it actually got.
+    bound_port = server.servers[0].sockets[0].getsockname()[1]
 
     width, height = _parse_resolution(resolution)
     tmpdir = tempfile.mkdtemp(prefix="auditorium-export-")
@@ -81,6 +83,33 @@ async def export_deck(
                 }
             """
 
+            # The deck is a timeline now, not a sequence of slide URLs: load the
+            # page once and seek to each beat. The old drive path asked for
+            # ?auto_step=0&instant_sleep=1 -- parameters the 4.0 server no longer
+            # parses -- and then waited on window.__auditorium_slide_complete,
+            # which the 4.0 client never sets. It hung for the full 120s timeout.
+            await page.goto(f"http://127.0.0.1:{bound_port}/", wait_until="load")
+            await page.wait_for_function(
+                "() => window.__auditorium_ready === true", timeout=30000
+            )
+            await page.evaluate("async () => { await document.fonts.ready; }")
+            await page.add_style_tag(content=DISABLE_ANIM_CSS)
+
+            beat_times = await page.evaluate(
+                "() => window.AuditoriumEngine._tl.beats.map(b => b.t)"
+            )
+            duration_ms = await page.evaluate(
+                "() => window.AuditoriumEngine._tl.meta.duration_ms"
+            )
+            # Scene boundaries emit a beat where the *outgoing* scene is still
+            # whole -- the clear lands a millisecond later. So the final scene
+            # sits after the last beat and has no beat of its own: without the
+            # end state a two-scene deck would export only the first scene. A
+            # deck with no beats at all is still this one capturable frame.
+            stops = list(beat_times)
+            if not stops or stops[-1] != duration_ms:
+                stops.append(duration_ms)
+
             with Progress(
                 TextColumn("[bold]{task.description}"),
                 BarColumn(),
@@ -89,63 +118,11 @@ async def export_deck(
                 TimeRemainingColumn(),
                 console=console,
             ) as progress:
-                task = progress.add_task(f"Exporting {fmt.upper()}", total=total)
-                for i in range(total):
-                    if step_by_step:
-                        # Step-by-step: no auto_step (steps block), instant_sleep.
-                        # We drive each step via keypress and capture between each.
-                        url = f"http://127.0.0.1:{port}/?instant_sleep=1&slide_delay=9999&_s={i}#slide-{i}"
-                        await page.goto(url, wait_until="load")
-                        await page.add_style_tag(content=DISABLE_ANIM_CSS)
-
-                        step_idx = 0
-                        while True:
-                            # Wait for DOM to settle
-                            await page.wait_for_timeout(200)
-
-                            # Check if slide already completed
-                            done = await page.evaluate(
-                                "() => window.__auditorium_slide_complete === true"
-                            )
-                            # Capture current state
-                            await _capture(page, fmt, output, slide_doms, i, step_idx)
-                            step_idx += 1
-
-                            if done:
-                                break
-
-                            # Advance one step/sleep boundary by sending a keypress
-                            await page.keyboard.press("ArrowRight")
-                            # Wait for the step/sleep to resolve and new content to render.
-                            # Use a short poll: either step_count changes, slide completes,
-                            # or we timeout after 2s (handles slides that finish between
-                            # steps without sending step_complete).
-                            prev_count = await page.evaluate(
-                                "() => window.__auditorium_step_count || 0"
-                            )
-                            try:
-                                await page.wait_for_function(
-                                    f"() => (window.__auditorium_step_count || 0) > {prev_count} "
-                                    f"|| window.__auditorium_slide_complete === true",
-                                    timeout=2000,
-                                )
-                            except Exception:
-                                # Timeout is OK — slide may have completed between checks
-                                pass
-
-                        progress.update(task, advance=1)
-                    else:
-                        # Default: auto_step=0 + instant_sleep — everything runs
-                        # instantly, capture final state.
-                        url = f"http://127.0.0.1:{port}/?auto_step=0&instant_sleep=1&slide_delay=9999&_s={i}#slide-{i}"
-                        await page.goto(url, wait_until="load")
-                        await page.add_style_tag(content=DISABLE_ANIM_CSS)
-                        await page.wait_for_function(
-                            "() => window.__auditorium_slide_complete === true",
-                            timeout=120000,
-                        )
-                        await _capture(page, fmt, output, slide_doms, i, None)
-                        progress.update(task, advance=1)
+                task = progress.add_task(f"Exporting {fmt.upper()}", total=len(stops))
+                for i, t in enumerate(stops):
+                    await page.evaluate("(t) => window.AuditoriumEngine.seek(t)", t)
+                    await _capture(page, fmt, output, slide_doms, i, None)
+                    progress.update(task, advance=1)
 
             await browser.close()
 
