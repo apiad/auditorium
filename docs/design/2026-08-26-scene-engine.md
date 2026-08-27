@@ -334,8 +334,11 @@ frame 0. Throwaway warm-up frames were tested and do nothing.
 p95 at 1920×1080 during the spike. Re-measured against the shipped renderer on
 2026-08-27: **60.4 ms/frame** at 1080p once browser and server startup (~4 s) is
 amortised out, or 127 ms/frame including it — so short renders pay a fixed cost
-that dominates. A 2821-frame 720p render of `demo_deck.py` took 140 s
-wall-clock (49.6 ms/frame; smaller frames are cheaper than 1080p). Acceptable, but it means `--jobs` is wanted sooner than its deferral
+that dominates. A full 720p render of `demo_deck.py` took 120 s wall-clock for
+2893 frames on 2026-08-27 — 41.5 ms/frame, smaller frames being cheaper than
+1080p. (An earlier measurement of the same deck before the Geometry scene was
+added read 2821 frames in 140 s; both were taken on a loaded machine, so treat
+the spread as the noise floor rather than either as exact.) Acceptable, but it means `--jobs` is wanted sooner than its deferral
 suggests. Parallel equivalence was verified end to end: a 40-frame sequential
 render and two 20-frame ranged renders in separate processes produced
 byte-identical frames, 40/40.
