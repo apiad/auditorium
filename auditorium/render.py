@@ -45,3 +45,119 @@ def render_schedule(timeline: Timeline, fps: int) -> list[int]:
 def frame_count(timeline: Timeline, fps: int) -> int:
     """Number of frames a render of this timeline will produce."""
     return len(render_schedule(timeline, fps))
+
+
+import asyncio
+import threading
+from pathlib import Path
+
+FRAME_NAME = "frame-{:06d}.png"
+
+
+async def render_frames(
+    deck,
+    out_dir: Path,
+    *,
+    fps: int = 30,
+    size: tuple[int, int] = (1920, 1080),
+    start_frame: int = 0,
+    end_frame: int | None = None,
+    port: int = 0,
+) -> int:
+    """Render frames to PNGs in out_dir. Returns how many were written.
+
+    A worker rendering [start_frame, end_frame) still replays the schedule
+    from frame 0 without screenshotting, because seek() is only correct
+    forward -- jumping straight to a mid-timeline position would reach a state
+    a sequential render never passes through.
+    """
+    import uvicorn
+    from playwright.async_api import async_playwright
+
+    from auditorium.compile import compile_deck
+    from auditorium.server import create_app
+
+    timeline = await compile_deck(deck)
+    # A deck with no ops, tracks or beats has a zero-length schedule, but it is
+    # still one capturable state. Rendering it as nothing leaves a caller
+    # holding an empty directory and no way to tell that from a failure.
+    schedule = render_schedule(timeline, fps) or [0]
+    stop = len(schedule) if end_frame is None else min(end_frame, len(schedule))
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    config = uvicorn.Config(create_app(deck), host="127.0.0.1", port=port,
+                            log_level="warning")
+    server = uvicorn.Server(config)
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+    deadline = 10.0
+    while not server.started:
+        await asyncio.sleep(0.05)
+        deadline -= 0.05
+        if deadline <= 0:
+            server.should_exit = True
+            raise RuntimeError("uvicorn did not start within 10s")
+    bound = server.servers[0].sockets[0].getsockname()[1]
+
+    written = 0
+    try:
+        width, height = size
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            context = await browser.new_context(
+                viewport={"width": width, "height": height},
+                device_scale_factor=1,
+            )
+            page = await context.new_page()
+            await page.goto(f"http://127.0.0.1:{bound}/")
+            await page.wait_for_function(
+                "() => window.__auditorium_ready === true", timeout=30000
+            )
+            # Frame 0 renders blank without this: webfonts and images resolve
+            # after the timeline loads, and nothing else waits for them.
+            await page.evaluate(
+                """async () => {
+                    await document.fonts.ready;
+                    const imgs = [...document.images].map(
+                        (i) => (i.decode ? i.decode().catch(() => {}) : null)
+                    );
+                    await Promise.all(imgs);
+                }"""
+            )
+            # The dot reports a live WebSocket, and which state it is in when a
+            # frame is taken depends on how fast the socket happened to open --
+            # a wall clock reaching the image by the back door.
+            await page.add_style_tag(
+                content="#connection-status { display: none !important; }"
+            )
+
+            for index in range(stop):
+                t = schedule[index]
+                # Drive through the client's seek wrapper. It clears the
+                # autoplay the page starts on load -- whose rAF loop reads
+                # performance.now() and would overwrite this seek before the
+                # screenshot -- and it advances the chrome, which seeking the
+                # engine directly leaves frozen at its load-time value.
+                await page.evaluate(
+                    "(t) => (window.__auditoriumShow || window.AuditoriumEngine.seek)(t)",
+                    t,
+                )
+                if index < start_frame:
+                    continue
+                # No animations="disabled" here: it fast-forwards every finite
+                # animation to its end state, which is the one state this frame
+                # is not in. The engine already pins determinism itself -- seek()
+                # pauses every animation on the page and sets currentTime = t.
+                await page.screenshot(
+                    path=str(out_dir / FRAME_NAME.format(index)),
+                )
+                written += 1
+            await context.close()
+            await browser.close()
+    finally:
+        server.should_exit = True
+        thread.join(timeout=5)
+
+    return written
