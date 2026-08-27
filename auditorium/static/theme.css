@@ -117,6 +117,14 @@ body {
     to   { transform: scale(1);    opacity: 1; }
 }
 
+/* Slide indicator fade. A persistent keyframe, not a transition — a
+   CSSTransition is dropped from getAnimations() once it finishes, which
+   makes any backward seek past it a silent no-op. */
+@keyframes audIndicatorFade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
 /* ---- Theme chrome slots ----
  * Empty fixed-position regions themes can fill via ::before / ::after content.
  * Pointer-events are disabled so the chrome never intercepts clicks.
@@ -142,7 +150,7 @@ body {
     color: #9ca3af;
     font-family: monospace;
     opacity: 0.5;
-    transition: opacity 0.3s;
+    animation: audIndicatorFade 0.3s ease both;
 }
 
 #slide-indicator:hover {
