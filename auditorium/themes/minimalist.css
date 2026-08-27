@@ -19,7 +19,9 @@ body, #slide-root {
 #slide-root .aud-slide-title { font-size: 1.8em; }
 #slide-root .aud-slide-subtitle {
     font-weight: 300;
-    opacity: 0.5;
+    /* 0.5 stacked on an already-muted colour is legible on white and
+       invisible on a dark ground. The colour carries the muting now. */
+    opacity: 0.78;
     letter-spacing: 0.02em;
 }
 #slide-root strong { font-weight: 500; }
