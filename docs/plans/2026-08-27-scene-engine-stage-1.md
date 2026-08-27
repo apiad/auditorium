@@ -404,7 +404,7 @@ git commit -m "feat(timeline): serializable timeline data model"
 
 **Interfaces:**
 - Consumes: `auditorium.timeline.{Timeline, Node, Op, Track, Beat}`.
-- Produces: `NodeHandle(id: str)` with attribute `.animate`; `SceneContext(timeline: Timeline, beat_hold_ms: int = 0)` with `async show(content, *, element_id=None) -> NodeHandle`, `async play(*anims, run_time: float = 1.0, ease: str = "linear", lag: float = 0.0) -> None`, `async beat(hold: float | None = None) -> None`, `async wait(seconds: float) -> None`, and property `t_ms: int`.
+- Produces: `NodeHandle(id: str)` with attribute `.animate`; `SceneContext(timeline: Timeline, *, beat_hold_ms: int = 0)` — note `beat_hold_ms` is **keyword-only**; positional raises `TypeError` — with `async show(content, *, element_id=None) -> NodeHandle`, `async play(*anims, run_time: float = 1.0, ease: str = "linear", lag: float = 0.0) -> None`, `async beat(hold: float | None = None) -> None`, `async wait(seconds: float) -> None`, and property `t_ms: int`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -685,7 +685,7 @@ class SceneContext:
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_scene.py -v`
-Expected: 11 passed
+Expected: 12 passed
 
 - [ ] **Step 5: Commit**
 
