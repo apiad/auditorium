@@ -289,49 +289,104 @@ async def sorting(s):
 
 @deck.scene(title="Arrows that follow")
 async def anchors(s):
-    """Geometry whose endpoints are promises, not coordinates."""
+    """Geometry whose endpoints are promises, not coordinates.
+
+    Six nodes, seven edges, and not one coordinate in this function. Every
+    edge names a *side of a node* and the browser resolves it on every frame,
+    so when the graph is shoved around the edges follow without anything
+    recomputing them. A single arrow between two boxes would demonstrate the
+    API; a graph that survives being jostled demonstrates the feature.
+    """
     header, body = await s.rows(["auto", 1])
     async with header:
         await s.title("Arrows that follow")
         await s.subtitle("An anchor is symbolic. Python never computes where anything is.")
 
-    def card(label, series):
-        # Not wrapped, and no max-width: show() already wraps content in a div
-        # and the handle refers to THAT wrapper, so a narrower card would make
-        # box.right resolve to the column edge and the arrows would point into
-        # empty space. Measured: 78px off, exactly the card-to-column gap.
+    def node(label, series):
+        # Fills its column on purpose. show() wraps content in a div and the
+        # handle refers to THAT wrapper, so a narrower box would anchor to the
+        # column edge and every edge would end in empty space.
         return (
-            f"<div style='margin-top:{(STAGE - 90) // 2}px;"
-            f"border:2px solid var(--aud-geom-{series});border-radius:16px;"
-            "padding:1.6rem 2rem;text-align:center;"
-            "font:500 1.7rem ui-monospace,monospace;"
+            "<div style='margin:110px 0;"
+            f"border:2px solid var(--aud-geom-{series});border-radius:14px;"
+            "padding:1.1rem 0.8rem;text-align:center;"
+            "font:500 1.35rem ui-monospace,monospace;"
             f"color:var(--aud-geom-{series})'>{label}</div>"
         )
 
-    boxes = []
+    # Row 1 is the compile path, row 2 the surfaces that consume it. Which is
+    # what the architecture actually is, so the graph is not decoration.
+    top_labels = [("deck.py", 4), ("compile", 1), ("timeline", 1)]
+    bottom_labels = [("present", 2), ("seek(t)", 3), ("render", 2)]
+
+    top, bottom = [], []
     async with body:
-        cols = await s.columns(3)
-        for column, (label, series) in zip(
-            cols, [("compile", 1), ("seek(t)", 3), ("render", 2)]
-        ):
-            async with column:
-                boxes.append(await s.show(card(label, series)))
+        row_a, row_b = await s.rows(2)
+        async with row_a:
+            cols = await s.columns(3)
+            for column, (label, series) in zip(cols, top_labels):
+                async with column:
+                    top.append(await s.show(node(label, series)))
+        async with row_b:
+            cols = await s.columns(3)
+            for column, (label, series) in zip(cols, bottom_labels):
+                async with column:
+                    bottom.append(await s.show(node(label, series)))
 
-    await s.play(*[b.animate.fade_in() for b in boxes], run_time=0.5, lag=0.12)
+    deck_py, compile_, timeline = top
+    present, seek, render = bottom
 
-    first = await s.draw(Arrow(from_=boxes[0].right, to=boxes[1].left, series=1, width=4))
-    second = await s.draw(Arrow(from_=boxes[1].right, to=boxes[2].left, series=2, width=4))
-    await s.play(first.animate.draw_on(), second.animate.draw_on(), run_time=0.7, lag=0.25)
-    await s.wait(1.2)
-    await s.beat()
+    await s.play(*[n.animate.fade_in() for n in top + bottom],
+                 run_time=0.5, lag=0.06)
 
-    # The arrows were never told where the box is -- they re-resolve every
-    # frame, so they stay attached while it moves.
-    await s.play(boxes[1].animate.move_by(0, -170), run_time=0.9, ease="out-back")
+    edges = [
+        await s.draw(Arrow(from_=deck_py.right, to=compile_.left, series=4, width=3)),
+        await s.draw(Arrow(from_=compile_.right, to=timeline.left, series=1, width=3)),
+        await s.draw(Arrow(from_=timeline.bottom, to=seek.top, series=1, width=3)),
+        await s.draw(Arrow(from_=seek.left, to=present.right, series=3, width=3)),
+        await s.draw(Arrow(from_=seek.right, to=render.left, series=3, width=3)),
+        await s.draw(Line(from_=compile_.bottom, to=seek.top, muted=True, width=2,
+                          dash="0.03 0.03")),
+        await s.draw(Line(from_=deck_py.bottom, to=present.top, muted=True, width=2,
+                          dash="0.03 0.03")),
+    ]
+    await s.play(*[e.animate.draw_on() for e in edges], run_time=0.8, lag=0.08)
     await s.wait(1.4)
     await s.beat()
-    await s.play(boxes[1].animate.move_by(0, 170), run_time=0.7, ease="out-cubic")
+
+    # Shove the whole graph around. Nothing below touches an edge -- only the
+    # nodes move, and the seven edges keep up because they were never told
+    # where anything was.
+    await s.play(
+        timeline.animate.move_by(0, -120),
+        compile_.animate.move_by(40, 70),
+        seek.animate.move_by(-70, 60),
+        render.animate.move_by(90, -40),
+        run_time=0.9, ease="out-back", lag=0.07,
+    )
+    await s.wait(1.2)
+
+    await s.play(
+        deck_py.animate.move_by(0, 90),
+        present.animate.move_by(-60, -80),
+        timeline.animate.move_by(120, 60),
+        seek.animate.move_by(60, -110),
+        run_time=0.9, ease="out-back", lag=0.07,
+    )
+    await s.wait(1.2)
+
+    # And back. move_by is a delta, so the returns are just the negatives.
+    await s.play(
+        timeline.animate.move_by(-120, 60),
+        compile_.animate.move_by(-40, -70),
+        seek.animate.move_by(10, 50),
+        render.animate.move_by(-90, 40),
+        deck_py.animate.move_by(0, -90),
+        present.animate.move_by(60, 80),
+        run_time=0.8, ease="out-cubic", lag=0.05,
+    )
     await s.wait(BEAT)
+    await s.beat()
 
 
 # --- 6. Close ----------------------------------------------------------
