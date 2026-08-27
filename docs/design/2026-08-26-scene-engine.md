@@ -2,7 +2,7 @@
 type: design_doc
 date: 2026-08-26
 title: "Auditorium 4.0: the scene engine"
-status: stage-1-and-3-implemented
+status: stages-1-2-3-implemented
 tags: [auditorium, animation, video, timeline, waapi, playwright, rendering]
 ---
 
@@ -163,6 +163,15 @@ Two thin surfaces over the same timeline.
 - `preview` — the authoring surface. Scrubber, time readout, frame counter,
   loop-a-range, single-frame stepping, and hot reload that holds position at the
   current `t` rather than restarting.
+
+Shipped 2026-08-27 with one correction the spec did not anticipate: the frame
+counter reports **rendered** frames, not timeline frames. Beats have no length in
+the timeline but a render dwells on each one, so `demo_deck.py` is 302 timeline
+frames and 2821 rendered ones — and 302 is not a number `--from`/`--to` can use.
+The JS reimplements `render_schedule`'s rule, so a test asserts the two agree
+across three frame rates; it caught an off-by-one immediately, because
+recovering a frame index from a time by truncation is lossy (frame 1 sits at
+33ms and `trunc(33 * 30 / 1000)` is 0).
 
 ### The renderer
 
@@ -350,19 +359,39 @@ concatenation is byte-identical.
 command counts needs normalisation, and whether that lands in v1 or degrades to a
 cross-fade is undecided until it is tried.
 
-**Hot-reload holding position** is untested. Recompiling a timeline whose node
-identities have shifted may not have a meaningful "same `t`" to hold.
+**Hot-reload holding position** — resolved 2026-08-27. Both the preview and the
+presenter hold `t`, clamped to the new duration, and neither attempts to
+reconcile node identity. If an edit changed what exists at that instant the
+author sees the *new* scene at the *old* time, which is the useful behaviour and
+the only one a pure timeline can offer. Reconciling identities would require the
+compiler to emit stable ids across recompiles, which nothing else needs.
 
 **Audio when the timeline is shorter than the track.** Truncate, fade out, or
 error. Defaulting to fade-out, revisited on first real use.
 
 ## Delivery order
 
-> Stage 1 landed 2026-08-27 (`1!4.0.0a1`). Stages 2-4 are not started.
-> Two decisions were revised during implementation: `beat()` advances 1ms so
-> post-beat content is not visible at the pause, and scene boundaries emit an
-> explicit clear op -- neither was in this spec, and both are required for the
-> model to work at all.
+> Stage 1 landed 2026-08-27 (`1!4.0.0a1`), Stage 3 the same day (`1!4.0.0b1`),
+> Stage 2 immediately after (`1!4.0.0`). Stage 4 is not started.
+>
+> Four decisions were revised or added during implementation, none of them in
+> this spec and each required for the model to work:
+>
+> - `beat()` advances 1ms, so content emitted after a beat is not already
+>   visible *at* the pause.
+> - Scene boundaries emit an explicit clear op; a timeline has no implicit
+>   boundary, and without one the whole deck accumulates into one DOM.
+> - **Markers are a timeline member.** The 3.x server sent a `notes` message per
+>   slide from the function docstring; 4.0 dropped the protocol and the notes
+>   with it, leaving the presenter view nothing to show. Notes and scene titles
+>   are now data (`t`, `title`, `notes_html`), ignored by `seek` and excluded
+>   from `duration_ms`.
+> - **Shared navigation broadcasts intent, not position.** Every surface runs
+>   the same deterministic engine over the same timeline, so `seek t` and
+>   `playTo from→to` are sufficient and 60 messages a second are not. The
+>   corollary is that the audience must not autoplay in presenter mode, and has
+>   to know the mode before its first frame — so it is injected into the shell
+>   rather than sent over the socket, where the handshake would race it.
 
 The work stages naturally, and each stage leaves the repo in a shippable state:
 

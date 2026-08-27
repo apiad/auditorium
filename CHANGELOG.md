@@ -1,8 +1,46 @@
 # Changelog
 
-## 4.0.0b1
+## 4.0.0
 
 ### Added
+
+- **`auditorium preview`** — the authoring client. Scrubber with a tick per
+  beat, time and frame readouts, single-frame stepping (`.`/`,`), loop-a-range
+  (`i`/`o`/`l`), and hot reload that holds position instead of restarting. The
+  stage is the render target scaled by transform rather than a resized box, so
+  it does not reflow rem-sized type into a layout the renderer never produces.
+  Its frame counter reports *rendered* frames — including the dwell a render
+  spends on each beat — so the number beside the scrubber is one `--from` and
+  `--to` can use.
+- **Presenter view, rebuilt** over the timeline. Stage mirror, speaker notes,
+  next-scene preview, elapsed timer. The mirror is a second engine seeking the
+  same timeline rather than a copy of the audience's DOM: two engines over one
+  timeline agree by construction, a mirror is a path that can disagree.
+- **Shared navigation.** The presenter broadcasts intent (`seek t`,
+  `play from→to`), never positions — every surface runs the same deterministic
+  engine, so a command suffices. Only the presenter's socket may drive, and the
+  server enforces it rather than trusting the audience's own keyboard handler.
+- **Late-join sync.** The server caches the last command and replays it as a
+  seek to joining tabs, so a tab that drops and auto-reconnects mid-talk lands
+  where the room is rather than at the start of the deck.
+- **Timeline markers** — one per scene, carrying its title and its docstring
+  rendered as speaker notes. Ignored by `seek`, excluded from `duration_ms`.
+- **Page Up / Page Down** in the audience view, because that is what a
+  presentation clicker sends.
+
+### Fixed
+
+- **The audience no longer autoplays in presenter mode.** It played itself to
+  the first beat while the presenter sat at zero, so the two were out of step
+  from the first keypress. The mode is injected into the shell rather than sent
+  over the socket, because the decision has to be made before the first frame
+  and the handshake would race it.
+- **`preview.html` would not have shipped.** `.gitignore` ignores `*.html`
+  repo-wide; the older shells survive only as already-tracked files. The
+  package's static shells are now explicitly un-ignored, verified against the
+  built wheel.
+
+### Added (4.0.0b1)
 
 - **`auditorium render`** — deterministic frame-stepped video. Seeks the
   compiled timeline to each frame's position, screenshots, and encodes with
@@ -45,12 +83,6 @@
 - **Chrome survives `t=0`.** `seek()` pins every animation on the page to
   timeline time, so an entrance animation on the slide indicator sat at its
   first keyframe at `t=0` and vanished from frame 0 of every render.
-
-### Known broken
-
-- **Presenter view (`--presenter`).** Still speaks the pre-4.0 mutation
-  protocol; renders nothing. Being rebuilt as a third client over the
-  timeline. This is why 4.0 is tagged beta.
 
 
 ## 3.6.0

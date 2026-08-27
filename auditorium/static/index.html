@@ -61,11 +61,13 @@
     document.addEventListener('keydown', function (e) {
         if (presenterMode) return;
         const t = player.t;
-        if (e.key === ' ' || e.key === 'ArrowRight') {
+        if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') {
+            // PageDown/PageUp because that is what a presentation clicker
+            // sends; they mean the same thing as the arrows here.
             e.preventDefault();
             if (player.playing) player.seekTo(player.nextBeat(t));
             else player.playTo(player.nextBeat(t));
-        } else if (e.key === 'ArrowLeft') {
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
             e.preventDefault();
             player.seekTo(player.prevBeat(t));
         } else if (e.key === 'r') {

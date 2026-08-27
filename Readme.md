@@ -42,7 +42,7 @@ Most presentation tools treat slides as static documents. Auditorium treats them
 - 🐍 **Run algorithms live** — sort arrays, traverse graphs, train models, all animated on stage
 - 📊 **Compute content** — generate plots, tables, or LaTeX from data, not screenshots
 - 📦 **Use any Python library** — numpy, matplotlib, pandas, whatever you import works
-- 🌍 **Share with students worldwide** — `--public` gives every connected browser your live deck (presenter mode is being rebuilt for 4.0)
+- 🌍 **Share with students worldwide** — `--public` gives every connected browser your live deck
 - 🔗 **Go public** — `--public` gives you an instant shareable URL, no deployment needed
 - 📤 **Render and share** — render to mp4 frame by frame, or ship a self-contained HTML bundle that replays the whole timeline
 
@@ -99,14 +99,15 @@ auditorium run talk.py
 | 🧮 | **LaTeX math** | KaTeX bundled — `$inline$` and `$$display$$` in any markdown |
 | 💻 | **Syntax highlighting** | Fenced code blocks with highlight.js (bundled) |
 | 📐 | **Flexible layouts** | `columns`, `rows` with `"auto"` sizing, arbitrarily nested |
-| 🎤 | **Presenter mode** | `--presenter` — ⚠️ broken in 4.0 beta, being rebuilt over the timeline |
-| 🔄 | **Shared navigation** | Presenter drives all audience tabs — ⚠️ tied to presenter mode, broken in 4.0 beta |
+| 🎤 | **Presenter mode** | `--presenter` — notes, timer, stage mirror, next-scene preview |
+| 🔄 | **Shared navigation** | Presenter drives all audience tabs; audience keyboards are inert |
 | 🌍 | **Public sharing** | `--public` bridges to a relay — instant shareable URL, no deployment |
 | 🕐 | **Late-join sync** | New viewers see the full slide state immediately |
 | 📄 | **HTML / PNG export** | Self-contained interactive HTML, or PNG stills. No PDF — see below |
 | 🎬 | **Deterministic video** | `auditorium render` steps frames against a paused timeline — two renders are byte-identical |
 | 🔀 | **Frame ranges** | `--from`/`--to` make parallel rendering a shell-level fan-out |
-| ♻️ | **Hot reload** | Edit your `.py` and the browser updates instantly |
+| 🎛️ | **Preview client** | `auditorium preview` — scrubber, frame stepping, loop-a-range |
+| ♻️ | **Hot reload** | Edit your `.py` and the browser updates instantly, holding your position |
 | 📡 | **Offline** | All assets bundled — zero CDN, zero internet required |
 | 🔌 | **Auto-reconnect** | Survives server restarts without losing your place |
 
@@ -151,6 +152,27 @@ make relay-update                   # pull + sync + restart
 
 ---
 
+## 🎛️ Preview
+
+`auditorium preview talk.py` opens the authoring surface: the stage plus a
+transport bar.
+
+```bash
+auditorium preview talk.py
+```
+
+- 🎚️ **Scrubber** with a tick per beat, so you can see the structure of the timeline
+- 🎞️ **Frame stepping** with `.` and `,` — one output frame at a time
+- 🔁 **Loop a range** with `i`, `o` and `l`, to tune one animation without replaying the deck
+- ♻️ **Hot reload holds your position** — edit the `.py` and you stay at the same instant
+
+The frame counter reports **rendered** frames, including the dwell a render
+spends on each beat — so the number beside the scrubber is the number you can
+pass to `--from` / `--to`. The stage is the render target scaled down, not a
+reflowed copy of it, so what you are looking at is what the mp4 will contain.
+
+---
+
 ## 🎤 Presenter Mode
 
 Start with `--presenter` to sync all audience tabs to your navigation:
@@ -159,17 +181,15 @@ Start with `--presenter` to sync all audience tabs to your navigation:
 auditorium run talk.py --presenter
 ```
 
-> ⚠️ **Not working in 4.0 beta.** The presenter view still speaks the pre-4.0
-> mutation protocol, which the timeline engine no longer sends, so it renders
-> nothing. It is being rebuilt as a third client over the timeline. Use
-> `auditorium run` without `--presenter` until then. This is why 4.0 is still
-> tagged beta.
-
 Two tabs open: your **presenter view** (notes + timer + slide mirror + next-slide preview) and the **audience view**. Navigate from the presenter tab — every connected browser follows in real time.
 
 - 📝 Docstrings become **speaker notes** (never shown to the audience)
 - ⚡ Late-joining tabs catch up instantly (full slide state replayed)
-- 🔒 Audience keyboards are locked — only the presenter navigates
+- 🔒 Audience keyboards are locked — only the presenter navigates, enforced by the server rather than by the audience's good manners
+
+The presenter broadcasts *intent* — "seek to t", "play from here to there" — not
+positions. Every surface runs the same deterministic engine over the same
+timeline, so a command is enough and there is nothing to drift.
 
 Without `--presenter`, each tab navigates independently.
 
@@ -290,13 +310,33 @@ worst code in this repository.
 
 ## ⌨️ Navigation
 
+Time is a coordinate in 4.0, so navigation moves between **beats** — the pause
+points `await ctx.step()` and `await s.beat()` record — rather than between
+slide indices.
+
+**Present and presenter views:**
+
 | Key | Action |
 |-----|--------|
-| → / Space | Advance step or next slide |
-| Page Down | Skip to next slide |
-| ← | Previous slide |
-| `r` | Restart current slide |
-| Digits + Enter | Jump to slide N |
+| → / Space / Page Down | Play to the next beat (skip to it if already playing) |
+| ← / Page Up | Back to the previous beat |
+| `r` | Restart from the beginning |
+| End | Jump to the end |
+
+**Preview client** (`auditorium preview`) adds:
+
+| Key | Action |
+|-----|--------|
+| Space | Play / pause |
+| `.` / `,` | Step one frame forward / back |
+| `i` / `o` | Set the loop in / out point to the current time |
+| `l` / `x` | Toggle looping / clear the loop |
+| Home / End | Jump to the start / end |
+
+Backward navigation resets the timeline and replays forward. That is deliberate:
+seeking is path-dependent, so a rewound state and a freshly-seeked one would
+otherwise differ — and the renderer only ever travels forward. Replaying is what
+keeps what you see equal to what you get.
 
 ---
 

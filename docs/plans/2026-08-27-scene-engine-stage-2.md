@@ -10,6 +10,12 @@
 
 **Spec:** `docs/design/2026-08-26-scene-engine.md` (see "The clients", D2, D8, and the "Hot-reload holding position" open question)
 
+> **Status: complete, 2026-08-27.** Landed as `1!4.0.0`; 141 passed, 1 skipped.
+> Two things the plan did not anticipate and the work forced out: the frame
+> readout had to report *rendered* frames rather than timeline frames, and the
+> audience had to stop autoplaying in presenter mode (learning the mode from the
+> shell, not the socket, so it is known before the first frame).
+
 **Predecessors:** `docs/plans/2026-08-27-scene-engine-stage-1.md` (engine, `1!4.0.0a1`), `docs/plans/2026-08-27-scene-engine-stage-3.md` (renderer, `1!4.0.0b1`). Both complete.
 
 ## Global Constraints
@@ -41,7 +47,7 @@ The 3.x server sent a `notes` message per slide, read from the slide function's 
 - Produces: `auditorium.timeline.Marker(t: int, title: str, notes_html: str = "")` with `to_dict()`/`from_dict()`; `Timeline.markers: list[Marker]`; the serialized key is `"markers"`, each entry `{"t", "title", "notes_html"}`.
 - Consumes: `Deck.slides` → `SlideInfo.name` (title) and `SlideInfo.func.__doc__` (notes source, rendered with `markdown.markdown`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `tests/test_timeline.py`:
 
@@ -111,12 +117,12 @@ async def test_a_slide_without_a_docstring_has_empty_notes():
     assert tl.markers[0].notes_html == ""
 ```
 
-- [ ] **Step 2: Run the tests and watch them fail**
+- [x] **Step 2: Run the tests and watch them fail**
 
 Run: `uv run pytest tests/test_timeline.py tests/test_compile.py -q`
 Expected: FAIL — `ImportError: cannot import name 'Marker'`.
 
-- [ ] **Step 3: Add `Marker` to the timeline**
+- [x] **Step 3: Add `Marker` to the timeline**
 
 In `auditorium/timeline.py`, after `Beat`:
 
@@ -143,7 +149,7 @@ class Marker:
 
 Add `markers: list[Marker] = field(default_factory=list)` to `Timeline`, serialize it in `to_dict` (`"markers": [m.to_dict() for m in self.markers]`), and restore it in `from_dict`. Do **not** add markers to `duration_ms`'s candidates: a marker is a label on time, not an extent of it.
 
-- [ ] **Step 4: Emit markers in `compile_deck`**
+- [x] **Step 4: Emit markers in `compile_deck`**
 
 In `auditorium/compile.py`, import `Marker` and `markdown`. Immediately before dispatching each slide/scene body (i.e. after the boundary `beat()` + `clear()` for slides after the first), append:
 
@@ -170,16 +176,16 @@ def _notes_html(func) -> str:
 
 `inspect.getdoc` does the dedenting; that is why it is used over `func.__doc__`.
 
-- [ ] **Step 5: Run the tests and watch them pass**
+- [x] **Step 5: Run the tests and watch them pass**
 
 Run: `uv run pytest tests/test_timeline.py tests/test_compile.py -q`
 Expected: PASS.
 
-- [ ] **Step 6: Mutation-test the notes path**
+- [x] **Step 6: Mutation-test the notes path**
 
 Break `_notes_html` to return `""` unconditionally, confirm `test_the_docstring_becomes_rendered_notes` goes red, restore. A notes assertion that survives an empty renderer is worthless.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add auditorium/timeline.py auditorium/compile.py tests/test_timeline.py tests/test_compile.py
@@ -204,12 +210,12 @@ git commit -m "feat(timeline): markers carry scene titles and speaker notes" -- 
   - `connect({ onReload, onCommand, role })` → the WebSocket, with auto-reconnect and a `setStatus` callback.
 - Consumes: `AuditoriumEngine` from `engine.js`.
 
-- [ ] **Step 1: Record the behavioural baseline**
+- [x] **Step 1: Record the behavioural baseline**
 
 Run: `uv run pytest tests/test_present_client.py -q`
 Expected: PASS (12 tests). Write down the count — it is the gate this refactor must still clear.
 
-- [ ] **Step 2: Create `client.js` with the extracted logic**
+- [x] **Step 2: Create `client.js` with the extracted logic**
 
 Move `beatIndex`, `nextBeat`, `prevBeat`, `seekTo`, `playTo`, `loadTimeline`, the `onAppend` decoration hook and `connect()` out of `index.html` verbatim, reshaped into the exported factories above. `onFrame` is the hook the audience client uses for `updateChrome` and the preview client uses to move its scrubber — it fires after every `seek`, including every frame of playback.
 
@@ -218,16 +224,16 @@ Two details that must survive the move, both paid for already:
 - `playTo` reads `performance.now()` for the *interactive* clock only. The renderer never calls it (it drives `window.__auditoriumShow`), so this does not reintroduce wall-clock nondeterminism into the render path.
 - `load()` must set `window.__auditoriumShow = seekTo` and `window.__auditorium_ready = true`. The renderer and the exporter both gate on these; calling `AuditoriumEngine.seek` directly skips the `onFrame` hook and freezes the slide indicator, which is how "2 / 63" got burned into all 63 exported stills.
 
-- [ ] **Step 3: Rewrite `index.html`'s module script against `client.js`**
+- [x] **Step 3: Rewrite `index.html`'s module script against `client.js`**
 
 The remaining inline script should be roughly twenty lines: import, `installDecoration`, `createPlayer` with an `onFrame` that writes the indicator and the `--aud-slide-number` / `--aud-slide-total` custom properties, the keydown map, and `connect`.
 
-- [ ] **Step 4: Run the present-client suite**
+- [x] **Step 4: Run the present-client suite**
 
 Run: `uv run pytest tests/test_present_client.py -q`
 Expected: PASS, same count as Step 1. Any regression here is the refactor's fault, not a flake.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add auditorium/static/client.js auditorium/static/index.html
@@ -251,7 +257,7 @@ The authoring surface (D8). Scrubber, time and frame readouts, single-frame step
 - Produces: route `GET /preview` → the preview HTML (always available, unlike `/presenter`); CLI command `auditorium preview <deck.py>` with the same options as `run` minus `--presenter`/`--public`.
 - Exposes for tests: `window.__auditorium_preview = { t, frame, frameCount, loop: {in, out, enabled}, playing }`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/test_preview_client.py`, modelled on `tests/test_present_client.py`'s fixture (an ephemeral uvicorn on a random port plus a real Chromium page). Tests:
 
@@ -269,12 +275,12 @@ async def test_hot_reload_holds_the_current_position()
 
 `test_hot_reload_holds_the_current_position` seeks to a known `t`, evaluates the client's `reload` handler against a recompiled timeline, and asserts `AuditoriumEngine.currentTime` is still that `t` — not 0.
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `uv run pytest tests/test_preview_client.py -q`
 Expected: FAIL — 404 on `/preview`.
 
-- [ ] **Step 3: Serve `/preview` from the server**
+- [x] **Step 3: Serve `/preview` from the server**
 
 In `auditorium/server.py`, beside the `/` route:
 
@@ -288,7 +294,7 @@ In `auditorium/server.py`, beside the `/` route:
 
 Unlike `/presenter` this needs no mode flag: previewing is never shared, so there is no session to be in the wrong mode for.
 
-- [ ] **Step 4: Write `preview.html`**
+- [x] **Step 4: Write `preview.html`**
 
 Layout: a `#preview-stage` wrapper holding the same shell as `index.html` (`#slide-root.aud-slide-root`, the four `.aud-chrome` slots, `#slide-indicator`), CSS-scaled to fit above a fixed `#preview-bar`.
 
@@ -318,20 +324,20 @@ Hot reload:
 
 Holding `t` — not node identity — is deliberate, and the limit is worth stating in a comment: if the edit changed what exists at that instant, the author sees the *new* scene at the *old* time, which is the useful behaviour and the only one a pure timeline can offer.
 
-- [ ] **Step 5: Add the `preview` CLI command**
+- [x] **Step 5: Add the `preview` CLI command**
 
 In `auditorium/cli.py`, a `preview` command that mirrors `run` (same `--host/--port/--theme/--transition/--watch`) and opens `http://host:port/preview`. Factor the shared body out of `run` rather than copying it.
 
-- [ ] **Step 6: Run the tests and watch them pass**
+- [x] **Step 6: Run the tests and watch them pass**
 
 Run: `uv run pytest tests/test_preview_client.py -q`
 Expected: PASS.
 
-- [ ] **Step 7: Mutation-test the two assertions that could be vacuous**
+- [x] **Step 7: Mutation-test the two assertions that could be vacuous**
 
 Break the scrubber's `input` handler so it does not call `seekTo`; confirm `test_dragging_the_scrubber_seeks_the_stage` fails. Break `onReload` to seek to 0; confirm `test_hot_reload_holds_the_current_position` fails. Restore both.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add auditorium/static/preview.html auditorium/server.py auditorium/cli.py tests/test_preview_client.py
@@ -358,7 +364,7 @@ The presenter view's whole reason to exist is driving the audience. In 3.x that 
   - server → all: `{"type": "reload"}` (unchanged)
 - Consumes: `Presentation.audience_clients` / `presenter_ws` from Stage 1.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `tests/test_server.py`, using `fastapi.testclient.TestClient`'s websocket support:
 
@@ -372,12 +378,12 @@ def test_commands_are_dropped_outside_presenter_mode()
 
 `test_an_audience_command_is_ignored` matters: without it, any tab could drive every other tab, and the Readme's "audience keyboards are locked" would be a lie enforced only by the audience's own good manners.
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `uv run pytest tests/test_server.py -q`
 Expected: FAIL — no `hello_ack`, commands are drained.
 
-- [ ] **Step 3: Implement the relay**
+- [x] **Step 3: Implement the relay**
 
 Add to `Presentation`:
 
@@ -399,19 +405,19 @@ Add to `Presentation`:
 
 In both `_handle_shared_session` and `_handle_independent_session`, send `hello_ack` immediately after accepting the role. In the shared-session receive loop, replace the drain with: parse the message; if it is a `cmd` **and** this socket is the presenter, `await pres.send_to_audience(msg)`; otherwise ignore it. Malformed JSON is ignored, not fatal — a bad frame from one tab must not close the presentation.
 
-- [ ] **Step 4: Teach the client to send and obey commands**
+- [x] **Step 4: Teach the client to send and obey commands**
 
 `connect()` gains an `onCommand` callback and a `send(cmd)` method on the returned socket wrapper. In `index.html`, the audience:
 - stores `presenterMode` from `hello_ack`;
 - ignores keydown entirely while `presenterMode` is true (the lock);
 - on `cmd`, calls `player.seekTo(t)` or `player.playTo(to)` accordingly.
 
-- [ ] **Step 5: Run the tests and watch them pass**
+- [x] **Step 5: Run the tests and watch them pass**
 
 Run: `uv run pytest tests/test_server.py -q`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add auditorium/server.py auditorium/static/client.js auditorium/static/index.html tests/test_server.py
@@ -433,7 +439,7 @@ git commit -m "feat(server): relay presenter commands instead of positions" -- a
 - Consumes: `createPlayer`/`installDecoration`/`connect` (Task 2), the `cmd` protocol (Task 4), `timeline.markers` (Task 1).
 - Produces: nothing other tasks consume.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `tests/test_presenter_client.py`, with a server started `presenter_mode=True` and two pages (`/presenter` and `/`):
 
@@ -450,12 +456,12 @@ async def test_presenter_route_is_403_without_presenter_mode()
 
 `test_advancing_the_presenter_advances_the_audience` is the one that would have caught the shipped bug: open both pages, press space on the presenter, assert the *audience* page's `AuditoriumEngine.currentTime` moved. Asserting only that the presenter moved is the proxy signal that let a broken presenter ship.
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `uv run pytest tests/test_presenter_client.py -q`
 Expected: FAIL — the current page renders an empty mirror and never seeks.
 
-- [ ] **Step 3: Rewrite `presenter.html`**
+- [x] **Step 3: Rewrite `presenter.html`**
 
 Structure stays as it was (it is a good layout): left pane a scaled stage mirror, right pane notes + next preview + footer with timer and indicator. What changes is everything below the markup:
 
@@ -467,16 +473,16 @@ Structure stays as it was (it is a good layout): left pane a scaled stage mirror
 - Keydown mirrors the audience's map (space/→ next beat, ← previous, `r` restart, `End`), and after acting locally sends the matching `cmd` so the audience follows.
 - Timer starts on the first advance, not on load, so a presenter who opens the deck early does not start the clock.
 
-- [ ] **Step 4: Run the tests and watch them pass**
+- [x] **Step 4: Run the tests and watch them pass**
 
 Run: `uv run pytest tests/test_presenter_client.py -q`
 Expected: PASS.
 
-- [ ] **Step 5: Watch it, do not infer it**
+- [x] **Step 5: Watch it, do not infer it**
 
 Run `uv run auditorium run examples/demo_deck.py --presenter --no-open`, open both tabs in a real browser, advance three times from the presenter, and confirm with your own eyes: the audience follows, the notes match the scene, the next preview names the right one. Screenshot both. The suite can prove the wiring; only looking proves the feature.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add auditorium/static/presenter.html tests/test_presenter_client.py
@@ -495,15 +501,15 @@ The `b1` suffix, the three Readme warnings, and the CHANGELOG note all exist bec
 - Modify: `CLAUDE.md` (the `presenter.html` and `cli.py` bullets under "Key modules"; add `preview.html` and `client.js`)
 - Modify: `docs/design/2026-08-26-scene-engine.md` (status header, delivery-order note)
 
-- [ ] **Step 1: Remove every "broken in 4.0 beta" claim from `Readme.md`**
+- [x] **Step 1: Remove every "broken in 4.0 beta" claim from `Readme.md`**
 
 Grep first — `grep -n "beta\|broken\|being rebuilt" Readme.md` — and fix every hit, not the three remembered ones. Document `auditorium preview` in the feature table and give it a short section next to Presenter Mode.
 
-- [ ] **Step 2: Update `CHANGELOG.md`** with the preview client, the presenter rebuild, timeline markers, and the `cmd` protocol.
+- [x] **Step 2: Update `CHANGELOG.md`** with the preview client, the presenter rebuild, timeline markers, and the `cmd` protocol.
 
-- [ ] **Step 3: Update the spec's status header** to `stage-1-2-3-implemented` and replace the "Stages 2-4 are not started" note in Delivery order with what actually landed, including the two decisions this stage made that the spec did not anticipate: markers as a timeline member, and shared navigation as broadcast intent rather than broadcast position.
+- [x] **Step 3: Update the spec's status header** to `stage-1-2-3-implemented` and replace the "Stages 2-4 are not started" note in Delivery order with what actually landed, including the two decisions this stage made that the spec did not anticipate: markers as a timeline member, and shared navigation as broadcast intent rather than broadcast position.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Readme.md CHANGELOG.md CLAUDE.md docs/design/2026-08-26-scene-engine.md
@@ -514,13 +520,13 @@ git commit -m "docs: preview client documented, presenter warnings retired" -- R
 
 ### Task 7: Full-suite gate
 
-- [ ] **Step 1: Run the whole suite as its own tool call, unpiped**
+- [x] **Step 1: Run the whole suite as its own tool call, unpiped**
 
 Run: `uv run pytest -q`
 Expected: every test passes. Do not pipe it into `tail` and do not chain it with `&&` — a pipe hands the shell `tail`'s exit code, which turns a red gate green.
 
-- [ ] **Step 2: Confirm the render path still works end to end**
+- [x] **Step 2: Confirm the render path still works end to end**
 
 Run: `uv run auditorium render examples/demo_deck.py -o /tmp/stage2.mp4 --fps 10 --size 720p --to 60`, then `ffprobe` the artifact for a packet count of 60. Stage 2 touched `index.html`, which the renderer drives; a green unit suite does not prove the video still renders.
 
-- [ ] **Step 3: Journal and release the lock**
+- [x] **Step 3: Journal and release the lock**
