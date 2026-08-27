@@ -2,6 +2,20 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **STATUS: Stage 1 complete (2026-08-27).** All ten tasks landed; `uv run pytest`
+> is 69 passed / 1 skipped (the skip is `tesserax_demo.py`, which needs the
+> optional `examples` extra). Version is `1!4.0.0a1`. Four surfaces are
+> deliberately broken until Stage 3 — see *Deliberately not in Stage 1*.
+>
+> **Corrections made while executing, folded back in above:** the commit form
+> (`git commit -- <path>` fails on new files), Task 2's test count (12, not 11),
+> `beat_hold_ms` being keyword-only, and the Task 8 peer-collision guard.
+>
+> **Found only by running the real thing in a browser, and added to the plan's
+> intent rather than its letter:** scenes had no construction vocabulary; nothing
+> cleared between scenes; `append` wrapped nodes in a div that broke flex sizing;
+> and the D5 path-independence gate could not fail.
+
 **Goal:** Replace auditorium's real-time WebSocket runtime with a compiled timeline driven by a single `seek(t)` primitive, leaving every existing deck working through a compatibility shim.
 
 **Architecture:** Running a deck compiles a serializable `Timeline` (nodes, ops, tracks, beats) instead of performing it — `play()` records, nothing sleeps. The browser receives the whole timeline and plays it locally; `seek(t)` puts the DOM into the state it holds at time `t` by applying ops forward, assigning `currentTime = t` to every animation in `document.getAnimations()`, and running JS tween callbacks. Backward seeks reset to zero and replay forward, because seeking is path-dependent. `@deck.slide` becomes a restricted `SceneContext` so existing decks keep running.

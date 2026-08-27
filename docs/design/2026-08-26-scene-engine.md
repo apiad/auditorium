@@ -2,7 +2,7 @@
 type: design_doc
 date: 2026-08-26
 title: "Auditorium 4.0: the scene engine"
-status: draft
+status: stage-1-implemented
 tags: [auditorium, animation, video, timeline, waapi, playwright, rendering]
 ---
 
@@ -352,6 +352,12 @@ identities have shifted may not have a meaningful "same `t`" to hold.
 error. Defaulting to fade-out, revisited on first real use.
 
 ## Delivery order
+
+> Stage 1 landed 2026-08-27 (`1!4.0.0a1`). Stages 2-4 are not started.
+> Two decisions were revised during implementation: `beat()` advances 1ms so
+> post-beat content is not visible at the pause, and scene boundaries emit an
+> explicit clear op -- neither was in this spec, and both are required for the
+> model to work at all.
 
 The work stages naturally, and each stage leaves the repo in a shippable state:
 
