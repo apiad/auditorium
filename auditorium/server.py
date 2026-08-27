@@ -39,6 +39,20 @@ class Presentation:
             except Exception:
                 self.presenter_ws = None
 
+    async def send_to_audience(self, message: dict) -> None:
+        """Fan a command out to audience tabs only.
+
+        Deliberately not ``send()``: echoing a command back to the presenter
+        that issued it would make it seek twice, and the second seek would be
+        backward often enough to trigger a full reset-and-replay mid-talk.
+        """
+        data = json.dumps(message)
+        for ws in list(self.audience_clients):
+            try:
+                await ws.send_text(data)
+            except Exception:
+                self.audience_clients.remove(ws)
+
     @property
     def has_clients(self) -> bool:
         return bool(self.audience_clients) or self.presenter_ws is not None
@@ -123,6 +137,7 @@ async def _handle_independent_session(app: FastAPI, ws: WebSocket, hello: dict) 
     pres = Presentation()
     pres.audience_clients.append(ws)
     app.state.sessions[session_id] = pres
+    await ws.send_text(json.dumps({"type": "hello_ack", "presenter_mode": False}))
 
     try:
         while True:
@@ -152,9 +167,23 @@ async def _handle_shared_session(app: FastAPI, ws: WebSocket, hello: dict, role:
     else:
         pres.audience_clients.append(ws)
 
+    await ws.send_text(json.dumps({"type": "hello_ack", "presenter_mode": True}))
+
     try:
         while True:
-            await ws.receive_text()  # drained; navigation is client-side
+            raw = await ws.receive_text()
+            # The server relays intent and holds no position of its own. Only
+            # the presenter may drive: without this check any audience tab
+            # could navigate the talk, and "audience keyboards are locked"
+            # would be enforced by nothing but the audience's good manners.
+            if not is_presenter:
+                continue
+            try:
+                msg = json.loads(raw)
+            except ValueError:
+                continue  # a bad frame from one tab must not end the talk
+            if isinstance(msg, dict) and msg.get("type") == "cmd":
+                await pres.send_to_audience(msg)
     except (WebSocketDisconnect, asyncio.CancelledError):
         pass
     finally:
