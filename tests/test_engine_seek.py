@@ -231,3 +231,44 @@ async def test_flex_sizing_propagates_to_appended_content(browser_page):
         "() => Math.round(document.getElementById('grower').getBoundingClientRect().height)"
     )
     assert h > 300, f"flex child did not grow (height {h}); a wrapper is blocking it"
+
+
+@pytest.fixture
+def move_to_timeline():
+    """A node with BOTH transform axes animated, as move_to() actually emits."""
+    tl = Timeline(meta={"title": "move"})
+    tl.nodes.append(Node(id="m1", layer="dom", html="<div>M</div>"))
+    tl.ops.append(Op(t=0, action="append", node="m1"))
+    tl.tracks.append(
+        Track(node="m1", prop="transform.x", from_=0, to=200, start=0, end=1000)
+    )
+    tl.tracks.append(
+        Track(node="m1", prop="transform.y", from_=0, to=0, start=0, end=1000)
+    )
+    return tl.to_dict()
+
+
+async def test_move_to_actually_moves_when_both_axes_are_animated(
+    browser_page, move_to_timeline
+):
+    """Two tracks on one CSS property must compose, not overwrite.
+
+    move_to() emits transform.x and transform.y. With WAAPI's default
+    composite:"replace" the second animation wins outright and the element
+    renders translateY(0px) -- it never moves, silently. Every stage-1 test
+    passed because the harness only ever had a single transform track.
+    """
+    await serve(browser_page, move_to_timeline)
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(1000)")
+    assert await x_of(browser_page, "#m1") == 200
+
+
+async def test_opacity_is_not_composited_additively(browser_page, timeline_dict):
+    """The fix must stay scoped to transforms.
+
+    Additive opacity sums against the underlying value and clamps to 1, which
+    would turn every fade-in into an instant appear.
+    """
+    await serve(browser_page, timeline_dict)
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+    assert await opacity_of(browser_page) == pytest.approx(0.0, abs=0.05)

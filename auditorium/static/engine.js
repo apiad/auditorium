@@ -166,11 +166,20 @@ export const AuditoriumEngine = {
       const build = PROP_SETTERS[track.prop];
       if (!build) continue;
       const keyframes = build(track.from, track.to);
+      // move_to() emits transform.x AND transform.y -- two animations writing
+      // the same CSS property. Under the default composite:"replace" the last
+      // one wins outright, so move_to(200, 0) renders translateY(0px) and the
+      // element never moves. Measured: replace -> x=0, add -> x=200.
+      //
+      // Scoped to transforms on purpose. Additive opacity would sum against
+      // the underlying 1 and clamp, turning every fade-in into a no-op.
+      const isTransform = track.prop.startsWith("transform.");
       const anim = el.animate(keyframes, {
         delay: track.start,
         duration: Math.max(1, track.end - track.start),
         easing: track.ease || "linear",
         fill: "both",
+        composite: isTransform ? "add" : "replace",
       });
       anim.pause();
     }
