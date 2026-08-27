@@ -161,3 +161,80 @@ async def render_frames(
         thread.join(timeout=5)
 
     return written
+
+
+import shutil
+import subprocess
+import tempfile
+
+SIZE_PRESETS = {
+    "1080p": (1920, 1080),
+    "720p": (1280, 720),
+    "vertical": (1080, 1920),
+    "square": (1080, 1080),
+}
+
+
+def parse_size(value: str) -> tuple[int, int]:
+    """Resolve a named preset or a WIDTHxHEIGHT string."""
+    if value in SIZE_PRESETS:
+        return SIZE_PRESETS[value]
+    parts = value.lower().split("x")
+    if len(parts) != 2 or not all(p.isdigit() for p in parts):
+        raise ValueError(
+            f"invalid size {value!r}; use WIDTHxHEIGHT or one of "
+            f"{', '.join(sorted(SIZE_PRESETS))}"
+        )
+    return int(parts[0]), int(parts[1])
+
+
+async def render_video(
+    deck,
+    output: Path,
+    *,
+    fps: int = 30,
+    size: tuple[int, int] = (1920, 1080),
+    audio: Path | None = None,
+    fmt: str = "mp4",
+    start_frame: int = 0,
+    end_frame: int | None = None,
+) -> Path:
+    """Render a deck to a video file (or a PNG sequence directory)."""
+    output = Path(output)
+    frame_range = {"start_frame": start_frame, "end_frame": end_frame}
+
+    if fmt == "png-sequence":
+        await render_frames(deck, output, fps=fps, size=size, **frame_range)
+        return output
+
+    if shutil.which("ffmpeg") is None:
+        raise RuntimeError("ffmpeg is required to encode video; install it or use --format png-sequence")
+
+    with tempfile.TemporaryDirectory(prefix="auditorium-render-") as tmp:
+        frames = Path(tmp)
+        await render_frames(deck, frames, fps=fps, size=size, **frame_range)
+        # A ranged render's files start at frame-%06d of the RANGE start, so
+        # ffmpeg needs to be told where the sequence begins or it finds nothing.
+        first_index = start_frame
+
+        codec = ["-c:v", "libx264", "-pix_fmt", "yuv420p"] if fmt == "mp4" else ["-c:v", "libvpx-vp9"]
+        cmd = [
+            "ffmpeg", "-y",
+            "-framerate", str(fps),
+            "-start_number", str(first_index),
+            "-i", str(frames / "frame-%06d.png"),
+        ]
+        if audio is not None:
+            cmd += ["-i", str(audio), "-c:a", "aac", "-shortest"]
+        cmd += codec
+        # Strip metadata so two renders of the same timeline are byte-identical;
+        # ffmpeg otherwise stamps an encoder string and creation time.
+        cmd += ["-map_metadata", "-1", "-fflags", "+bitexact", "-flags:v", "+bitexact"]
+        cmd += [str(output)]
+
+        output.parent.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"ffmpeg failed (rc={result.returncode}):\n{result.stderr[-2000:]}")
+
+    return output
