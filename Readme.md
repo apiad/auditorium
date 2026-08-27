@@ -44,7 +44,7 @@ Most presentation tools treat slides as static documents. Auditorium treats them
 - 📦 **Use any Python library** — numpy, matplotlib, pandas, whatever you import works
 - 🌍 **Share with students worldwide** — presenter mode syncs your slides to every connected browser in real time
 - 🔗 **Go public** — `--public` gives you an instant shareable URL, no deployment needed
-- 📤 **Export everywhere** — record to video, export to PDF, or share as a self-contained HTML that replays your talk with original timing
+- 📤 **Render and share** — render to mp4 frame by frame, or ship a self-contained HTML bundle that replays the whole timeline
 
 If you've ever wished you could `await` inside a PowerPoint slide, this is for you.
 
@@ -103,7 +103,7 @@ auditorium run talk.py
 | 🔄 | **Shared navigation** | Presenter drives all audience tabs — students see what you show |
 | 🌍 | **Public sharing** | `--public` bridges to a relay — instant shareable URL, no deployment |
 | 🕐 | **Late-join sync** | New viewers see the full slide state immediately |
-| 📄 | **PDF / HTML / PNG export** | Vector PDF, self-contained interactive HTML, or PNG per slide |
+| 📄 | **HTML / PNG export** | Self-contained interactive HTML, or PNG stills. No PDF — see below |
 | 🎬 | **Video recording** | Headless or live recording via Playwright |
 | 🔀 | **Step-by-step export** | Each reveal as a separate frame with original timing |
 | ♻️ | **Hot reload** | Edit your `.py` and the browser updates instantly |
@@ -226,22 +226,50 @@ This works with **matplotlib** figures, **pandas** DataFrames, **altair** charts
 
 ---
 
-## 🎬 Recording & Export
+## 🎬 Rendering & Export
 
 Requires `pip install auditorium[record]` and `playwright install chromium`.
 
 ```bash
-# Record to video
-auditorium record talk.py -o talk.webm
-
-# Export to PDF (vector), HTML (interactive), or PNG
-auditorium export talk.py -f pdf -o talk.pdf
+# Export a self-contained HTML bundle, or PNG stills
 auditorium export talk.py -f html -o talk.html
 auditorium export talk.py -f png -o slides/
-
-# Step-by-step: one frame per reveal, with original timing in HTML
-auditorium export talk.py -f html --step-by-step -o talk.html
 ```
+
+> **4.0 migration note.** `auditorium record` is being replaced by
+> `auditorium render`, which steps frames deterministically instead of
+> screen-capturing a live browser. Until that lands, video output is
+> unavailable — `record` rides the pre-4.0 runtime and no longer works.
+
+### Why there is no PDF export
+
+**Auditorium 4.0 removed PDF export, deliberately. It is not coming back.**
+
+A deck is no longer a list of slides — it is a timeline. A scene is a
+continuous function of time, so there is no canonical instant to print. Every
+answer to "which moment becomes a page?" is invented rather than derived: the
+end of each scene loses every build stage, one page per pause produces a run of
+near-identical cumulative pages, and asking the author to name capture points
+is a knob nobody wants to turn.
+
+PNG and HTML export survive because both *are* total functions of the timeline.
+A PNG is "the frame at time *t*", well-defined for any scene. The HTML bundle
+carries the whole timeline and replays it. Neither has to guess.
+
+**If you want a PDF**, that is a real thing to want — but you are the one who
+knows which instants matter. Export PNGs, pick your frames, and assemble them:
+
+```bash
+auditorium export talk.py -f png -o slides/
+img2pdf slides/*.png -o talk.pdf
+```
+
+**If the document was always meant to be printed**, do not start here. Author
+it in a document engine — [scriptorium](https://github.com/apiad/scriptorium)
+ships a `deck` theme for 16:9 slides and is built for pagination, which is a
+genuinely hard problem and not this project's problem. Auditorium is for
+animation. Print is a different craft, and pretending otherwise produced the
+worst code in this repository.
 
 ---
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased (4.0)
+
+### Removed
+
+- **PDF export.** A deck is now a timeline, and a scene is a continuous
+  function of time, so there is no canonical instant to print. Every candidate
+  rule invents semantics the model does not have: end-of-scene loses every
+  build stage, one-page-per-pause emits runs of near-identical cumulative
+  pages, and author-declared capture points are a knob nobody turns. `png` and
+  `html` export survive because both are total functions of the timeline.
+  Export stills and assemble them (`img2pdf slides/*.png`), or author print
+  documents in a document engine built for pagination.
+
+
 ## 3.6.0
 
 ### Added

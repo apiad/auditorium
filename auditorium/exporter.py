@@ -152,9 +152,6 @@ async def export_deck(
         if fmt == "html":
             _build_html(slide_doms, output, width, height, STATIC_DIR, deck.theme_style_block())
             console.print(f"[green]✓[/] HTML saved to [bold]{output}[/]")
-        elif fmt == "pdf":
-            await _build_pdf(slide_doms, output, width, height, STATIC_DIR, tmpdir, deck.theme_style_block())
-            console.print(f"[green]✓[/] PDF saved to [bold]{output}[/]")
         elif fmt == "png":
             console.print(f"[green]✓[/] PNG slides saved to [bold]{output}/[/]")
 
@@ -302,71 +299,6 @@ body {{ margin: 0; background: #fff; overflow: hidden; }}
 </body>
 </html>"""
     )
-
-
-async def _build_pdf(
-    slide_doms: list[dict],
-    output: Path,
-    width: int,
-    height: int,
-    static_dir: Path,
-    tmpdir: str,
-    theme_overrides: str = "",
-) -> None:
-    """Build a vector PDF by rendering slides in a print-optimized page."""
-    from playwright.async_api import async_playwright
-
-    theme_css = (static_dir / "theme.css").read_text()
-    katex_css = _inline_katex_fonts(
-        (static_dir / "vendor" / "katex" / "katex.min.css").read_text(),
-        static_dir / "vendor" / "katex" / "fonts",
-    )
-    hljs_css = (static_dir / "vendor" / "hljs" / "styles" / "github.min.css").read_text()
-
-    slides_html = ""
-    for i, dom in enumerate(slide_doms):
-        pb = "page-break-after: always;" if i < len(slide_doms) - 1 else ""
-        slides_html += (
-            f'<div class="{dom["classes"]}" style="width:{width}px;height:{height}px;'
-            f"overflow:hidden;display:flex;flex-direction:column;align-items:center;"
-            f'justify-content:center;padding:3rem;font-size:1.5rem;line-height:1.8;{pb}">'
-            f'{dom["html"]}</div>\n'
-        )
-
-    no_anim = (
-        "*, *::before, *::after { "
-        "animation-duration: 0s !important; animation-delay: 0s !important; "
-        "transition-duration: 0s !important; transition-delay: 0s !important; }"
-    )
-    # theme.css sets body to `display: flex; height: 100vh; overflow: hidden`
-    # — for print, every slide must be a block-level page, so reset body.
-    body_reset = (
-        "body { margin: 0; display: block; width: auto; height: auto; "
-        "overflow: visible; background: #fff; }"
-    )
-    print_html = (
-        f'<!DOCTYPE html><html><head><meta charset="UTF-8">'
-        f"<style>{theme_css}\n{katex_css}\n{hljs_css}\n{no_anim}\n{body_reset}</style>"
-        f"{theme_overrides}"
-        f"</head><body>{slides_html}</body></html>"
-    )
-
-    html_path = Path(tmpdir) / "print.html"
-    html_path.write_text(print_html)
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        await page.goto(f"file://{html_path}")
-        await page.wait_for_timeout(1000)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        await page.pdf(
-            path=str(output),
-            width=f"{width}px",
-            height=f"{height}px",
-            print_background=True,
-        )
-        await browser.close()
 
 
 def _inline_katex_fonts(katex_css: str, font_dir: Path) -> str:

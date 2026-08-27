@@ -19,7 +19,8 @@
   git add <explicit paths> && git commit -m "message" -- <the same explicit paths>
   ```
   Both halves required: `git commit -- <path>` alone fails on a **new** file, and `-m` must precede `--`. Never `git add -A`, `git add .`, `git add -u`, `--amend`, `git stash`, or `git checkout`/`restore` on a path your task did not create.
-- **`_build_pdf` and `_build_html` in `exporter.py` are OFF LIMITS.** A peer is actively rewriting the PDF CSS scoping there. Stage 3 touches only `export_deck`'s drive path (roughly lines 90–155). Before editing, run `git diff auditorium/exporter.py` and leave every hunk you did not write.
+- **PDF export is gone as of 2026-08-27** (`_build_pdf` deleted, CLI rejects `-f pdf` with a rationale). Do not reintroduce it. A timeline has no canonical instant to print; `png` and `html` survive because both are total functions of the timeline. See `Readme.md` → "Why there is no PDF export".
+- **`_build_html` and `_inline_katex_fonts` in `exporter.py` are OFF LIMITS.** `_inline_katex_fonts` is shared with the HTML bundle, not PDF-only. Stage 3 touches only `export_deck`'s drive path. Before editing, run `git diff auditorium/exporter.py` and leave every hunk you did not write.
 - All times in the timeline are integer milliseconds. Frame indices are integers; `fps` is an integer.
 - Rendering must be deterministic: same timeline, same frames, byte-identical output. Nothing in the render path may read a wall clock.
 - Playwright and ffmpeg stay optional — importing `auditorium.render` must not require them; only calling the render entry point does.
@@ -718,13 +719,13 @@ git add auditorium/cli.py tests/test_render_cli.py && git rm auditorium/recorder
 
 ### Task 5: Un-break `auditorium export`
 
-`export` currently hangs — it drives the deck with `?instant_sleep=1&auto_step=0` query parameters the server no longer parses, then waits forever on `window.__auditorium_slide_complete`, which the new client never sets. Verified: `TimeoutError: Page.wait_for_function: Timeout 120000ms exceeded`, no PDF produced.
+`export` currently hangs — it drives the deck with `?instant_sleep=1&auto_step=0` query parameters the server no longer parses, then waits forever on `window.__auditorium_slide_complete`, which the new client never sets. Verified: `TimeoutError: Page.wait_for_function: Timeout 120000ms exceeded`, no output produced.
 
 **Files:**
 - Modify: `auditorium/exporter.py` — **only** the drive path inside `export_deck` (roughly lines 90–155)
 - Create: `tests/test_export.py`
 
-**SCOPE FENCE:** `_build_pdf` (line ~307), `_build_html` (line ~167), `_inline_katex_fonts`, and `_capture` are OFF LIMITS — a peer is rewriting the PDF CSS scoping in them right now. Run `git diff auditorium/exporter.py` before you start and preserve every hunk you did not write. If your change seems to require touching `_build_pdf`, STOP and report instead.
+**SCOPE FENCE:** `_build_html`, `_inline_katex_fonts`, and `_capture` are OFF LIMITS. `_build_pdf` no longer exists — PDF export was removed on 2026-08-27; do not reintroduce it. Run `git diff auditorium/exporter.py` before you start and preserve every hunk you did not write.
 
 **Interfaces:**
 - Consumes: `auditorium.compile.compile_deck`, the client's `window.AuditoriumEngine`.
@@ -792,7 +793,7 @@ Expected: FAIL by timeout (the current drive path hangs).
 
 - [ ] **Step 3: Replace the drive path**
 
-Inside `export_deck`, replace the per-slide URL/wait logic with: load the page once, wait for `window.__auditorium_ready`, read the beat list from `window.AuditoriumEngine._tl.beats`, then for each beat seek to it and capture. Keep the `slide_doms` structure that `_build_pdf`/`_build_html` consume — those functions must not change:
+Inside `export_deck`, replace the per-slide URL/wait logic with: load the page once, wait for `window.__auditorium_ready`, read the beat list from `window.AuditoriumEngine._tl.beats`, then for each beat seek to it and capture. Keep the `slide_doms` structure that `_build_html` consumes — that function must not change:
 
 ```python
         await page.goto(f"http://127.0.0.1:{port}/", wait_until="load")
@@ -821,8 +822,8 @@ Expected: 2 passed
 
 - [ ] **Step 5: Verify the real command, not just the test**
 
-Run: `uv run auditorium export examples/demo_deck.py -o /tmp/stage3.pdf`
-Expected: completes and produces a non-empty PDF. Open it and confirm slides are distinct and not piled on top of each other. Report the page count.
+Run: `uv run auditorium export examples/demo_deck.py -f png -o /tmp/stage3-png/`
+Expected: completes and writes one PNG per beat. Open several and confirm scenes are distinct and not piled on top of each other. Report the count.
 
 - [ ] **Step 6: Commit**
 
@@ -997,7 +998,8 @@ git add pyproject.toml auditorium/cli.py CHANGELOG.md Readme.md CLAUDE.md && git
 ## Stage 3 done when
 
 - `auditorium render examples/demo_deck.py -o out.mp4` produces a watchable mp4.
-- `auditorium export examples/demo_deck.py -o out.pdf` completes and produces distinct pages.
+- `auditorium export examples/demo_deck.py -f png -o slides/` completes and produces distinct stills.
+- `auditorium export examples/demo_deck.py -f pdf` fails fast with the removal rationale, exit code 1.
 - Two renders of the same deck are byte-identical.
 - A ranged render matches the corresponding frames of a full render.
 - `uv run pytest` is green.

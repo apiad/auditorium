@@ -183,22 +183,34 @@ def record(
 @app.command()
 def export(
     deck_path: Path = typer.Argument(..., help="Path to the deck.py file"),
-    fmt: str = typer.Option("pdf", "-f", "--format", help="Output format: pdf, html, png"),
-    output: Path = typer.Option(None, "-o", "--output", help="Output path (default: deck.pdf/html or slides/)"),
+    fmt: str = typer.Option("html", "-f", "--format", help="Output format: html, png"),
+    output: Path = typer.Option(None, "-o", "--output", help="Output path (default: deck.html or slides/)"),
     resolution: str = typer.Option("1920x1080", "-r", "--resolution", help="Viewport size, e.g. 1280x720"),
     step_by_step: bool = typer.Option(False, "-s", "--step-by-step", help="One page/frame per step instead of per slide"),
     port: int = typer.Option(0, help="Server port (0 = random)"),
     theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack."),
     transition: str = typer.Option(None, "--transition", help="Override the slide transition: fade, slide-left, slide-up, zoom, none (or a custom @keyframes name)."),
 ) -> None:
-    """Export presentation to PDF, HTML, or PNG."""
+    """Export a deck to a self-contained HTML bundle or PNG stills."""
     deck_path = deck_path.resolve()
     if not deck_path.exists():
         console.print(f"[red]Error:[/] {deck_path} not found")
         raise typer.Exit(1)
 
-    if fmt not in ("pdf", "html", "png"):
-        console.print(f"[red]Error:[/] unknown format [bold]'{fmt}'[/]. Use pdf, html, or png.")
+    if fmt == "pdf":
+        console.print(
+            "[red]Error:[/] PDF export was removed in 4.0.\n"
+            "A timeline has no canonical instant to print: a scene is a "
+            "continuous function of time, not a page.\n"
+            "Export [bold]png[/] stills and decide yourself what instants "
+            "matter, then assemble them (img2pdf, ImageMagick).\n"
+            "For a document that was always meant to be printed, author it in "
+            "scriptorium instead."
+        )
+        raise typer.Exit(1)
+
+    if fmt not in ("html", "png"):
+        console.print(f"[red]Error:[/] unknown format [bold]'{fmt}'[/]. Use html or png.")
         raise typer.Exit(1)
 
     if output is None:
