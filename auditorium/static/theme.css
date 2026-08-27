@@ -117,14 +117,6 @@ body {
     to   { transform: scale(1);    opacity: 1; }
 }
 
-/* Slide indicator fade. A persistent keyframe, not a transition — a
-   CSSTransition is dropped from getAnimations() once it finishes, which
-   makes any backward seek past it a silent no-op. */
-@keyframes audIndicatorFade {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
 /* ---- Theme chrome slots ----
  * Empty fixed-position regions themes can fill via ::before / ::after content.
  * Pointer-events are disabled so the chrome never intercepts clicks.
@@ -150,7 +142,13 @@ body {
     color: #9ca3af;
     font-family: monospace;
     opacity: 0.5;
-    animation: audIndicatorFade 0.3s ease both;
+    /* No animation, and no transition either.
+       Persistent chrome must be statically styled. seek() pins EVERY
+       animation on the page to timeline time, so an entrance animation here
+       sits at its first keyframe whenever t=0 -- the indicator vanished from
+       frame 0 of every render. (A bare `transition:` is separately banned:
+       CSSTransitions leave getAnimations() on completion, so backward seeks
+       past them silently no-op. Smoothing the hover is not worth either.) */
 }
 
 #slide-indicator:hover {

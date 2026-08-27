@@ -225,3 +225,24 @@ async def test_the_root_keeps_its_base_class_across_a_rewind(
         "() => document.getElementById('slide-root').className"
     )
     assert "aud-slide-root" in cls
+
+
+async def test_chrome_is_visible_at_time_zero(browser_page, live_server):
+    """Nothing that should be on screen may be invisible at t=0.
+
+    seek() pins EVERY animation on the page to timeline time, including ones
+    on persistent chrome. An entrance animation there sits at its first
+    keyframe whenever t=0, so the slide indicator disappeared from frame 0 of
+    every rendered video and every export -- while all the timeline assertions
+    stayed green, because none of them look at chrome.
+    """
+    await _ready(browser_page, live_server)
+    await browser_page.evaluate("() => window.__auditoriumShow(0)")
+    opacity = await browser_page.evaluate(
+        "() => parseFloat(getComputedStyle(document.getElementById('slide-indicator')).opacity)"
+    )
+    assert opacity > 0.1, f"slide indicator is invisible at t=0 (opacity {opacity})"
+    text = await browser_page.evaluate(
+        "() => document.getElementById('slide-indicator').textContent"
+    )
+    assert "/" in text, f"indicator has no counter at t=0: {text!r}"
