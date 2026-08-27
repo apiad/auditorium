@@ -132,32 +132,36 @@ async def opening(s):
 # --- 2. Fourier --------------------------------------------------------
 
 # The wheel: arm k turns at frequency 2k+1 with radius proportional to
-# 1/(2k+1), and the tip traces a square wave. Four arms is where the shape
-# becomes unmistakable while each circle is still individually readable.
-HARMONICS = 4
-WHEEL_X, WHEEL_Y = 450, 690      # centre of the wheel, on the trace's axis
-WHEEL_R = 175
-TURNS = 2
+# 1/(2k+1), and the tip traces a square wave. Five rounds, one new harmonic
+# each time, so the curve visibly gains detail instead of arriving finished.
+HARMONICS = 5
+WHEEL_X, WHEEL_Y = 450, 700      # centre of the wheel, on the trace's axis
+WHEEL_R = 165
+SPIN = 2.3                       # seconds per full turn of the base arm
+
+TERMS = [
+    r"\sin x",
+    r"+\tfrac{\sin 3x}{3}",
+    r"+\tfrac{\sin 5x}{5}",
+    r"+\tfrac{\sin 7x}{7}",
+    r"+\tfrac{\sin 9x}{9}",
+]
 
 
 def arm(radius: float, series: int, parent_radius: float, root: bool = False) -> str:
-    """One epicycle arm: a spoke, its circle, and a hub at the far end.
+    """One epicycle arm: its circle, a spoke, and a hub at the far end.
 
-    Positioned at its parent's tip and rotating about its own origin, so
-    nesting arm k+1 inside arm k composes the rotations -- which is the
-    entire mechanism. transform-origin is 0 0 rather than the default centre,
-    because an arm pivots at its root, not at its middle.
+    The root arm is fixed to the stage so its centre is a known point in the
+    same pixel space as the SVG trace; every arm after it is absolute inside
+    its parent, which is what makes the rotations compose. transform-origin is
+    0 0 rather than the default centre, because an arm pivots at its root.
     """
-    # The root arm is fixed to the stage so its centre is a known point in the
-    # same pixel space as the SVG trace; every arm after it is absolute inside
-    # its parent, which is what makes the rotations compose.
     place = (
         f"position:fixed;left:{WHEEL_X}px;top:{WHEEL_Y}px" if root
         else f"position:absolute;left:{parent_radius:.1f}px;top:0"
     )
     return (
-        f"<div style='{place};"
-        "width:0;height:0;transform-origin:0 0'>"
+        f"<div style='{place};width:0;height:0;transform-origin:0 0'>"
         f"<div style='position:absolute;left:{-radius:.1f}px;top:{-radius:.1f}px;"
         f"width:{2 * radius:.1f}px;height:{2 * radius:.1f}px;border-radius:50%;"
         "border:1px solid var(--aud-geom-muted);opacity:.75'></div>"
@@ -174,67 +178,80 @@ def arm(radius: float, series: int, parent_radius: float, root: bool = False) ->
 async def fourier(s):
     """The centrepiece: the machine that makes the wave, not the wave.
 
-    Four nested arms turn at 1, 3, 5 and 7 times the base frequency with
-    radii 1, 1/3, 1/5, 1/7 -- the Fourier coefficients of a square wave, as
-    rotation. Their tip traces the curve drawn alongside, and the Gibbs
-    overshoot appears at the corners because the mathematics puts it there.
+    One harmonic is added per round -- a new arm on the wheel, a new term in
+    the formula, and a new trace with one more wiggle in it -- so the audience
+    watches complexity accumulate rather than arrive. The Gibbs overshoot
+    grows at the corners because the mathematics puts it there.
 
-    Nothing here is keyframed. Python computes the trace, and the arms are
-    four `rotate_by` calls in one `play()`.
+    Nothing is keyframed. Python computes each partial sum, and a round is
+    one `play()` in which every arm turns at its own frequency.
     """
     header, body = await s.rows(["auto", 1])
     async with header:
         await s.title("A square wave, drawn by rotation")
-        await s.subtitle("Four arms turning at 1, 3, 5 and 7 times the base frequency.")
+        await s.subtitle("One harmonic at a time. Each arm turns at an odd multiple of the base.")
 
-    x0, x1 = 0.0, TURNS * 2 * math.pi
+    x0, x1 = 0.0, 2 * math.pi
 
-    def partial(x):
-        return 4 / math.pi * sum(
-            math.sin((2 * k + 1) * x) / (2 * k + 1) for k in range(HARMONICS)
+    def partial(n):
+        return lambda x: 4 / math.pi * sum(
+            math.sin((2 * k + 1) * x) / (2 * k + 1) for k in range(n)
         )
 
-    async with body:
-        stage = await s.show(
-            "<div style='position:relative;width:100%;height:620px'></div>"
-        )
+    trace_l = WHEEL_X + WHEEL_R + 150
 
-    # The wheel, nested arm inside arm: each one's rotation composes onto its
-    # parent's, which is the entire mechanism.
-    radii = [WHEEL_R / (2 * k + 1) for k in range(HARMONICS)]
-    arms, parent = [], stage
-    for k, radius in enumerate(radii):
-        parent_radius = radii[k - 1] if k else 0.0
-        parent = await s.show(
-            arm(radius, 1 + (k % 2), parent_radius, root=(k == 0)), into=parent
-        )
-        arms.append(parent)
-
-    # The trace, to the right of the wheel and on the same vertical scale.
-    trace_l = WHEEL_X + WHEEL_R + 140
-    curve = await s.draw(Path(
-        "M" + " L".join(
+    def trace_path(n):
+        return "M" + " L".join(
             f"{trace_l + (x - x0) / (x1 - x0) * (PLOT_R - trace_l):.1f},"
-            f"{PLOT_MID - partial(x) * WHEEL_R * 0.72:.1f}"
-            for x in (x0 + (x1 - x0) * i / 600 for i in range(601))
-        ),
-        series=1, width=4,
-    ))
+            f"{PLOT_MID - partial(n)(x) * WHEEL_R * 0.7:.1f}"
+            for x in (x0 + (x1 - x0) * i / 700 for i in range(701))
+        )
+
+    # The formula, built term by term. `into=` gives each term its own node so
+    # it can fade in on its own; a single KaTeX block could only be replaced
+    # wholesale, and `replace` does not re-run the maths renderer.
+    async with body:
+        holder = await s.show("<div style='padding-top:0.5rem'></div>")
+    row = await s.show(
+        "<div style='display:flex;align-items:center;justify-content:center;"
+        "gap:0.15rem;font-size:1.05em'></div>",
+        into=holder,
+    )
+    lead = await s.show(r"<span>$f(x)=\tfrac{4}{\pi}\Big[$</span>", into=row)
+
     axis = await s.draw(Line(from_=(trace_l, PLOT_MID), to=(PLOT_R, PLOT_MID),
                              muted=True, width=2))
+    await s.play(lead.animate.fade_in(), axis.animate.draw_on(), run_time=0.5)
 
-    await s.play(*[a.animate.fade_in() for a in arms], run_time=0.6, lag=0.12)
-    await s.play(axis.animate.draw_on(), run_time=0.4)
-    await s.wait(0.4)
+    radii = [WHEEL_R / (2 * k + 1) for k in range(HARMONICS)]
+    arms, parent, previous = [], None, None
 
-    # One play(): every arm turns, and the trace draws, over the same span.
-    spin = 4.6
-    await s.play(
-        *[a.animate.rotate_by(360 * TURNS * (2 * k + 1)) for k, a in enumerate(arms)],
-        curve.animate.draw_on(),
-        run_time=spin,
-    )
+    for k in range(HARMONICS):
+        # A new arm on the wheel and a new term in the formula, together.
+        parent_radius = radii[k - 1] if k else 0.0
+        node = await s.show(
+            arm(radii[k], 1 + (k % 2), parent_radius, root=(k == 0)),
+            into=parent if parent is not None else holder,
+        )
+        arms.append(node)
+        parent = node
 
+        term = await s.show(f"<span>${TERMS[k]}$</span>", into=row)
+        await s.play(node.animate.fade_in(), term.animate.fade_in(), run_time=0.45)
+
+        # One round: every arm turns once at its own frequency while the new
+        # partial sum draws. rotate_by accumulates, so each round carries on
+        # from where the last one stopped.
+        curve = await s.draw(Path(trace_path(k + 1), series=1, width=4))
+        turning = [a.animate.rotate_by(360 * (2 * i + 1)) for i, a in enumerate(arms)]
+        if previous is not None:
+            turning.append(previous.animate.fade_out())
+        await s.play(*turning, curve.animate.draw_on(), run_time=SPIN)
+        previous = curve
+        await s.wait(0.45)
+
+    tail = await s.show(r"<span>$\cdots\Big]$</span>", into=row)
+    await s.play(tail.animate.fade_in(), run_time=0.4)
     await s.wait(READ)
     await s.beat()
 
