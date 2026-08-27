@@ -52,6 +52,13 @@ def _endpoint(value) -> dict:
 class _Stroked:
     """Shared stroke styling.
 
+    ``dash`` is expressed in NORMALIZED units -- fractions of the shape's own
+    length -- because every stroked node is created with ``pathLength="1"`` so
+    that draw-on works without measuring geometry anchors may be about to
+    change. ``dash="0.05 0.02"`` is a 5% dash with a 2% gap, and is
+    resolution-independent as a result. A pattern in pixels would silently
+    render as a solid line.
+
     A plain mixin rather than a base dataclass on purpose: dataclass
     inheritance puts the *base's* fields first, so ``Path("M0,0 L10,10")``
     would bind its command string to ``stroke``. Each node therefore declares

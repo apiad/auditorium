@@ -12,6 +12,7 @@
     <script src="/static/vendor/katex/katex.min.js"></script>
     <script src="/static/vendor/katex/contrib/auto-render.min.js"></script>
     <script src="/static/vendor/hljs/highlight.min.js"></script>
+    <link rel="stylesheet" href="/static/svg-layer.css">
     <!--AUDITORIUM_THEME_OVERRIDES-->
     <link rel="stylesheet" href="/static/presenter.css">
 </head>
@@ -28,6 +29,14 @@
                 <div class="aud-chrome aud-chrome-footer"></div>
                 <div class="aud-chrome aud-chrome-left"></div>
                 <div class="aud-chrome aud-chrome-right"></div>
+            <svg id="svg-layer" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="aud-arrowhead" viewBox="0 0 10 10" refX="9" refY="5"
+                        markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>
+                </marker>
+              </defs>
+            </svg>
             </div>
         </div>
 
