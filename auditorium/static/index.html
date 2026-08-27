@@ -26,269 +26,143 @@
     <div id="slide-indicator"></div>
     <div id="connection-status"></div>
 
-    <script>
-    (function() {
-        const root = document.getElementById('slide-root');
-        const indicator = document.getElementById('slide-indicator');
-        const statusEl = document.getElementById('connection-status');
-        let ws = null;
-        let targetStack = [root];
+    <script type="module">
+    import { AuditoriumEngine } from "/static/engine.js";
+    window.AuditoriumEngine = AuditoriumEngine;
 
-        function currentTarget() {
-            return targetStack[targetStack.length - 1];
+    const root = document.getElementById('slide-root');
+    const indicator = document.getElementById('slide-indicator');
+    const statusEl = document.getElementById('connection-status');
+
+    let beats = [];
+    let duration = 0;
+    let playing = false;
+    let clockBase = 0;
+    let clockStart = 0;
+
+    function setStatus(state) {
+        statusEl.innerHTML = '<span class="aud-dot aud-dot-' + state + '"></span>';
+    }
+
+    // KaTeX and highlight.js. Registered as an append hook rather than run per
+    // frame: both mutate innerHTML, so re-running them on every seek would
+    // re-highlight already-marked code and cost time in the render loop.
+    AuditoriumEngine.onAppend = function (el) {
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(el, {
+                delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '$', right: '$', display: false },
+                ],
+                throwOnError: false,
+            });
         }
-
-        function getSlideFromHash() {
-            const match = location.hash.match(/#slide-(\d+)/);
-            return match ? parseInt(match[1], 10) : 0;
+        if (typeof hljs !== 'undefined') {
+            el.querySelectorAll('pre code').forEach(function (block) {
+                hljs.highlightElement(block);
+            });
         }
+    };
 
-        function setStatus(state) {
-            const dot = '<span class="aud-dot aud-dot-' + state + '"></span>';
-            statusEl.innerHTML = dot;
+    function beatIndex(t) {
+        let i = 0;
+        for (const b of beats) if (b < t) i += 1;
+        return i;
+    }
+
+    function updateChrome() {
+        const t = AuditoriumEngine.currentTime;
+        const n = beatIndex(t) + 1;
+        const total = beats.length + 1;
+        if (indicator) indicator.textContent = n + ' / ' + total;
+        const style = document.documentElement.style;
+        style.setProperty('--aud-slide-number', n);
+        style.setProperty('--aud-slide-total', total);
+    }
+
+    function nextBeat(from) {
+        for (const b of beats) if (b > from) return b;
+        return duration;
+    }
+
+    function prevBeat(from) {
+        let target = 0;
+        for (const b of beats) if (b < from - 1) target = b;
+        return target;
+    }
+
+    function seekTo(t) {
+        playing = false;
+        AuditoriumEngine.seek(t);
+        updateChrome();
+    }
+
+    function playTo(target) {
+        playing = true;
+        clockBase = AuditoriumEngine.currentTime;
+        clockStart = performance.now();
+        function frame(now) {
+            if (!playing) return;
+            const t = Math.min(clockBase + (now - clockStart), target);
+            AuditoriumEngine.seek(t);
+            updateChrome();
+            if (t < target) requestAnimationFrame(frame);
+            else playing = false;
         }
+        requestAnimationFrame(frame);
+    }
 
-        const SLIDE_ROOT_RESET = 'aud-slide-root';
+    async function loadTimeline() {
+        const tl = await (await fetch('/timeline.json')).json();
+        beats = (tl.beats || []).map(function (b) { return b.t; });
+        duration = (tl.meta && tl.meta.duration_ms) || 0;
+        AuditoriumEngine.load(tl);
+        AuditoriumEngine.seek(0);
+        updateChrome();
+        window.__auditorium_ready = true;
+        playTo(nextBeat(0));
+    }
 
-        function triggerTransition() {
-            // Force animation re-fire: drop the class, flush layout, re-add.
-            root.classList.remove('aud-slide-enter');
-            void root.offsetWidth;
-            root.classList.add('aud-slide-enter');
+    document.addEventListener('keydown', function (e) {
+        const t = AuditoriumEngine.currentTime;
+        if (e.key === ' ' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (playing) seekTo(nextBeat(t));
+            else playTo(nextBeat(t));
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            seekTo(prevBeat(t));
+        } else if (e.key === 'r') {
+            e.preventDefault();
+            seekTo(0);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            seekTo(duration);
         }
+    });
 
-        function resetRoot() {
-            root.innerHTML = '';
-            root.className = SLIDE_ROOT_RESET;
-            triggerTransition();
-            targetStack = [root];
-            window.__auditorium_slide_complete = false;
-            window.__auditorium_step_count = 0;
-            window.__auditorium_finished = false;
-            window.__auditorium_last_boundary = null;
-        }
+    function connect() {
+        setStatus('connecting');
+        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsMeta = document.querySelector('meta[name="auditorium-ws-path"]');
+        const wsPath = wsMeta ? wsMeta.content : '/ws';
+        const ws = new WebSocket(protocol + '//' + location.host + wsPath);
+        ws.onopen = function () {
+            setStatus('connected');
+            ws.send(JSON.stringify({ type: 'hello', role: 'audience' }));
+        };
+        ws.onmessage = function (event) {
+            if (JSON.parse(event.data).type === 'reload') loadTimeline();
+        };
+        ws.onclose = function () {
+            setStatus('disconnected');
+            setTimeout(connect, 1000);
+        };
+        ws.onerror = function () { ws.close(); };
+    }
 
-        function connect() {
-            setStatus('connecting');
-            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            // Check for relay ws path (injected by relay server via meta tag)
-            const wsMeta = document.querySelector('meta[name="auditorium-ws-path"]');
-            const wsPath = wsMeta ? wsMeta.content : '/ws';
-            ws = new WebSocket(`${protocol}//${location.host}${wsPath}`);
-
-            ws.onopen = function() {
-                setStatus('connected');
-                const params = new URLSearchParams(location.search);
-                const hello = { type: 'hello', slide: getSlideFromHash() };
-                const autoStep = params.get('auto_step');
-                if (autoStep) hello.auto_step = parseFloat(autoStep);
-                const slideDelay = params.get('slide_delay');
-                if (slideDelay) hello.slide_delay = parseFloat(slideDelay);
-                if (params.get('instant_sleep')) hello.instant_sleep = true;
-                ws.send(JSON.stringify(hello));
-            };
-
-            ws.onmessage = function(event) {
-                const msg = JSON.parse(event.data);
-                handleMessage(msg);
-            };
-
-            ws.onclose = function() {
-                setStatus('disconnected');
-                setTimeout(connect, 1000);
-            };
-
-            ws.onerror = function(err) {
-                console.error('[auditorium] websocket error', err);
-                ws.close();
-            };
-        }
-
-        function handleMessage(msg) {
-            switch (msg.type) {
-                case 'mutation':
-                    applyMutation(msg);
-                    break;
-                case 'clear':
-                    resetRoot();
-                    break;
-                case 'slide':
-                    location.hash = `#slide-${msg.index}`;
-                    indicator.textContent = msg.total ? `${msg.index + 1} / ${msg.total}` : `${msg.index + 1}`;
-                    document.documentElement.style.setProperty('--aud-slide-number', JSON.stringify(String(msg.index + 1)));
-                    document.documentElement.style.setProperty('--aud-slide-total', JSON.stringify(String(msg.total || '')));
-                    document.documentElement.style.setProperty('--aud-slide-name', JSON.stringify(msg.name || ''));
-                    document.body.dataset.slide = String(msg.index + 1);
-                    document.body.dataset.total = String(msg.total || '');
-                    document.body.dataset.slideName = msg.name || '';
-                    break;
-                case 'reload':
-                    location.hash = `#slide-${msg.slide}`;
-                    resetRoot();
-                    break;
-                case 'finished':
-                    window.__auditorium_finished = true;
-                    break;
-                case 'slide_complete':
-                    window.__auditorium_slide_complete = true;
-                    break;
-                case 'step_complete':
-                    window.__auditorium_step_count = (window.__auditorium_step_count || 0) + 1;
-                    window.__auditorium_last_boundary = {type: 'step'};
-                    break;
-                case 'sleep_complete':
-                    window.__auditorium_step_count = (window.__auditorium_step_count || 0) + 1;
-                    window.__auditorium_last_boundary = {type: 'sleep', duration: msg.duration};
-                    break;
-            }
-        }
-
-        function applyMutation(msg) {
-            const target = msg.target ? document.querySelector(msg.target) : currentTarget();
-            switch (msg.action) {
-                case 'append': {
-                    const wrapper = document.createElement('div');
-                    wrapper.innerHTML = msg.html;
-                    const el = wrapper.firstElementChild || wrapper;
-                    if (msg.element_id) {
-                        el.id = msg.element_id;
-                    }
-                    if (target) {
-                        // Coalesce consecutive list wrappers: when the new wrapper
-                        // contains a single <ol>/<ul> and the previous sibling
-                        // wrapper contains the same kind of list, move the new
-                        // <li>s into the existing list so numbering and visual
-                        // grouping stay continuous across separate .md() calls.
-                        const newList = (el.children.length === 1 &&
-                                         (el.children[0].tagName === 'OL' || el.children[0].tagName === 'UL'))
-                                        ? el.children[0] : null;
-                        const prevWrap = target.lastElementChild;
-                        const prevList = (newList && prevWrap && !msg.element_id &&
-                                          prevWrap.children.length === 1 &&
-                                          prevWrap.children[0].tagName === newList.tagName)
-                                         ? prevWrap.children[0] : null;
-                        if (prevList) {
-                            const newItems = Array.from(newList.children);
-                            for (const li of newItems) {
-                                prevList.appendChild(li);
-                                li.classList.add('aud-enter');
-                                li.addEventListener('animationend', () => li.classList.remove('aud-enter'), { once: true });
-                            }
-                            renderMath(prevList);
-                            renderCode(prevList);
-                        } else {
-                            // FLIP: snapshot positions of existing siblings before DOM change
-                            const siblings = Array.from(target.children);
-                            const beforeRects = new Map();
-                            siblings.forEach(s => beforeRects.set(s, s.getBoundingClientRect()));
-
-                            target.appendChild(el);
-
-                            // Animate the new element in
-                            el.classList.add('aud-enter');
-                            el.addEventListener('animationend', () => el.classList.remove('aud-enter'), { once: true });
-
-                            // FLIP: animate existing siblings from old position to new
-                            siblings.forEach(s => {
-                                const before = beforeRects.get(s);
-                                const after = s.getBoundingClientRect();
-                                const dx = before.left - after.left;
-                                const dy = before.top - after.top;
-                                if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
-                                    s.style.transition = 'none';
-                                    s.style.transform = `translate(${dx}px, ${dy}px)`;
-                                    requestAnimationFrame(() => {
-                                        requestAnimationFrame(() => {
-                                            s.style.transition = 'transform 0.3s ease';
-                                            s.style.transform = '';
-                                            s.addEventListener('transitionend', () => {
-                                                s.style.transition = '';
-                                            }, { once: true });
-                                        });
-                                    });
-                                }
-                            });
-                            renderMath(el);
-                            renderCode(el);
-                        }
-                    } else {
-                        renderMath(el);
-                        renderCode(el);
-                    }
-                    break;
-                }
-                case 'remove': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) el.remove();
-                    break;
-                }
-                case 'replace': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) {
-                        el.innerHTML = msg.html;
-                        renderMath(el);
-                        renderCode(el);
-                    }
-                    break;
-                }
-                case 'set_class': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) el.classList.add(...msg.cls.split(' '));
-                    break;
-                }
-                case 'remove_class': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) el.classList.remove(...msg.cls.split(' '));
-                    break;
-                }
-                case 'push_target': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) targetStack.push(el);
-                    break;
-                }
-                case 'pop_target': {
-                    if (targetStack.length > 1) targetStack.pop();
-                    break;
-                }
-            }
-            if (msg.id && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'ack', id: msg.id }));
-            }
-        }
-
-        function renderMath(el) {
-            if (typeof renderMathInElement === 'function') {
-                renderMathInElement(el, {
-                    delimiters: [
-                        { left: '$$', right: '$$', display: true },
-                        { left: '$', right: '$', display: false },
-                    ],
-                    throwOnError: false,
-                });
-            }
-        }
-
-        function renderCode(el) {
-            if (typeof hljs !== 'undefined') {
-                el.querySelectorAll('pre code').forEach(block => {
-                    hljs.highlightElement(block);
-                });
-            }
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                const key = e.key;
-                if (['ArrowRight', 'ArrowLeft', 'PageDown', ' ', 'r'].includes(key) ||
-                    (key >= '0' && key <= '9') || key === 'Enter') {
-                    e.preventDefault();
-                    ws.send(JSON.stringify({ type: 'keypress', key: key }));
-                }
-            }
-        });
-
-        connect();
-    })();
+    connect();
+    loadTimeline();
     </script>
 </body>
 </html>

@@ -97,6 +97,10 @@ export const AuditoriumEngine = {
           ? document.getElementById(node.parent) || root
           : root;
       parent.appendChild(el);
+      // Client-supplied decoration (KaTeX, syntax highlighting). Runs once per
+      // append rather than per seek: it mutates innerHTML, and re-running it on
+      // every frame would both cost time and re-highlight already-marked code.
+      if (typeof this.onAppend === "function") this.onAppend(el);
       this._attachTracks(node.id, el);
     } else if (op.action === "remove") {
       document.querySelectorAll(op.selector).forEach((el) => el.remove());
