@@ -34,4 +34,5 @@ async def compile_deck(deck: Deck) -> Timeline:
             from auditorium.slide import SlideContext
             await info.func(SlideContext(ctx))
 
+    tl.audio = list(getattr(deck, "_audio", []))
     return tl

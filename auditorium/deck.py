@@ -118,6 +118,15 @@ class Deck:
         self.themes: list[str] = list(theme) if theme else []
         self.theme_css: str = resolve_themes(self.themes) if self.themes else ""
         self._slides: list[SlideInfo] = []
+        self._audio: list[dict] = []
+
+    def audio(self, path: str | Path, *, at: float = 0.0) -> None:
+        """Declare an audio bed mixed in at render time.
+
+        Not part of the timeline's visual state: seek() ignores it entirely,
+        and interactive playback is silent. Only rendering consumes it.
+        """
+        self._audio.append({"src": str(path), "at": at})
 
     def theme_style_block(self) -> str:
         """Render the full theme override as an HTML <style> block.

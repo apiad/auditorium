@@ -210,6 +210,17 @@ async def render_video(
     if shutil.which("ffmpeg") is None:
         raise RuntimeError("ffmpeg is required to encode video; install it or use --format png-sequence")
 
+    # An explicit audio= wins; otherwise a deck-declared bed is picked up from
+    # the compiled timeline. Audio is not part of the visual state -- seek()
+    # never sees it -- so this is the only place it is read.
+    audio_at = 0.0
+    if audio is None:
+        from auditorium.compile import compile_deck
+        bed = (await compile_deck(deck)).audio
+        if bed:
+            audio = Path(bed[0]["src"])
+            audio_at = float(bed[0].get("at", 0.0))
+
     with tempfile.TemporaryDirectory(prefix="auditorium-render-") as tmp:
         frames = Path(tmp)
         await render_frames(deck, frames, fps=fps, size=size, **frame_range)
@@ -225,6 +236,8 @@ async def render_video(
             "-i", str(frames / "frame-%06d.png"),
         ]
         if audio is not None:
+            if audio_at:
+                cmd += ["-itsoffset", str(audio_at)]
             cmd += ["-i", str(audio), "-c:a", "aac", "-shortest"]
         cmd += codec
         # Strip metadata so two renders of the same timeline are byte-identical;
