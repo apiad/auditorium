@@ -107,6 +107,7 @@ auditorium run talk.py
 | 🎬 | **Deterministic video** | `auditorium render` steps frames against a paused timeline — two renders are byte-identical |
 | 🔀 | **Frame ranges** | `--from`/`--to` make parallel rendering a shell-level fan-out |
 | 🎛️ | **Preview client** | `auditorium preview` — scrubber, frame stepping, loop-a-range |
+| 📐 | **Geometry layer** | `Line`, `Arrow`, `Path`, `Circle` with anchors that track their boxes |
 | ♻️ | **Hot reload** | Edit your `.py` and the browser updates instantly, holding your position |
 | 📡 | **Offline** | All assets bundled — zero CDN, zero internet required |
 | 🔌 | **Auto-reconnect** | Survives server restarts without losing your place |
@@ -216,6 +217,46 @@ Use `"auto"` for natural-size regions:
 ```python
 header, body, footer = await ctx.rows(["auto", 1, "auto"])
 ```
+
+---
+
+## 📐 Geometry
+
+Lines, arrows, paths and circles live in an SVG overlay sharing the stage's
+coordinate space — what CSS cannot express: stroke draw-on, geometric motion,
+and edges that connect boxes.
+
+```python
+from auditorium.nodes import Arrow, Circle, Line, Path
+
+@deck.scene
+async def wiring(s):
+    a = await s.show("<div class='aud-block aud-block-info'>compile</div>")
+    b = await s.show("<div class='aud-block aud-block-success'>seek(t)</div>")
+
+    wire = await s.draw(Arrow(from_=a.bottom, to=b.top, stroke="#2563eb", width=3))
+    await s.play(wire.animate.draw_on(), run_time=0.6, ease="out-cubic")
+
+    await s.play(a.animate.move_to(160, 0), run_time=0.8)   # the arrow follows
+```
+
+**Anchors are symbolic.** `a.bottom` is not a coordinate — it is a promise the
+browser keeps on every frame. Python never computes layout, so an arrow tracks
+its box through motion *and* through flex reflow. Every handle exposes `left`,
+`right`, `top`, `bottom` and `center`.
+
+**`draw_on()`** strokes a shape into existence along its own length. Every
+geometric node is created with `pathLength="1"`, so the animation runs in
+normalized units and needs no measurement of a geometry the anchors may be
+about to change. The same normalization applies to `dash`: write
+`dash="0.05 0.02"` for a 5% dash and a 2% gap, **not** a pattern in pixels —
+which would render as a solid line.
+
+**What this layer does not do.** Path *morphing* between two `d` strings is not
+in v1. Interpolating paths with differing command counts needs normalisation
+that has not been built, and a cross-fade was not worth shipping as a
+substitute. `Path` is static geometry you can draw on and move; it does not
+tween into another path.
 
 ---
 

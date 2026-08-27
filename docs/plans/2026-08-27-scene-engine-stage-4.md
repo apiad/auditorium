@@ -10,6 +10,12 @@
 
 **Spec:** `docs/design/2026-08-26-scene-engine.md` (see "The scene graph", D6, and the "SVG path morphing" open question)
 
+> **Status: complete, 2026-08-27.** Landed in `1!4.0.0`.
+> Two things the plan did not anticipate: screen rects need converting into the
+> overlay's user units via `getScreenCTM` (the preview and presenter both scale
+> their stage), and the `clear` op has to empty the overlay as well as the slide
+> root. Path morphing is deferred rather than degraded to a cross-fade.
+
 **Predecessors:** Stages 1, 2 and 3 complete. `engine.js` already carries an empty `_anchored` list and a `_resolveAnchors()` that reads-then-writes — this stage fills them.
 
 ## Global Constraints
@@ -43,7 +49,7 @@ The timeline is the contract, so the geometry vocabulary lands there first — p
   - Each exposes `to_svg_dict() -> dict` with a `"kind"` key (`"line" | "arrow" | "circle" | "path"`) plus its own fields. Endpoints serialize as either `{"anchor": {...}}` or `{"point": [x, y]}`.
 - Modifies `timeline.Node`: new field `svg: dict | None = None`, serialized under `"svg"`. `layer` is already there and becomes meaningful (`"dom"` vs `"svg"`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `tests/test_nodes.py`:
 
@@ -77,9 +83,9 @@ def test_svg_nodes_round_trip_through_json():
 
 Rejecting a bad side at construction is worth a test: the alternative is an arrow that silently does not render, three layers away from the typo.
 
-- [ ] **Step 2: Run and watch fail.** `uv run pytest tests/test_nodes.py -q` → `ModuleNotFoundError`.
+- [x] **Step 2: Run and watch fail.** `uv run pytest tests/test_nodes.py -q` → `ModuleNotFoundError`.
 
-- [ ] **Step 3: Implement `nodes.py` and the `Node.svg` field.**
+- [x] **Step 3: Implement `nodes.py` and the `Node.svg` field.**
 
 Endpoint normalization is one shared helper:
 
@@ -96,9 +102,9 @@ def _endpoint(value) -> dict:
     return {"point": [x, y]}
 ```
 
-- [ ] **Step 4: Run and watch pass.** `uv run pytest tests/test_nodes.py tests/test_timeline.py -q`
+- [x] **Step 4: Run and watch pass.** `uv run pytest tests/test_nodes.py tests/test_timeline.py -q`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add auditorium/nodes.py auditorium/timeline.py tests/test_nodes.py tests/test_timeline.py
@@ -120,7 +126,7 @@ git commit -m "feat(nodes): geometric scene nodes with symbolic anchors" -- audi
   - `NodeHandle.left/right/top/bottom/center -> Anchor`
   - `AnimateProxy.draw_on() -> list[AnimSpec]` emitting prop `"stroke.dashoffset"` from `1.0` to `0.0`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_scene.py`:
+- [x] **Step 1: Write the failing tests** in `tests/test_scene.py`:
 
 ```python
 async def test_draw_appends_an_svg_node_at_the_current_clock():
@@ -149,11 +155,11 @@ async def test_draw_on_animates_dashoffset_to_zero():
     assert (track.start, track.end) == (0, 500)
 ```
 
-- [ ] **Step 2: Run and watch fail.**
+- [x] **Step 2: Run and watch fail.**
 
-- [ ] **Step 3: Implement.** `draw()` mirrors `show()`'s bookkeeping but sets `layer="svg"` and `svg=shape.to_svg_dict()`, and always parents to the overlay rather than the current region — an SVG node has viewport coordinates, so region scoping would be a lie.
+- [x] **Step 3: Implement.** `draw()` mirrors `show()`'s bookkeeping but sets `layer="svg"` and `svg=shape.to_svg_dict()`, and always parents to the overlay rather than the current region — an SVG node has viewport coordinates, so region scoping would be a lie.
 
-- [ ] **Step 4: Run and watch pass. Step 5: Commit**
+- [x] **Step 4: Run and watch pass. Step 5: Commit**
 
 ```bash
 git add auditorium/scene.py tests/test_scene.py
@@ -177,7 +183,7 @@ The stage where the interesting failures live.
 - Consumes: `Node.layer === "svg"` and `Node.svg` (Task 1).
 - Produces: `AuditoriumEngine` handles svg-layer appends, populates `_anchored`, and resolves geometry inside `seek`. `PROP_SETTERS` gains `"stroke.dashoffset"`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_engine_svg.py`:
+- [x] **Step 1: Write the failing tests** in `tests/test_engine_svg.py`:
 
 ```python
 async def test_an_svg_node_appears_in_the_overlay_not_the_slide_root()
@@ -194,9 +200,9 @@ async def test_anchor_resolution_reads_every_rect_before_writing_any()
 
 `test_anchor_resolution_reads_every_rect_before_writing_any` is the D6 guard, and it needs a structural test rather than a timing one — timing tests on a loaded machine are noise. Instrument by patching `Element.prototype.getBoundingClientRect` and the SVG attribute setter to push labels onto a global array, seek once with three anchored lines, then assert the array is all reads followed by all writes with no interleaving. A benchmark would prove today's machine was fast; this proves the property.
 
-- [ ] **Step 2: Run and watch fail.**
+- [x] **Step 2: Run and watch fail.**
 
-- [ ] **Step 3: Add the overlay to the three client shells and the harness**
+- [x] **Step 3: Add the overlay to the three client shells and the harness**
 
 ```html
 <svg id="svg-layer" xmlns="http://www.w3.org/2000/svg">
@@ -213,7 +219,7 @@ CSS: `#svg-layer { position: fixed; inset: 0; width: 100vw; height: 100vh; point
 
 `fill="context-stroke"` makes the head inherit the line's stroke; check it renders under Chromium 1234 and fall back to setting the marker's fill per-arrow if it does not.
 
-- [ ] **Step 4: Teach `_applyOp` about the svg layer**
+- [x] **Step 4: Teach `_applyOp` about the svg layer**
 
 Branch on `node.layer === "svg"` before the DOM path. Build with `createElementNS("http://www.w3.org/2000/svg", tag)` — `innerHTML` on an HTML parent produces HTML elements with SVG names, which look right in the inspector and never render. Map `kind` → tag (`line`, `path`, `circle`; `arrow` → `line` plus `marker-end="url(#aud-arrowhead)"`).
 
@@ -227,7 +233,7 @@ Register anchored endpoints:
       }
 ```
 
-- [ ] **Step 5: Implement `_resolveAnchors` for real**
+- [x] **Step 5: Implement `_resolveAnchors` for real**
 
 Keep the existing two-phase shape and extend it: phase one collects, for every registered spec, the rects of whichever endpoints are symbolic (a literal point needs no read); phase two writes. The side→point reduction is pure arithmetic on an already-read rect and belongs in phase two:
 
@@ -243,7 +249,7 @@ Keep the existing two-phase shape and extend it: phase one collects, for every r
   },
 ```
 
-- [ ] **Step 6: Add `"stroke.dashoffset"` to `PROP_SETTERS`**
+- [x] **Step 6: Add `"stroke.dashoffset"` to `PROP_SETTERS`**
 
 ```javascript
   "stroke.dashoffset": (from_, to) => [
@@ -254,15 +260,15 @@ Keep the existing two-phase shape and extend it: phase one collects, for every r
 
 `composite` stays `"replace"` — the additive path in `_attachTracks` is scoped to transforms on purpose, and an additive dashoffset would sum against the base and clamp.
 
-- [ ] **Step 7: Extend `reset()`** to empty the overlay of everything except `<defs>`, and to clear `_anchored`. Forgetting `<defs>` deletes the arrowhead on the first rewind and every arrow after that renders headless.
+- [x] **Step 7: Extend `reset()`** to empty the overlay of everything except `<defs>`, and to clear `_anchored`. Forgetting `<defs>` deletes the arrowhead on the first rewind and every arrow after that renders headless.
 
-- [ ] **Step 8: Run and watch pass.** `uv run pytest tests/test_engine_svg.py -q`
+- [x] **Step 8: Run and watch pass.** `uv run pytest tests/test_engine_svg.py -q`
 
-- [ ] **Step 9: Mutation-test the two structural claims**
+- [x] **Step 9: Mutation-test the two structural claims**
 
 Change `_resolveAnchors` to interleave reads and writes; confirm the D6 test fails. Change `_applyOp` to resolve anchors once at append instead of registering them; confirm the follow-the-node test fails. Restore both. A structural test that cannot fail is worth less than none.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add auditorium/static/engine.js auditorium/static/index.html auditorium/static/preview.html auditorium/static/presenter.html auditorium/static/theme.css tests/fixtures/engine_harness.html tests/test_engine_svg.py
@@ -279,15 +285,15 @@ An SVG layer that only works interactively is half a feature: the point of 4.0 i
 - Create: `tests/fixtures/svg_scene.py` (a scene deck: two boxes, an anchored arrow, a `move_to`, a `draw_on`)
 - Test: `tests/test_render_svg.py`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 Render the fixture at a small size to a png-sequence, then assert on the *frames*: the frame at the start of the draw-on differs from the frame at its end, and the frame after the `move_to` differs from the frame before. Compare file bytes — a PNG that is byte-identical across an animation is the failure this catches, and it is the failure an "it rendered without erroring" check misses entirely.
 
-- [ ] **Step 2: Run, fix whatever the browser actually does, run again.**
+- [x] **Step 2: Run, fix whatever the browser actually does, run again.**
 
 Two failures are likely enough to plan for. Playwright's screenshot may not composite a `position: fixed` overlay the way the live page does — if so, the overlay becomes `position: absolute` on a positioned root. And `context-stroke` may be unsupported, in which case the arrowhead gets an explicit fill.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/fixtures/svg_scene.py tests/test_render_svg.py
@@ -306,15 +312,15 @@ git commit -m "test(render): the svg layer renders and animates in video" -- tes
 - Modify: `CLAUDE.md` (`nodes.py` under "Key modules")
 - Modify: `docs/design/2026-08-26-scene-engine.md` (status; resolve or restate the path-morphing open question with what was actually tried)
 
-- [ ] **Step 1: Add the scene**, run `uv run auditorium run examples/demo_deck.py`, walk to it, and look at it. Screenshot it.
-- [ ] **Step 2: Document it.** State plainly in the Readme what the layer does *not* do — path morphing between differing command counts is not in v1 — rather than leaving a reader to discover it.
-- [ ] **Step 3: Commit.**
+- [x] **Step 1: Add the scene**, run `uv run auditorium run examples/demo_deck.py`, walk to it, and look at it. Screenshot it.
+- [x] **Step 2: Document it.** State plainly in the Readme what the layer does *not* do — path morphing between differing command counts is not in v1 — rather than leaving a reader to discover it.
+- [x] **Step 3: Commit.**
 
 ---
 
 ### Task 6: Release gate
 
-- [ ] **Step 1: Full suite, unpiped, its own tool call.** `uv run pytest -q`
-- [ ] **Step 2: Render the demo deck end to end** and probe the artifact for the expected packet count.
-- [ ] **Step 3: Version to `1!4.0.0`** in `pyproject.toml` and `cli.py` — both, they are separate strings and one has been missed before.
-- [ ] **Step 4: CHANGELOG, spec status `implemented`, journal, release the lock.**
+- [x] **Step 1: Full suite, unpiped, its own tool call.** `uv run pytest -q`
+- [x] **Step 2: Render the demo deck end to end** and probe the artifact for the expected packet count.
+- [x] **Step 3: Version to `1!4.0.0`** in `pyproject.toml` and `cli.py` — both, they are separate strings and one has been missed before.
+- [x] **Step 4: CHANGELOG, spec status `implemented`, journal, release the lock.**

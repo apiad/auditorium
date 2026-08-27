@@ -176,11 +176,13 @@ async def test_a_late_audience_tab_catches_up_to_the_presenter(
     of the deck while the room is on scene three.
     """
     await _open_presenter(browser_page, presenter_server)
-    await browser_page.evaluate("() => window.__auditorium_presenter.next()")
-    await browser_page.evaluate("() => window.__auditorium_presenter.next()")
-    await asyncio.sleep(0.3)
+    # seekTo, not next(): next() plays via requestAnimationFrame, which a
+    # browser stalls in a backgrounded tab -- so under full-suite load the
+    # presenter sat at 0 and this test failed for a reason that had nothing
+    # to do with late joining. What is under test is catch-up, not playback.
+    await browser_page.evaluate("() => window.__auditorium_presenter.seekTo(1200)")
     presenter_t = await _t(browser_page)
-    assert presenter_t > 0
+    assert presenter_t == 1200
 
     late = await _open_audience(browser_page.context, presenter_server)
     await late.wait_for_function(

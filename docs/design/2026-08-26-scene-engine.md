@@ -2,7 +2,7 @@
 type: design_doc
 date: 2026-08-26
 title: "Auditorium 4.0: the scene engine"
-status: stages-1-2-3-implemented
+status: implemented
 tags: [auditorium, animation, video, timeline, waapi, playwright, rendering]
 ---
 
@@ -119,13 +119,27 @@ signature changes, even though nothing awaits I/O during compilation.
 the existing theme system, laid out by the existing flex primitives. Animatable
 properties are transform, opacity, colour, size, and filter.
 
+Shipped as the existing construction vocabulary (`show`, `md`, `title`, `block`,
+…) rather than as new node classes: those methods already emit exactly the HTML
+the theme system styles, so a parallel set of DOM node types would have been a
+second way to say the same thing.
+
 **SVG nodes** — `Line`, `Arrow`, `Path`, `Circle` — live in a full-viewport SVG
 overlay and add what CSS cannot express: stroke draw-on, path interpolation,
 geometric motion.
 
-An SVG node may take a **symbolic anchor** on a DOM node (`Arrow(from=box_a.right,
+An SVG node may take a **symbolic anchor** on a DOM node (`Arrow(from_=box_a.right,
 to=box_b.left)`). Python never computes layout; anchors resolve in the browser at
 seek time, so an arrow tracks its box through any motion, including flex reflow.
+
+Shipped 2026-08-27 with two findings the spec did not anticipate. Screen rects
+have to be converted into the overlay's user units via `getScreenCTM`, because
+the preview and presenter both scale their stage and viewport pixels are not
+SVG user units there. And the `clear` op has to empty the overlay as well as the
+slide root — geometry is part of the stage, and without it a scene's arrows stay
+drawn over every slide that follows. The second was found by looking at a
+rendered deck; every geometry test passed while it was broken, because none of
+them crossed a scene boundary.
 
 ### The runtime: `seek(t)`
 
@@ -355,9 +369,13 @@ concatenation is byte-identical.
 
 ## Open questions
 
-**SVG path morphing** is untested. Interpolating between paths with differing
-command counts needs normalisation, and whether that lands in v1 or degrades to a
-cross-fade is undecided until it is tried.
+**SVG path morphing** — deferred, 2026-08-27, and deliberately not degraded to a
+cross-fade. `Path` ships as static geometry that can be drawn on and moved;
+interpolating two `d` strings with differing command counts still needs a
+normalisation step that has not been built. A cross-fade was considered and
+rejected as a substitute: it does not look like morphing, and shipping it under
+that name would make the vocabulary lie. The Readme says plainly what the layer
+does not do rather than leaving a reader to discover it.
 
 **Hot-reload holding position** — resolved 2026-08-27. Both the preview and the
 presenter hold `t`, clamped to the new duration, and neither attempts to
@@ -372,7 +390,8 @@ error. Defaulting to fade-out, revisited on first real use.
 ## Delivery order
 
 > Stage 1 landed 2026-08-27 (`1!4.0.0a1`), Stage 3 the same day (`1!4.0.0b1`),
-> Stage 2 immediately after (`1!4.0.0`). Stage 4 is not started.
+> Stage 2 immediately after (`1!4.0.0`), then Stage 4 the same day.
+> All four stages are implemented.
 >
 > Four decisions were revised or added during implementation, none of them in
 > this spec and each required for the model to work:

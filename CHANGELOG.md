@@ -4,6 +4,15 @@
 
 ### Added
 
+- **The geometry layer** — `Line`, `Arrow`, `Circle` and `Path` in an SVG
+  overlay sharing the stage's coordinate space, plus `draw_on()` stroke
+  animation. Anchors (`handle.left/right/top/bottom/center`) are symbolic and
+  resolve in the browser on every seek, so an arrow follows its box through
+  motion and through flex reflow while Python computes no layout at all.
+  Reads are batched before writes, which is a correctness requirement in
+  practice: interleaved, 2000 anchors cost 182ms a frame against a 33ms budget.
+  Not in v1: path morphing between differing command counts.
+
 - **`auditorium preview`** — the authoring client. Scrubber with a tick per
   beat, time and frame readouts, single-frame stepping (`.`/`,`), loop-a-range
   (`i`/`o`/`l`), and hot reload that holds position instead of restarting. The
@@ -30,6 +39,10 @@
 
 ### Fixed
 
+- **A scene boundary clears the geometry overlay.** `clear` only emptied
+  `#slide-root`, so a scene's arrows and rules stayed drawn over every slide
+  that followed it. Found by looking at the rendered deck; every SVG test
+  passed while it was broken, because none crossed a scene boundary.
 - **The audience no longer autoplays in presenter mode.** It played itself to
   the first beat while the presenter sat at zero, so the two were out of step
   from the first keypress. The mode is injected into the shell rather than sent
