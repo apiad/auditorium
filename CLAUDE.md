@@ -12,8 +12,8 @@ Presentation mode survives as one consumer of that engine rather than as the rea
 
 ```bash
 uv sync                                    # install dependencies
-uv run auditorium run examples/demo_deck.py  # run the demo presentation
-uv run auditorium preview examples/demo_deck.py  # authoring preview: scrub, step, loop
+uv run auditorium run examples/demo.py     # run the demo
+uv run auditorium preview examples/demo.py # authoring preview: scrub, step, loop
 uv run auditorium run deck.py --no-open    # run without auto-opening browser
 uv run auditorium render deck.py -o out.mp4  # render to video, frame by frame
 uv run pytest                              # run tests (141 passing)
@@ -62,4 +62,8 @@ The `deploy.yaml` workflow triggers on `release: published` and publishes to PyP
 
 ## Living documentation
 
-`examples/demo_deck.py` is living documentation. It must always contain every feature in a sensible structure and run smoothly. When adding a new vocabulary primitive or capability, add a slide to `demo_deck.py` that exercises it. When changing existing behavior, update the relevant slide. Run it (`uv run auditorium run examples/demo_deck.py`) and walk through all slides to verify before considering work complete.
+`examples/demo.py` is the living documentation, and it is a set of **scenes that move** — not a vocabulary tour. It replaced `demo_deck.py`, which was 25 shim slides of `step()` reveals against 4 scenes: on screen that was a slideshow that faded, which is the opposite of what 4.0 is for.
+
+When adding an animation primitive, add it to `demo.py` and **watch the render** — `tests/test_examples.py` asserts the demo still exercises motion, but only looking at frames tells you it reads. Two gotchas the demo documents in comments because they cost real time to find: `show()` wraps content in a div and the handle refers to that **wrapper**, so anything you anchor to must fill it; and a top-level `rows()`/`columns()` drops the root out of centred mode, so scenes give their content an explicit stage height.
+
+The deck is authored for 1920x1080 — translations are CSS pixels, so `PITCH` and the stage offsets assume that size.

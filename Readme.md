@@ -383,10 +383,10 @@ keeps what you see equal to what you get.
 
 ## 📚 Example
 
-See [`examples/demo_deck.py`](examples/demo_deck.py) for a full 11-slide deck exercising every feature.
+See [`examples/demo.py`](examples/demo.py) — six scenes that animate, including a bubble sort whose every swap on screen is a swap the algorithm actually made.
 
 ```bash
-auditorium run examples/demo_deck.py
+auditorium run examples/demo.py
 ```
 
 ---

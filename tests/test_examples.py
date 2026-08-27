@@ -27,9 +27,22 @@ async def test_every_example_deck_compiles(path):
     assert timeline.ops, f"{path.name} compiled to an empty timeline"
 
 
-async def test_demo_deck_exercises_the_animation_vocabulary():
-    """demo_deck.py is living documentation; new primitives must appear in it."""
-    source = (EXAMPLES / "demo_deck.py").read_text()
+async def test_the_demo_actually_animates():
+    """demo.py is the living documentation, and it has to MOVE.
+
+    The deck it replaced was 25 shim slides of step() reveals and 4 scenes:
+    on screen it was a slideshow that faded, which is the opposite of what
+    4.0 is for. These assertions are about motion specifically, so the demo
+    cannot quietly decay back into a bullet tour.
+    """
+    source = (EXAMPLES / "demo.py").read_text()
+    assert "@deck.slide" not in source, "the demo is scenes, not slides"
     assert "@deck.scene" in source
-    assert ".animate." in source
-    assert "s.play(" in source
+    for primitive in ("s.play(", "move_to(", "draw_on()", "lag=", "s.draw(", "ease="):
+        assert primitive in source, f"the demo no longer exercises {primitive}"
+
+
+async def test_the_demo_is_mostly_motion():
+    """More animation calls than static shows -- a floor, not a formality."""
+    source = (EXAMPLES / "demo.py").read_text()
+    assert source.count("animate.") >= 12

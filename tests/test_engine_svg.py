@@ -308,7 +308,7 @@ async def test_a_dash_pattern_is_normalized_to_the_shape_length(browser_page):
 async def test_clear_empties_the_overlay_too(browser_page):
     """A scene boundary must wipe geometry, not just the DOM layer.
 
-    Found by looking at demo_deck rather than by a test: the arrow, rule and
+    Found by looking at the demo rather than by a test: the arrow, rule and
     circle from the Geometry scene were still drawn over the "Thank You"
     slide, because `clear` only ever emptied #slide-root. The overlay
     accumulated for the rest of the deck.
