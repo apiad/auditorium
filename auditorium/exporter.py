@@ -183,10 +183,20 @@ def _build_html(
         duration = dom.get("duration", 0)
         if boundary == "initial":
             slide_num += 1
+        # The captured coordinates are in capture-viewport pixels, so the
+        # overlay carries a viewBox at that resolution and stretches with the
+        # slide box. Exact at the capture aspect ratio, approximate elsewhere
+        # -- which is already true of the reflowing DOM content beside it.
+        overlay = ""
+        if dom.get("svg"):
+            overlay = (
+                f'<svg class="export-svg" viewBox="0 0 {width} {height}" '
+                f'preserveAspectRatio="none">{dom["svg"]}</svg>'
+            )
         slides_html += (
             f'<div class="export-slide{active} {dom["classes"]}" '
             f'data-boundary="{boundary}" data-duration="{duration}" data-slide="{slide_num}">'
-            f'{dom["html"]}</div>\n'
+            f'{dom["html"]}{overlay}</div>\n'
         )
 
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -216,11 +226,21 @@ def _build_html(
 body {{ margin: 0; background: #fff; overflow: hidden; }}
 .export-slide {{ position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }}
 .export-slide.active {{ opacity: 1; pointer-events: auto; }}
+.export-svg {{ position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }}
+.export-defs {{ position: absolute; width: 0; height: 0; }}
 #counter {{ position: fixed; bottom: 1rem; right: 1rem; font: 0.875rem monospace; color: #9ca3af; z-index: 10; }}
 </style>
 {theme_overrides}
 </head>
 <body>
+<!-- Marker definitions, once for the whole document. A marker in a separate
+     <svg> is still referable by url(#id) from any other SVG on the page. -->
+<svg class="export-defs" xmlns="http://www.w3.org/2000/svg"><defs>
+  <marker id="aud-arrowhead" viewBox="0 0 10 10" refX="9" refY="5"
+          markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>
+  </marker>
+</defs></svg>
 {slides_html}
 <div id="counter">1 / {len(slide_doms)}</div>
 <script>
@@ -320,9 +340,21 @@ async def _capture(page, fmt: str, output: Path, slide_doms: list[dict], slide_i
             """() => {
             const root = document.getElementById('slide-root');
             const boundary = window.__auditorium_last_boundary || {type: 'initial'};
+            // Geometry lives in the overlay, a SIBLING of #slide-root, so a
+            // snapshot of the root alone silently drops every arrow, line and
+            // circle in the deck. <defs> is excluded here and emitted once at
+            // document level instead of 66 times.
+            const layer = document.getElementById('svg-layer');
+            const svg = layer
+                ? Array.from(layer.children)
+                    .filter((c) => c.tagName.toLowerCase() !== 'defs')
+                    .map((c) => c.outerHTML)
+                    .join('')
+                : '';
             return {
                 html: root.innerHTML,
                 classes: root.className,
+                svg: svg,
                 boundary: boundary.type,
                 duration: boundary.duration || 0,
             };

@@ -95,3 +95,56 @@ async def test_the_export_stylesheet_hides_the_live_connection_dot(browser_page)
     )
     assert hidden == "none"
     assert visible != "none", "the rule is too broad and hid unrelated elements"
+
+
+SVG_DECK_SRC = '''
+from auditorium import Deck
+from auditorium.nodes import Arrow, Circle
+
+deck = Deck("Geo")
+
+@deck.scene
+async def alpha(s):
+    a = await s.show("<p>A</p>")
+    b = await s.show("<p>B</p>")
+    await s.draw(Arrow(from_=a.bottom, to=b.top, stroke="#c00", width=3))
+    await s.draw(Circle(at=(100, 100), r=20, stroke="#06c"))
+    await s.beat()
+
+@deck.scene
+async def bravo(s):
+    await s.show("<p>BRAVO</p>")
+'''
+
+
+@pytest.fixture
+def svg_deck_file(tmp_path):
+    path = tmp_path / "geo.py"
+    path.write_text(SVG_DECK_SRC)
+    return path
+
+
+async def test_html_export_carries_the_geometry_layer(svg_deck_file, tmp_path):
+    """Geometry lives outside #slide-root, so a naive snapshot loses it.
+
+    The export captured only the slide root, which meant a self-contained
+    bundle silently dropped every arrow, line and circle in the deck -- a
+    whole 4.0 feature missing from the artifact with nothing to notice it.
+    """
+    out = tmp_path / "geo.html"
+    await export_deck(svg_deck_file, out, "html", "1280x720", False, 0)
+    html = out.read_text()
+    assert "<line" in html, "the arrow did not survive the export"
+    assert "<circle" in html, "the circle did not survive the export"
+    # The head marker is referenced by the arrow; without a definition
+    # somewhere in the document the arrow renders headless.
+    assert "aud-arrowhead" in html
+    assert 'viewBox="0 0 1280 720"' in html, "geometry must scale with the slide"
+
+
+async def test_a_scene_without_geometry_gets_no_empty_overlay(svg_deck_file, tmp_path):
+    """The second scene draws nothing; it should not carry a stray <svg>."""
+    out = tmp_path / "geo2.html"
+    await export_deck(svg_deck_file, out, "html", "1280x720", False, 0)
+    html = out.read_text()
+    assert html.count('class="export-svg"') < html.count('class="export-slide')
