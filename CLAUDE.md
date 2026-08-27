@@ -12,7 +12,8 @@ Auditorium 2.0 is a server-driven Python presentation framework. Slides are `asy
 uv sync                                    # install dependencies
 uv run auditorium run examples/demo_deck.py  # run the demo presentation
 uv run auditorium run deck.py --no-open    # run without auto-opening browser
-uv run pytest                              # run tests (none yet)
+uv run auditorium render deck.py -o out.mp4  # render to video, frame by frame
+uv run pytest                              # run tests (103 passing)
 uv run ruff check auditorium/              # lint
 ```
 
@@ -29,8 +30,8 @@ Each browser tab gets its own `Session` on the server with independent slide sta
 - `slide.py` — `SlideContext` passed to each slide function. Takes a `Session` (not the app). Exposes the async vocabulary (`show`, `hide`, `replace`, `set_class`, `remove_class`, `md`, `show_md`, `step`, `sleep`) and layout methods (`columns`, `rows`, `place`). Maintains `_target_stack` for layout region scoping. Layout sizing accepts ints (proportional) or `"auto"` (natural size) — e.g. `rows(["auto", 1, "auto"])` for header/body/footer.
 - `layout.py` — `Region` (async context manager for `with` block scoping), layout factory functions. Top-level layouts auto-remove `justify-center` from `#slide-root` to switch from centered to fill mode.
 - `cli.py` — Typer CLI. `auditorium run <deck.py>` loads the module, discovers the `Deck` instance, sets up file watching (watchfiles), and starts uvicorn. `auditorium record <deck.py>` records to video via Playwright. SIGINT is set to SIG_DFL for clean shutdown.
-- `recorder.py` — Video recording. Starts uvicorn programmatically, launches Playwright (headless or headed), captures video. Auto mode: navigates via `?auto_step=N` URL param, waits for `window.__auditorium_finished`. Live mode: waits for browser close. Optional dep: `auditorium[record]`.
-- `exporter.py` — Static export to self-contained HTML or PNG stills. **No PDF**: a timeline has no canonical instant to print, so the format was removed in 4.0 rather than guessed at. See Readme.md. Reuses recorder infrastructure (Playwright + ephemeral uvicorn). For HTML: inlines all assets into a single file with arrow-key navigation (no server needed). For PDF/PNG: screenshots each slide. Optional dep: `auditorium[record]`.
+- `render.py` — Frame-stepped video rendering, the fourth consumer of `seek(t)`. `render_schedule()` is a pure function mapping each output frame to a timeline position (inserting beat dwells), so the frame plan is testable without a browser. `render_frames()` captures PNGs through `window.__auditoriumShow` — never `AuditoriumEngine.seek` directly, because the client autoplays on load and would race the capture. `render_video()` encodes via ffmpeg. Takes `--from`/`--to`, so parallel rendering is a shell-level fan-out. Replaced `recorder.py`, which screen-captured a live browser and was nondeterministic.
+- `exporter.py` — Static export to self-contained HTML or PNG stills. **No PDF**: a timeline has no canonical instant to print, so the format was removed in 4.0 rather than guessed at. See Readme.md. Drives by seeking to each beat (Playwright + ephemeral uvicorn). For HTML: inlines all assets into a single file. For PNG: one still per beat. Optional dep: `auditorium[record]`.
 - `static/index.html` — HTML shell with Tailwind CDN, KaTeX CDN, highlight.js CDN, Google Fonts. Client-side JS handles WebSocket, `hello` handshake with slide index from URL hash, mutation application (with FLIP animation), keypress capture, auto-reconnect, and connection status dot.
 - `static/presenter.html` — Presenter view served at `/presenter`. Shows current slide mirror, speaker notes (from docstring), next-slide preview, and elapsed timer. Syncs with the audience view via a shared session over WebSocket. Opens automatically with `--presenter` flag or press `p` during a presentation.
 

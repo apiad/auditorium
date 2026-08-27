@@ -17,7 +17,7 @@ app = typer.Typer(name="auditorium", help="Python-scripted live slide framework"
 
 def _version_callback(value: bool) -> None:
     if value:
-        console.print("auditorium [bold]1!4.0.0a1[/]")
+        console.print("auditorium [bold]1!4.0.0b1[/]")
         raise typer.Exit()
 
 

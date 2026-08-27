@@ -1,8 +1,26 @@
 # Changelog
 
-## Unreleased (4.0)
+## 4.0.0b1
+
+### Added
+
+- **`auditorium render`** — deterministic frame-stepped video. Seeks the
+  compiled timeline to each frame's position, screenshots, and encodes with
+  ffmpeg. Two renders of the same deck are byte-identical. Supports `--fps`,
+  `--size` (`1080p`/`720p`/`vertical`/`square` or `WIDTHxHEIGHT`), `--format`
+  (`mp4`/`webm`/`png-sequence`), `--audio`, and `--from`/`--to`.
+- **Frame ranges** — `--from`/`--to` render a slice, and a worker replays
+  forward from frame 0 without capturing so its output matches a sequential
+  render exactly. Parallel rendering is a shell-level fan-out plus `concat`.
+- **Audio bed** — `deck.audio(path, at=0.0)`, mixed at the ffmpeg step and
+  truncated to the video with `-shortest`. Not part of the timeline's visual
+  state: `seek()` ignores it and interactive playback stays silent.
 
 ### Removed
+
+- **`auditorium record`.** It screen-captured a live browser through
+  Playwright's `record_video_dir`, so output depended on machine load. It had
+  also been broken since the 4.0 runtime landed. `render` replaces it.
 
 - **PDF export.** A deck is now a timeline, and a scene is a continuous
   function of time, so there is no canonical instant to print. Every candidate
@@ -12,6 +30,27 @@
   `html` export survive because both are total functions of the timeline.
   Export stills and assemble them (`img2pdf slides/*.png`), or author print
   documents in a document engine built for pagination.
+
+### Fixed
+
+- **`auditorium export` no longer hangs.** It drove the deck with
+  `?instant_sleep=1&auto_step=0` query parameters the 4.0 server does not
+  parse, then waited forever on a flag the 4.0 client never sets. It now seeks
+  to each beat.
+- **`move_to()` actually moves.** It emits `transform.x` and `transform.y`,
+  two animations writing one CSS property; under WAAPI's default
+  `composite: "replace"` the second won outright and the element never moved.
+  Transform tracks now composite additively (opacity deliberately does not —
+  additive opacity clamps and would break every fade).
+- **Chrome survives `t=0`.** `seek()` pins every animation on the page to
+  timeline time, so an entrance animation on the slide indicator sat at its
+  first keyframe at `t=0` and vanished from frame 0 of every render.
+
+### Known broken
+
+- **Presenter view (`--presenter`).** Still speaks the pre-4.0 mutation
+  protocol; renders nothing. Being rebuilt as a third client over the
+  timeline. This is why 4.0 is tagged beta.
 
 
 ## 3.6.0

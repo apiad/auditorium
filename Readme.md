@@ -42,7 +42,7 @@ Most presentation tools treat slides as static documents. Auditorium treats them
 - 🐍 **Run algorithms live** — sort arrays, traverse graphs, train models, all animated on stage
 - 📊 **Compute content** — generate plots, tables, or LaTeX from data, not screenshots
 - 📦 **Use any Python library** — numpy, matplotlib, pandas, whatever you import works
-- 🌍 **Share with students worldwide** — presenter mode syncs your slides to every connected browser in real time
+- 🌍 **Share with students worldwide** — `--public` gives every connected browser your live deck (presenter mode is being rebuilt for 4.0)
 - 🔗 **Go public** — `--public` gives you an instant shareable URL, no deployment needed
 - 📤 **Render and share** — render to mp4 frame by frame, or ship a self-contained HTML bundle that replays the whole timeline
 
@@ -99,13 +99,13 @@ auditorium run talk.py
 | 🧮 | **LaTeX math** | KaTeX bundled — `$inline$` and `$$display$$` in any markdown |
 | 💻 | **Syntax highlighting** | Fenced code blocks with highlight.js (bundled) |
 | 📐 | **Flexible layouts** | `columns`, `rows` with `"auto"` sizing, arbitrarily nested |
-| 🎤 | **Presenter mode** | `--presenter` — notes, timer, slide mirror, next-slide preview |
-| 🔄 | **Shared navigation** | Presenter drives all audience tabs — students see what you show |
+| 🎤 | **Presenter mode** | `--presenter` — ⚠️ broken in 4.0 beta, being rebuilt over the timeline |
+| 🔄 | **Shared navigation** | Presenter drives all audience tabs — ⚠️ tied to presenter mode, broken in 4.0 beta |
 | 🌍 | **Public sharing** | `--public` bridges to a relay — instant shareable URL, no deployment |
 | 🕐 | **Late-join sync** | New viewers see the full slide state immediately |
 | 📄 | **HTML / PNG export** | Self-contained interactive HTML, or PNG stills. No PDF — see below |
-| 🎬 | **Video recording** | Headless or live recording via Playwright |
-| 🔀 | **Step-by-step export** | Each reveal as a separate frame with original timing |
+| 🎬 | **Deterministic video** | `auditorium render` steps frames against a paused timeline — two renders are byte-identical |
+| 🔀 | **Frame ranges** | `--from`/`--to` make parallel rendering a shell-level fan-out |
 | ♻️ | **Hot reload** | Edit your `.py` and the browser updates instantly |
 | 📡 | **Offline** | All assets bundled — zero CDN, zero internet required |
 | 🔌 | **Auto-reconnect** | Survives server restarts without losing your place |
@@ -158,6 +158,12 @@ Start with `--presenter` to sync all audience tabs to your navigation:
 ```bash
 auditorium run talk.py --presenter
 ```
+
+> ⚠️ **Not working in 4.0 beta.** The presenter view still speaks the pre-4.0
+> mutation protocol, which the timeline engine no longer sends, so it renders
+> nothing. It is being rebuilt as a third client over the timeline. Use
+> `auditorium run` without `--presenter` until then. This is why 4.0 is still
+> tagged beta.
 
 Two tabs open: your **presenter view** (notes + timer + slide mirror + next-slide preview) and the **audience view**. Navigate from the presenter tab — every connected browser follows in real time.
 
@@ -236,10 +242,19 @@ auditorium export talk.py -f html -o talk.html
 auditorium export talk.py -f png -o slides/
 ```
 
-> **4.0 migration note.** `auditorium record` is being replaced by
-> `auditorium render`, which steps frames deterministically instead of
-> screen-capturing a live browser. Until that lands, video output is
-> unavailable — `record` rides the pre-4.0 runtime and no longer works.
+```bash
+# Render to video, frame by frame
+auditorium render talk.py -o talk.mp4
+auditorium render talk.py -o clip.mp4 --size vertical --fps 60
+auditorium render talk.py -o frames/ --format png-sequence
+
+# Render a frame range -- fan several out in parallel, then concat
+auditorium render talk.py -o part1.mp4 --from 0 --to 300
+```
+
+`render` replaces the old `record`. `record` screen-captured a live browser,
+so a loaded machine produced a different video; `render` steps frames against
+a paused timeline, and two renders of the same deck are byte-identical.
 
 ### Why there is no PDF export
 
