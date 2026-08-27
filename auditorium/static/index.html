@@ -28,147 +28,74 @@
 
     <script type="module">
     import { AuditoriumEngine } from "/static/engine.js";
+    import { connect, createPlayer, installDecoration } from "/static/client.js";
     window.AuditoriumEngine = AuditoriumEngine;
 
-    const root = document.getElementById('slide-root');
     const indicator = document.getElementById('slide-indicator');
     const statusEl = document.getElementById('connection-status');
 
-    let beats = [];
-    let duration = 0;
-    let playing = false;
-    let clockBase = 0;
-    let clockStart = 0;
+    // Set by hello_ack. In presenter mode the audience is driven by the
+    // presenter and its own keyboard is inert -- otherwise any tab in the
+    // room could navigate the talk.
+    let presenterMode = false;
 
-    function setStatus(state) {
-        statusEl.innerHTML = '<span class="aud-dot aud-dot-' + state + '"></span>';
-    }
+    installDecoration(AuditoriumEngine);
 
-    // KaTeX and highlight.js. Registered as an append hook rather than run per
-    // frame: both mutate innerHTML, so re-running them on every seek would
-    // re-highlight already-marked code and cost time in the render loop.
-    AuditoriumEngine.onAppend = function (el) {
-        if (typeof renderMathInElement === 'function') {
-            renderMathInElement(el, {
-                delimiters: [
-                    { left: '$$', right: '$$', display: true },
-                    { left: '$', right: '$', display: false },
-                ],
-                throwOnError: false,
-            });
-        }
-        if (typeof hljs !== 'undefined') {
-            el.querySelectorAll('pre code').forEach(function (block) {
-                hljs.highlightElement(block);
-            });
-        }
-    };
-
-    function beatIndex(t) {
-        let i = 0;
-        for (const b of beats) if (b < t) i += 1;
-        return i;
-    }
-
-    function updateChrome() {
-        const t = AuditoriumEngine.currentTime;
-        const n = beatIndex(t) + 1;
-        const total = beats.length + 1;
-        if (indicator) indicator.textContent = n + ' / ' + total;
-        const style = document.documentElement.style;
-        style.setProperty('--aud-slide-number', n);
-        style.setProperty('--aud-slide-total', total);
-    }
-
-    function nextBeat(from) {
-        for (const b of beats) if (b > from) return b;
-        return duration;
-    }
-
-    function prevBeat(from) {
-        let target = 0;
-        for (const b of beats) if (b < from - 1) target = b;
-        return target;
-    }
-
-    function seekTo(t) {
-        playing = false;
-        AuditoriumEngine.seek(t);
-        updateChrome();
-    }
-
-    function playTo(target) {
-        playing = true;
-        clockBase = AuditoriumEngine.currentTime;
-        clockStart = performance.now();
-        function frame(now) {
-            if (!playing) return;
-            const t = Math.min(clockBase + (now - clockStart), target);
-            AuditoriumEngine.seek(t);
-            updateChrome();
-            if (t < target) requestAnimationFrame(frame);
-            else playing = false;
-        }
-        requestAnimationFrame(frame);
-    }
-
-    async function loadTimeline() {
-        const tl = await (await fetch('/timeline.json')).json();
-        beats = (tl.beats || []).map(function (b) { return b.t; });
-        duration = (tl.meta && tl.meta.duration_ms) || 0;
-        AuditoriumEngine.load(tl);
-        AuditoriumEngine.seek(0);
-        updateChrome();
-        window.__auditorium_duration = duration;
-        // Exported stills and rendered frames must drive chrome the same way
-        // interactive playback does. Calling AuditoriumEngine.seek() directly
-        // skips updateChrome(), which freezes the slide indicator at whatever
-        // it read on load -- burning one wrong page number into every frame.
-        window.__auditoriumShow = seekTo;
-        window.__auditorium_ready = true;
-        playTo(nextBeat(0));
-    }
+    const player = createPlayer({
+        engine: AuditoriumEngine,
+        onFrame(p) {
+            const n = p.beatIndex(p.t) + 1;
+            const total = p.beats.length + 1;
+            if (indicator) indicator.textContent = n + ' / ' + total;
+            const style = document.documentElement.style;
+            style.setProperty('--aud-slide-number', n);
+            style.setProperty('--aud-slide-total', total);
+        },
+    });
+    window.__auditorium_player = player;
 
     document.addEventListener('keydown', function (e) {
-        const t = AuditoriumEngine.currentTime;
+        if (presenterMode) return;
+        const t = player.t;
         if (e.key === ' ' || e.key === 'ArrowRight') {
             e.preventDefault();
-            if (playing) seekTo(nextBeat(t));
-            else playTo(nextBeat(t));
+            if (player.playing) player.seekTo(player.nextBeat(t));
+            else player.playTo(player.nextBeat(t));
         } else if (e.key === 'ArrowLeft') {
             e.preventDefault();
-            seekTo(prevBeat(t));
+            player.seekTo(player.prevBeat(t));
         } else if (e.key === 'r') {
             e.preventDefault();
-            seekTo(0);
+            player.seekTo(0);
         } else if (e.key === 'End') {
             e.preventDefault();
-            seekTo(duration);
+            player.seekTo(player.duration);
         }
     });
 
-    function connect() {
-        setStatus('connecting');
-        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsMeta = document.querySelector('meta[name="auditorium-ws-path"]');
-        const wsPath = wsMeta ? wsMeta.content : '/ws';
-        const ws = new WebSocket(protocol + '//' + location.host + wsPath);
-        ws.onopen = function () {
-            setStatus('connected');
-            ws.send(JSON.stringify({ type: 'hello', role: 'audience' }));
-        };
-        ws.onmessage = function (event) {
-            if (JSON.parse(event.data).type === 'reload') loadTimeline();
-        };
-        ws.onclose = function () {
-            setStatus('disconnected');
-            setTimeout(connect, 1000);
-        };
-        ws.onerror = function () { ws.close(); };
-    }
+    connect({
+        role: 'audience',
+        onStatus(state) {
+            statusEl.innerHTML = '<span class="aud-dot aud-dot-' + state + '"></span>';
+        },
+        onHello(msg) { presenterMode = !!msg.presenter_mode; },
+        async onReload() {
+            await player.fetchAndLoad();
+            player.playTo(player.nextBeat(0));
+        },
+        // The presenter broadcasts intent, not positions: every surface runs
+        // the same deterministic engine over the same timeline, so a command
+        // is enough and 60 messages a second are not.
+        onCommand(msg) {
+            if (msg.cmd === 'seek') player.seekTo(msg.t);
+            else if (msg.cmd === 'playTo') { player.seekTo(msg.from); player.playTo(msg.to); }
+        },
+    });
 
-    connect();
-    loadTimeline();
+    (async function () {
+        await player.fetchAndLoad();
+        player.playTo(player.nextBeat(0));
+    })();
     </script>
 </body>
 </html>
