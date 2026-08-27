@@ -1,3 +1,4 @@
+from auditorium.nodes import Anchor, Circle, Line
 from auditorium.scene import SceneContext
 from auditorium.timeline import Timeline
 
@@ -109,3 +110,50 @@ async def test_nothing_sleeps_during_compilation():
     await s.wait(10.0)
     assert time.monotonic() - started < 0.5
     assert s.t_ms == 15000
+
+
+async def test_draw_appends_an_svg_node_at_the_current_clock():
+    s, tl = make_scene()
+    await s.wait(2.0)
+    handle = await s.draw(Circle(at=(100, 100), r=20))
+    node = next(n for n in tl.nodes if n.id == handle.id)
+    assert node.layer == "svg"
+    assert node.svg["kind"] == "circle"
+    assert [o.t for o in tl.ops if o.node == handle.id] == [2000]
+
+
+async def test_a_handle_yields_anchors_on_every_side():
+    s, tl = make_scene()
+    box = await s.show("<div>x</div>")
+    for side in ("left", "right", "top", "bottom", "center"):
+        anchor = getattr(box, side)
+        assert isinstance(anchor, Anchor)
+        assert (anchor.node, anchor.side) == (box.id, side)
+
+
+async def test_an_anchor_survives_into_the_timeline_unresolved():
+    """Python must never turn a symbolic anchor into a number (D6)."""
+    s, tl = make_scene()
+    box = await s.show("<div>x</div>")
+    line = await s.draw(Line(from_=box.right, to=(400, 300)))
+    node = next(n for n in tl.nodes if n.id == line.id)
+    assert node.svg["from"] == {"anchor": {"node": box.id, "side": "right"}}
+
+
+async def test_draw_on_animates_dashoffset_to_zero():
+    s, tl = make_scene()
+    line = await s.draw(Line(from_=(0, 0), to=(100, 0)))
+    await s.play(line.animate.draw_on(), run_time=0.5)
+    track = next(t for t in tl.tracks if t.node == line.id)
+    assert (track.prop, track.from_, track.to) == ("stroke.dashoffset", 1.0, 0.0)
+    assert (track.start, track.end) == (0, 500)
+
+
+async def test_an_svg_node_ignores_region_scoping():
+    """SVG coordinates are viewport coordinates; parenting into a column lies."""
+    s, tl = make_scene()
+    cols = await s.columns(2)
+    async with cols[0]:
+        line = await s.draw(Line(from_=(0, 0), to=(10, 10)))
+    node = next(n for n in tl.nodes if n.id == line.id)
+    assert node.parent == "svg-layer"

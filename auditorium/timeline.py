@@ -18,14 +18,20 @@ class Node:
     layer: str = "dom"          # "dom" | "svg"
     html: str | None = None
     parent: str = "root"
+    # Geometry, for layer="svg" only: kind plus its own fields, as produced by
+    # auditorium.nodes. Endpoints stay symbolic here -- a resolved point would
+    # be layout Python is not allowed to model (D6).
+    svg: dict | None = None
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "layer": self.layer, "html": self.html, "parent": self.parent}
+        return {"id": self.id, "layer": self.layer, "html": self.html,
+                "parent": self.parent, "svg": self.svg}
 
     @classmethod
     def from_dict(cls, d: dict) -> Node:
         return cls(id=d["id"], layer=d.get("layer", "dom"),
-                   html=d.get("html"), parent=d.get("parent", "root"))
+                   html=d.get("html"), parent=d.get("parent", "root"),
+                   svg=d.get("svg"))
 
 
 @dataclass

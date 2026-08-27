@@ -10,8 +10,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from auditorium.nodes import Anchor
 from auditorium.slide import ConstructionVocabulary
 from auditorium.timeline import Beat, Node, Op, Timeline, Track
+
+# The overlay element every geometric node parents into. Shared with
+# engine.js, which looks it up by this id.
+SVG_LAYER_ID = "svg-layer"
 
 EASINGS = {
     "linear": "linear",
@@ -66,6 +71,18 @@ class AnimateProxy:
     def scale_to(self, factor: float) -> list[AnimSpec]:
         return [AnimSpec(self._node, "transform.scale", None, factor)]
 
+    def draw_on(self) -> list[AnimSpec]:
+        """Stroke a geometric node into existence along its own length.
+
+        Normalized units: every stroked SVG node is created with
+        ``pathLength="1"`` and ``stroke-dasharray="1"``, so the offset runs
+        1 -> 0 regardless of the shape's actual length. That matters because
+        an anchored line has no fixed length -- it changes whenever the DOM
+        node it points at moves, and a measured dash pattern would go stale
+        on the next frame.
+        """
+        return [AnimSpec(self._node, "stroke.dashoffset", 1.0, 0.0)]
+
 
 @dataclass
 class NodeHandle:
@@ -75,6 +92,30 @@ class NodeHandle:
     @property
     def animate(self) -> AnimateProxy:
         return AnimateProxy(self.id)
+
+    # Anchors. Each returns a symbolic reference the browser resolves at seek
+    # time, so `Arrow(from_=box_a.right, to=box_b.left)` tracks both boxes
+    # through motion and through flex reflow without Python knowing where
+    # either of them is.
+    @property
+    def left(self) -> Anchor:
+        return Anchor(self.id, "left")
+
+    @property
+    def right(self) -> Anchor:
+        return Anchor(self.id, "right")
+
+    @property
+    def top(self) -> Anchor:
+        return Anchor(self.id, "top")
+
+    @property
+    def bottom(self) -> Anchor:
+        return Anchor(self.id, "bottom")
+
+    @property
+    def center(self) -> Anchor:
+        return Anchor(self.id, "center")
 
 
 class SceneContext(ConstructionVocabulary):
@@ -114,6 +155,21 @@ class SceneContext(ConstructionVocabulary):
         the only difference is that a scene gets a handle back.
         """
         node_id = await super().show(content, element_id=element_id)
+        return NodeHandle(id=node_id)
+
+    async def draw(self, shape: Any) -> NodeHandle:
+        """Append a geometric node to the SVG overlay and return its handle.
+
+        Deliberately not routed through the region stack the way ``show`` is:
+        an SVG node's coordinates are viewport coordinates, so parenting it
+        into a column would claim a containment that does not exist.
+        """
+        node_id = self._next_id()
+        self._tl.nodes.append(
+            Node(id=node_id, layer="svg", parent=SVG_LAYER_ID,
+                 svg=shape.to_svg_dict())
+        )
+        self._tl.ops.append(Op(t=self._t, action="append", node=node_id))
         return NodeHandle(id=node_id)
 
     async def play(
