@@ -153,31 +153,33 @@ def run(
 
 
 @app.command()
-def record(
-    deck_path: Path = typer.Argument(..., help="Path to the deck.py file"),
-    output: Path = typer.Option("recording.webm", "-o", "--output", help="Output file path"),
-    resolution: str = typer.Option("1920x1080", help="Viewport size, e.g. 1280x720"),
-    auto_step: float = typer.Option(2.0, "-a", "--auto-step", help="Seconds per step() in auto mode"),
-    slide_delay: float = typer.Option(3.0, "-d", "--slide-delay", help="Seconds to linger on completed slide before advancing"),
-    live: bool = typer.Option(False, "--live", help="Launch visible browser for manual recording"),
-    port: int = typer.Option(0, help="Server port (0 = random)"),
-    theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack."),
-    transition: str = typer.Option(None, "--transition", help="Override the slide transition: fade, slide-left, slide-up, zoom, none (or a custom @keyframes name)."),
+def render(
+    deck_path: Path = typer.Argument(..., help="Path to the deck file"),
+    output: Path = typer.Option(Path("out.mp4"), "-o", "--output", help="Output file"),
+    fps: int = typer.Option(30, "--fps", help="Frames per second"),
+    size: str = typer.Option("1080p", "--size", help="WIDTHxHEIGHT or a preset: 1080p, 720p, vertical, square"),
+    fmt: str = typer.Option("mp4", "--format", help="mp4, webm, or png-sequence"),
+    audio: Path | None = typer.Option(None, "--audio", help="Audio bed mixed into the render"),
+    from_frame: int = typer.Option(0, "--from", help="First frame to render"),
+    to_frame: int | None = typer.Option(None, "--to", help="Stop before this frame"),
+    theme: list[str] | None = typer.Option(None, "--theme"),
+    transition: str | None = typer.Option(None, "--transition"),
 ) -> None:
-    """Record a presentation to video."""
-    deck_path = deck_path.resolve()
-    if not deck_path.exists():
-        console.print(f"[red]Error:[/] {deck_path} not found")
-        raise typer.Exit(1)
+    """Render a deck to video by stepping frames deterministically."""
+    from auditorium.render import parse_size, render_video
 
-    if port == 0:
-        import socket
-        with socket.socket() as s:
-            s.bind(("", 0))
-            port = s.getsockname()[1]
+    deck = _load_deck(deck_path)
+    _apply_theme_override(deck, theme, transition)
+    try:
+        width, height = parse_size(size)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
-    from auditorium.recorder import record as do_record
-    asyncio.run(do_record(deck_path, output, resolution, auto_step, slide_delay, live, port, theme, transition))
+    asyncio.run(render_video(
+        deck, output, fps=fps, size=(width, height), audio=audio, fmt=fmt,
+        start_frame=from_frame, end_frame=to_frame,
+    ))
+    console.print(f"[green]✓[/] Rendered to [bold]{output}[/]")
 
 
 @app.command()
