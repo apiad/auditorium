@@ -100,13 +100,42 @@ export const AuditoriumEngine = {
     } else if (op.action === "append") {
       const node = this._tl.nodes.find((n) => n.id === op.node);
       if (!node) return;
-      const el = document.createElement("div");
+      // Unwrap to the real element. Appending an extra <div> around content
+      // that is already an element breaks flex sizing: a `flex: 1` container
+      // cannot grow through an unstyled wrapper, and nested row layouts
+      // collapse to their natural height instead of filling.
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = node.html || "";
+      const el = wrapper.firstElementChild || wrapper;
       el.id = node.id;
-      el.innerHTML = node.html || "";
       const parent =
         node.parent && node.parent !== "root"
           ? document.getElementById(node.parent) || root
           : root;
+
+      // Coalesce consecutive lists so numbering stays continuous across
+      // separate md() calls (ported from the 3.x client, commit 1e81cdc).
+      // Skipped when the node is animated: merging it away would leave its
+      // tracks with no element to attach to.
+      const animated = this._tl.tracks.some((t) => t.node === node.id);
+      const newList =
+        el.children.length === 1 &&
+        (el.children[0].tagName === "OL" || el.children[0].tagName === "UL")
+          ? el.children[0]
+          : null;
+      const prevWrap = parent.lastElementChild;
+      const prevList =
+        !animated && newList && prevWrap &&
+        prevWrap.children.length === 1 &&
+        prevWrap.children[0].tagName === newList.tagName
+          ? prevWrap.children[0]
+          : null;
+      if (prevList) {
+        for (const li of Array.from(newList.children)) prevList.appendChild(li);
+        if (typeof this.onAppend === "function") this.onAppend(prevList);
+        return;
+      }
+
       parent.appendChild(el);
       // Client-supplied decoration (KaTeX, syntax highlighting). Runs once per
       // append rather than per seek: it mutates innerHTML, and re-running it on

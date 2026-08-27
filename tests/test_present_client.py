@@ -147,3 +147,81 @@ async def test_math_and_code_are_still_decorated(browser_page, live_server):
         "() => typeof window.AuditoriumEngine.onAppend === 'function'"
     )
     assert hooked is True
+
+
+def _two_scene_deck():
+    deck = Deck("Boundary")
+
+    @deck.scene
+    async def alpha(s):
+        await s.show("<p>ALPHA</p>")
+
+    @deck.scene
+    async def bravo(s):
+        await s.show("<p>BRAVO</p>")
+
+    return deck
+
+
+@pytest_asyncio.fixture
+async def boundary_server():
+    config = uvicorn.Config(
+        create_app(_two_scene_deck()), host="127.0.0.1", port=0, log_level="warning"
+    )
+    server = uvicorn.Server(config)
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+    deadline = 10.0
+    while not server.started:
+        await asyncio.sleep(0.05)
+        deadline -= 0.05
+        if deadline <= 0:
+            server.should_exit = True
+            raise RuntimeError("uvicorn did not start within 10s")
+    port = server.servers[0].sockets[0].getsockname()[1]
+    yield f"http://127.0.0.1:{port}"
+    server.should_exit = True
+    thread.join(timeout=5)
+
+
+async def test_the_stage_actually_clears_in_the_browser(browser_page, boundary_server):
+    """Assert on the DOM, not on the timeline.
+
+    A compile-level test that a clear op EXISTS cannot prove the engine
+    applies it. Without this, a deck renders as every scene piled into one
+    continuous DOM while the compiler tests stay green.
+    """
+    await _ready(browser_page, boundary_server)
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+    text = await browser_page.evaluate(
+        "() => document.getElementById('slide-root').textContent"
+    )
+    assert "ALPHA" in text and "BRAVO" not in text
+
+    await browser_page.evaluate(
+        "() => window.AuditoriumEngine.seek(window.__auditorium_duration)"
+    )
+    text = await browser_page.evaluate(
+        "() => document.getElementById('slide-root').textContent"
+    )
+    assert "BRAVO" in text
+    assert "ALPHA" not in text, "the previous scene was never cleared from the DOM"
+
+
+async def test_the_root_keeps_its_base_class_across_a_rewind(
+    browser_page, boundary_server
+):
+    """reset() must restore the root class, not just empty it.
+
+    Losing it drops the base layout class (content stops centring) and lets
+    aud-layout-mode leak from the first scene that uses columns onward.
+    """
+    await _ready(browser_page, boundary_server)
+    await browser_page.evaluate(
+        "() => window.AuditoriumEngine.seek(window.__auditorium_duration)"
+    )
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+    cls = await browser_page.evaluate(
+        "() => document.getElementById('slide-root').className"
+    )
+    assert "aud-slide-root" in cls

@@ -119,6 +119,7 @@
         AuditoriumEngine.load(tl);
         AuditoriumEngine.seek(0);
         updateChrome();
+        window.__auditorium_duration = duration;
         window.__auditorium_ready = true;
         playTo(nextBeat(0));
     }

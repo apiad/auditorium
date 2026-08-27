@@ -189,3 +189,45 @@ async def test_rewound_state_matches_a_freshly_loaded_engine(browser_page, timel
     rewound.reverse()
 
     assert rewound == reference
+
+
+async def test_append_does_not_add_a_wrapper_element(browser_page):
+    """The node's own element goes into the DOM, not a div around it.
+
+    An extra wrapper breaks flex sizing: a `flex: 1` container cannot grow
+    through an unstyled div, so nested row layouts collapse to their natural
+    height. Pinning the tag name catches it directly.
+    """
+    tl = Timeline(meta={"title": "wrap"})
+    tl.nodes.append(Node(id="n1", layer="dom", html="<p>hi</p>"))
+    tl.ops.append(Op(t=0, action="append", node="n1"))
+    await serve(browser_page, tl.to_dict())
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+
+    tag = await browser_page.evaluate("() => document.getElementById('n1').tagName")
+    assert tag == "P", f"expected the node's own <p>, got a <{tag.lower()}> wrapper"
+    depth = await browser_page.evaluate(
+        "() => document.getElementById('n1').parentElement.id"
+    )
+    assert depth == "slide-root"
+
+
+async def test_flex_sizing_propagates_to_appended_content(browser_page):
+    """The behaviour the wrapper broke: a flex child must actually grow."""
+    tl = Timeline(meta={"title": "flex"})
+    tl.nodes.append(
+        Node(
+            id="n1",
+            layer="dom",
+            html='<div style="display:flex;flex-direction:column;height:400px">'
+            '<div id="grower" style="flex:1">x</div></div>',
+        )
+    )
+    tl.ops.append(Op(t=0, action="append", node="n1"))
+    await serve(browser_page, tl.to_dict())
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+
+    h = await browser_page.evaluate(
+        "() => Math.round(document.getElementById('grower').getBoundingClientRect().height)"
+    )
+    assert h > 300, f"flex child did not grow (height {h}); a wrapper is blocking it"
