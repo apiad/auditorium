@@ -12,6 +12,7 @@
     <script src="/static/vendor/katex/katex.min.js"></script>
     <script src="/static/vendor/katex/contrib/auto-render.min.js"></script>
     <script src="/static/vendor/hljs/highlight.min.js"></script>
+    <!--AUDITORIUM_MODE-->
     <!--AUDITORIUM_THEME_OVERRIDES-->
 </head>
 <body>
@@ -34,10 +35,13 @@
     const indicator = document.getElementById('slide-indicator');
     const statusEl = document.getElementById('connection-status');
 
-    // Set by hello_ack. In presenter mode the audience is driven by the
-    // presenter and its own keyboard is inert -- otherwise any tab in the
-    // room could navigate the talk.
-    let presenterMode = false;
+    // Injected by the server into the shell, so it is known before the first
+    // frame. In presenter mode the audience is driven: its keyboard is inert
+    // (otherwise any tab in the room could navigate the talk) and it does not
+    // autoplay, because a presenter starting at zero and an audience playing
+    // itself to the first beat are out of step from the very first keypress.
+    const modeMeta = document.querySelector('meta[name="auditorium-presenter-mode"]');
+    const presenterMode = !!modeMeta && modeMeta.content === 'true';
 
     installDecoration(AuditoriumEngine);
 
@@ -78,10 +82,11 @@
         onStatus(state) {
             statusEl.innerHTML = '<span class="aud-dot aud-dot-' + state + '"></span>';
         },
-        onHello(msg) { presenterMode = !!msg.presenter_mode; },
         async onReload() {
+            const held = player.t;
             await player.fetchAndLoad();
-            player.playTo(player.nextBeat(0));
+            if (presenterMode) player.seekTo(Math.min(held, player.duration));
+            else player.playTo(player.nextBeat(0));
         },
         // The presenter broadcasts intent, not positions: every surface runs
         // the same deterministic engine over the same timeline, so a command
@@ -94,7 +99,8 @@
 
     (async function () {
         await player.fetchAndLoad();
-        player.playTo(player.nextBeat(0));
+        // Driven surfaces wait to be driven; independent ones start themselves.
+        if (!presenterMode) player.playTo(player.nextBeat(0));
     })();
     </script>
 </body>

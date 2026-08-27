@@ -107,7 +107,12 @@
         const availW = window.innerWidth;
         const availH = window.innerHeight - bar;
         const scale = Math.min(availW / 1920, availH / 1080);
-        stage.style.transform = 'scale(' + scale + ')';
+        // Translate before scale in the composite, so the offsets are in the
+        // viewport's own pixels and the letterboxing is even on both sides.
+        const dx = (availW - 1920 * scale) / 2;
+        const dy = (availH - 1080 * scale) / 2;
+        stage.style.transform =
+            'translate(' + dx + 'px,' + dy + 'px) scale(' + scale + ')';
         viewport.style.height = availH + 'px';
     }
 

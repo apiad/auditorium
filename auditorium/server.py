@@ -25,6 +25,12 @@ class Presentation:
 
     audience_clients: list[WebSocket] = field(default_factory=list)
     presenter_ws: WebSocket | None = None
+    # The last command relayed, replayed to audience tabs as they join. The
+    # server still holds no position of its own -- this is a cached message,
+    # not state it computes. Without it a tab that drops for a second (the
+    # client auto-reconnects, so that is routine) rejoins at the start of the
+    # deck while the room is on scene three.
+    last_cmd: dict | None = None
 
     async def send(self, message: dict) -> None:
         data = json.dumps(message)
@@ -80,6 +86,15 @@ def create_app(deck: Deck | None = None, presenter_mode: bool = False) -> FastAP
         html = (STATIC_DIR / "index.html").read_text()
         overrides = deck.theme_style_block() if deck else ""
         html = html.replace("<!--AUDITORIUM_THEME_OVERRIDES-->", overrides)
+        # Injected into the shell rather than sent over the socket, because
+        # the audience has to decide whether to autoplay at load time. Waiting
+        # for hello_ack would race it: in shared mode an autoplaying audience
+        # and a presenter starting at zero drift apart immediately.
+        mode = "true" if app.state.presenter_mode else "false"
+        html = html.replace(
+            "<!--AUDITORIUM_MODE-->",
+            f'<meta name="auditorium-presenter-mode" content="{mode}">',
+        )
         return HTMLResponse(html)
 
     @app.get("/preview")
@@ -177,6 +192,13 @@ async def _handle_shared_session(app: FastAPI, ws: WebSocket, hello: dict, role:
         pres.audience_clients.append(ws)
 
     await ws.send_text(json.dumps({"type": "hello_ack", "presenter_mode": True}))
+    if not is_presenter and pres.last_cmd is not None:
+        # Catch a joining or reconnecting tab up to where the room is. Sent as
+        # a seek rather than the original command: replaying a playTo would
+        # re-animate a segment the audience already watched.
+        await ws.send_text(json.dumps(
+            {"type": "cmd", "cmd": "seek", "t": pres.last_cmd.get("t", 0)}
+        ))
 
     try:
         while True:
@@ -192,6 +214,9 @@ async def _handle_shared_session(app: FastAPI, ws: WebSocket, hello: dict, role:
             except ValueError:
                 continue  # a bad frame from one tab must not end the talk
             if isinstance(msg, dict) and msg.get("type") == "cmd":
+                # A playTo caches as its destination: a late tab should arrive
+                # where the room is, not replay the animation getting there.
+                pres.last_cmd = {"cmd": "seek", "t": msg.get("to", msg.get("t", 0))}
                 await pres.send_to_audience(msg)
     except (WebSocketDisconnect, asyncio.CancelledError):
         pass

@@ -1,0 +1,32 @@
+/* The presenter view's own chrome. Kept out of theme.css so a deck's theme
+   can never restyle the notes pane -- and so these rules can override the
+   3.x #slide-pane sizing that predates the timeline. */
+
+body.aud-presenter {
+    display: block;
+    overflow: hidden;
+}
+
+#slide-pane {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Fixed logical size, scaled by transform. Two reasons, the same as the
+   preview's: resizing the box would reflow rem-sized type and mirror a
+   layout the audience is not seeing, and the transform gives the chrome
+   slots their containing block so they stay inside the mirror instead of
+   escaping to the presenter's own viewport. */
+#presenter-stage {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    transform-origin: top left;
+    background: var(--aud-slide-bg, #fff);
+}
+
+#presenter-stage #slide-root {
+    width: 1920px;
+    height: 1080px;
+    transform: none;
+}

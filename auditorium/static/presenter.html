@@ -12,15 +12,25 @@
     <script src="/static/vendor/katex/katex.min.js"></script>
     <script src="/static/vendor/katex/contrib/auto-render.min.js"></script>
     <script src="/static/vendor/hljs/highlight.min.js"></script>
+    <!--AUDITORIUM_THEME_OVERRIDES-->
+    <link rel="stylesheet" href="/static/presenter.css">
 </head>
-<body>
+<body class="aud-presenter">
     <div id="presenter-container">
-        <!-- Left pane: slide mirror -->
+        <!-- Left: a real engine over the real timeline, scaled to fit.
+             Not a copy of the audience's DOM: two engines seeking one
+             timeline agree by construction (D2), whereas a mirror is a
+             second path that can disagree with the first. -->
         <div id="slide-pane">
-            <div id="slide-root"></div>
+            <div id="presenter-stage">
+                <div id="slide-root" class="aud-slide-root"></div>
+                <div class="aud-chrome aud-chrome-header"></div>
+                <div class="aud-chrome aud-chrome-footer"></div>
+                <div class="aud-chrome aud-chrome-left"></div>
+                <div class="aud-chrome aud-chrome-right"></div>
+            </div>
         </div>
 
-        <!-- Right pane: notes, next preview, footer -->
         <div id="info-pane">
             <div id="notes">No notes.</div>
 
@@ -38,208 +48,149 @@
 
     <div id="connection-status"></div>
 
-    <script>
-    (function() {
-        const root = document.getElementById('slide-root');
-        const indicator = document.getElementById('slide-indicator');
-        const statusEl = document.getElementById('connection-status');
-        const notesEl = document.getElementById('notes');
-        const nextTitleEl = document.getElementById('next-title');
-        const nextExcerptEl = document.getElementById('next-excerpt');
-        const timerEl = document.getElementById('presenter-timer');
+    <script type="module">
+    import { AuditoriumEngine } from "/static/engine.js";
+    import { connect, createPlayer, installDecoration } from "/static/client.js";
+    window.AuditoriumEngine = AuditoriumEngine;
 
-        let ws = null;
-        let targetStack = [root];
-        let timerStart = null;
-        let timerInterval = null;
+    const stage = document.getElementById('presenter-stage');
+    const pane = document.getElementById('slide-pane');
+    const indicator = document.getElementById('slide-indicator');
+    const statusEl = document.getElementById('connection-status');
+    const notesEl = document.getElementById('notes');
+    const nextTitleEl = document.getElementById('next-title');
+    const nextExcerptEl = document.getElementById('next-excerpt');
+    const timerEl = document.getElementById('presenter-timer');
 
-        function currentTarget() {
-            return targetStack[targetStack.length - 1];
-        }
+    let timerStart = null;
+    let timerInterval = null;
+    let socket = null;
 
-        function getSlideFromHash() {
-            const match = location.hash.match(/#slide-(\d+)/);
-            return match ? parseInt(match[1], 10) : 0;
-        }
+    installDecoration(AuditoriumEngine);
 
-        function setStatus(state) {
-            const dot = '<span class="aud-dot aud-dot-' + state + '"></span>';
-            statusEl.innerHTML = dot;
-        }
+    /** Plain text of author-authored HTML, for the next-scene excerpt.
+     *  Via textContent, never a regex: notes are real markup. */
+    function excerptOf(html, limit = 200) {
+        const box = document.createElement('div');
+        box.innerHTML = html || '';
+        const text = box.textContent.trim().replace(/\s+/g, ' ');
+        return text.length > limit ? text.slice(0, limit) + '…' : text;
+    }
 
-        const SLIDE_ROOT_RESET = 'aud-slide-root';
+    const player = createPlayer({
+        engine: AuditoriumEngine,
+        onFrame(p) {
+            const t = p.t;
+            indicator.textContent = (p.beatIndex(t) + 1) + ' / ' + (p.beats.length + 1);
 
-        function resetRoot() {
-            root.innerHTML = '';
-            root.className = SLIDE_ROOT_RESET;
-            targetStack = [root];
-        }
+            const here = p.markerAt(t);
+            notesEl.innerHTML =
+                here && here.notes_html && here.notes_html.trim()
+                    ? here.notes_html
+                    : 'No notes.';
 
-        function startTimer() {
-            if (timerStart !== null) return;
-            timerStart = Date.now();
-            timerInterval = setInterval(function() {
-                const elapsed = Math.floor((Date.now() - timerStart) / 1000);
-                const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
-                const ss = String(elapsed % 60).padStart(2, '0');
-                timerEl.textContent = mm + ':' + ss;
-            }, 1000);
-        }
-
-        function connect() {
-            setStatus('connecting');
-            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${location.host}/ws`);
-
-            ws.onopen = function() {
-                setStatus('connected');
-                const params = new URLSearchParams(location.search);
-                const hello = { type: 'hello', slide: getSlideFromHash(), role: 'presenter' };
-                ws.send(JSON.stringify(hello));
-            };
-
-            ws.onmessage = function(event) {
-                const msg = JSON.parse(event.data);
-                handleMessage(msg);
-            };
-
-            ws.onclose = function() {
-                setStatus('disconnected');
-                setTimeout(connect, 1000);
-            };
-
-            ws.onerror = function(err) {
-                console.error('[auditorium] websocket error', err);
-                ws.close();
-            };
-        }
-
-        function handleMessage(msg) {
-            switch (msg.type) {
-                case 'mutation':
-                    applyMutation(msg);
-                    break;
-                case 'clear':
-                    resetRoot();
-                    break;
-                case 'slide':
-                    startTimer();
-                    location.hash = `#slide-${msg.index}`;
-                    indicator.textContent = msg.total ? `${msg.index + 1} / ${msg.total}` : `${msg.index + 1}`;
-                    break;
-                case 'reload':
-                    location.hash = `#slide-${msg.slide}`;
-                    resetRoot();
-                    break;
-                case 'finished':
-                    window.__auditorium_finished = true;
-                    break;
-                case 'error':
-                    notesEl.innerHTML = '<p style="color:#ef4444;font-weight:600;">' + msg.message + '</p>';
-                    break;
-                case 'notes':
-                    notesEl.innerHTML = msg.html && msg.html.trim() ? msg.html : 'No notes.';
-                    break;
-                case 'next_preview':
-                    if (msg.title === null || msg.title === undefined) {
-                        nextTitleEl.textContent = 'Last slide';
-                        nextExcerptEl.textContent = '';
-                    } else {
-                        nextTitleEl.textContent = 'Next: ' + msg.title;
-                        nextExcerptEl.textContent = msg.excerpt || '';
-                    }
-                    break;
+            const next = p.markerAfter(t);
+            if (next) {
+                nextTitleEl.textContent = 'Next: ' + next.title;
+                nextExcerptEl.textContent = excerptOf(next.notes_html);
+            } else {
+                nextTitleEl.textContent = 'Last scene';
+                nextExcerptEl.textContent = '';
             }
+        },
+    });
+
+    function fitStage() {
+        const w = pane.clientWidth;
+        const h = pane.clientHeight;
+        const scale = Math.min(w / 1920, h / 1080);
+        // Translate before scale in the composite, so the offsets are in the
+        // pane's own pixels and the letterboxing is even on both sides.
+        const dx = (w - 1920 * scale) / 2;
+        const dy = (h - 1080 * scale) / 2;
+        stage.style.transform =
+            'translate(' + dx + 'px,' + dy + 'px) scale(' + scale + ')';
+    }
+
+    function startTimer() {
+        if (timerStart !== null) return;
+        timerStart = Date.now();
+        timerInterval = setInterval(function () {
+            const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+            const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const ss = String(elapsed % 60).padStart(2, '0');
+            timerEl.textContent = mm + ':' + ss;
+        }, 1000);
+    }
+
+    function send(cmd) {
+        if (socket) socket.send(Object.assign({ type: 'cmd' }, cmd));
+    }
+
+    // Act locally, then broadcast the same intent. The audience runs the same
+    // engine over the same timeline, so a command is enough -- there is no
+    // need to stream 60 positions a second, and nothing to drift.
+    function next() {
+        startTimer();
+        const from = player.t;
+        const to = player.nextBeat(from);
+        if (player.playing) { player.seekTo(to); send({ cmd: 'seek', t: to }); }
+        else { player.playTo(to); send({ cmd: 'playTo', from, to }); }
+    }
+
+    function prev() {
+        startTimer();
+        const to = player.prevBeat(player.t);
+        player.seekTo(to);
+        send({ cmd: 'seek', t: to });
+    }
+
+    function seekTo(t) {
+        player.seekTo(t);
+        send({ cmd: 'seek', t });
+    }
+
+    document.addEventListener('keydown', function (e) {
+        switch (e.key) {
+            case ' ':
+            case 'ArrowRight':
+            case 'PageDown':
+                e.preventDefault(); next(); break;
+            case 'ArrowLeft':
+            case 'PageUp':
+                e.preventDefault(); prev(); break;
+            case 'r': e.preventDefault(); seekTo(0); break;
+            case 'End': e.preventDefault(); seekTo(player.duration); break;
         }
+    });
 
-        function applyMutation(msg) {
-            const target = msg.target ? document.querySelector(msg.target) : currentTarget();
-            switch (msg.action) {
-                case 'append': {
-                    const wrapper = document.createElement('div');
-                    wrapper.innerHTML = msg.html;
-                    const el = wrapper.firstElementChild || wrapper;
-                    if (msg.element_id) {
-                        el.id = msg.element_id;
-                    }
-                    if (target) {
-                        target.appendChild(el);
-                    }
-                    renderMath(el);
-                    renderCode(el);
-                    break;
-                }
-                case 'remove': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) el.remove();
-                    break;
-                }
-                case 'replace': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) {
-                        el.innerHTML = msg.html;
-                        renderMath(el);
-                        renderCode(el);
-                    }
-                    break;
-                }
-                case 'set_class': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) el.classList.add(...msg.cls.split(' '));
-                    break;
-                }
-                case 'remove_class': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) el.classList.remove(...msg.cls.split(' '));
-                    break;
-                }
-                case 'push_target': {
-                    const el = document.querySelector(msg.selector);
-                    if (el) targetStack.push(el);
-                    break;
-                }
-                case 'pop_target': {
-                    if (targetStack.length > 1) targetStack.pop();
-                    break;
-                }
-            }
-            if (msg.id && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'ack', id: msg.id }));
-            }
-        }
+    window.addEventListener('resize', fitStage);
 
-        function renderMath(el) {
-            if (typeof renderMathInElement === 'function') {
-                renderMathInElement(el, {
-                    delimiters: [
-                        { left: '$$', right: '$$', display: true },
-                        { left: '$', right: '$', display: false },
-                    ],
-                    throwOnError: false,
-                });
-            }
-        }
+    window.__auditorium_presenter = {
+        next, prev, seekTo,
+        state: () => ({
+            t: player.t,
+            timerRunning: timerStart !== null,
+            notes: notesEl.innerHTML,
+        }),
+    };
 
-        function renderCode(el) {
-            if (typeof hljs !== 'undefined') {
-                el.querySelectorAll('pre code').forEach(block => {
-                    hljs.highlightElement(block);
-                });
-            }
-        }
+    socket = connect({
+        role: 'presenter',
+        onStatus(state) {
+            statusEl.innerHTML = '<span class="aud-dot aud-dot-' + state + '"></span>';
+        },
+        async onReload() {
+            const held = player.t;
+            await player.fetchAndLoad();
+            player.seekTo(Math.min(held, player.duration));
+        },
+    });
 
-        document.addEventListener('keydown', function(e) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                const key = e.key;
-                if (['ArrowRight', 'ArrowLeft', 'PageDown', ' ', 'r'].includes(key) ||
-                    (key >= '0' && key <= '9') || key === 'Enter') {
-                    e.preventDefault();
-                    ws.send(JSON.stringify({ type: 'keypress', key: key }));
-                }
-            }
-        });
-
-        connect();
+    (async function () {
+        await player.fetchAndLoad();
+        fitStage();
+        player.seekTo(0);
     })();
     </script>
 </body>
