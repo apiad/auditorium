@@ -2,7 +2,7 @@
 type: design_doc
 date: 2026-08-26
 title: "Auditorium 4.0: the scene engine"
-status: stage-1-implemented
+status: stage-1-and-3-implemented
 tags: [auditorium, animation, video, timeline, waapi, playwright, rendering]
 ---
 
@@ -307,10 +307,15 @@ frame with no error. Measured: without a gate, exactly one bad frame at t=0.
 Mitigation: gate on `document.fonts.ready` plus explicit image decode before
 frame 0. Throwaway warm-up frames were tested and do nothing.
 
-**Throughput has no headroom.** Screenshots measure 70.8 ms median and 80.7 ms
-p95 at 1920×1080, so 900 frames take 64 seconds and a 60-second clip takes about
-two minutes. Acceptable for v1, but it means `--jobs` is wanted sooner than its
-deferral suggests.
+**Throughput has no headroom.** Screenshots measured 70.8 ms median and 80.7 ms
+p95 at 1920×1080 during the spike. Re-measured against the shipped renderer on
+2026-08-27: **60.4 ms/frame** at 1080p once browser and server startup (~4 s) is
+amortised out, or 127 ms/frame including it — so short renders pay a fixed cost
+that dominates. A 2821-frame 720p render of `demo_deck.py` took about 5 minutes
+wall-clock. Acceptable, but it means `--jobs` is wanted sooner than its deferral
+suggests. Parallel equivalence was verified end to end: a 40-frame sequential
+render and two 20-frame ranged renders in separate processes produced
+byte-identical frames, 40/40.
 
 **Path-dependence regressing.** D5 is easy to violate by adding an "optimised"
 backward seek. Mitigation: the path-independence test below is the guard, and it
