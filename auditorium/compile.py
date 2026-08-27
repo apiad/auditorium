@@ -20,9 +20,13 @@ async def compile_deck(deck: Deck) -> Timeline:
         if ctx is None:
             ctx = SceneContext(tl, beat_hold_ms=hold)
         else:
-            # Scene boundary: a beat, then continue on the same clock.
+            # Scene boundary: a beat, then wipe the stage, then continue on
+            # the same clock. The clear lands after beat()'s 1ms bump, so the
+            # outgoing scene is still whole *at* the beat where the presenter
+            # is paused, and only clears once they advance.
             ctx._beat_hold_ms = hold
             await ctx.beat()
+            await ctx.clear()
 
         if is_scene:
             await info.func(ctx)

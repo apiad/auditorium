@@ -35,7 +35,7 @@ wheels = [
 
 [[package]]
 name = "auditorium"
-version = "1!3.6.0"
+version = "1!4.0.0a1"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },

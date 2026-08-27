@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from auditorium.slide import ConstructionVocabulary
 from auditorium.timeline import Beat, Node, Op, Timeline, Track
 
 EASINGS = {
@@ -76,12 +77,26 @@ class NodeHandle:
         return AnimateProxy(self.id)
 
 
-class SceneContext:
+class SceneContext(ConstructionVocabulary):
+    """The 4.0 authoring surface: the full vocabulary plus a timeline clock.
+
+    Inherits every construction method rather than reimplementing them. Those
+    methods are timing-agnostic — they describe *what* appears, never *when* —
+    so a scene and a slide build content identically and differ only in how
+    they mark time.
+    """
+
     def __init__(self, timeline: Timeline, *, beat_hold_ms: int = 0) -> None:
         self._tl = timeline
         self._t = 0
         self._counter = 0
         self._beat_hold_ms = beat_hold_ms
+        self._target_stack: list[str] = []
+
+    @property
+    def _scene(self) -> SceneContext:
+        """The vocabulary emits through ``self._scene``; for a scene that is itself."""
+        return self
 
     @property
     def t_ms(self) -> int:
@@ -92,13 +107,13 @@ class SceneContext:
         return f"n{self._counter}"
 
     async def show(self, content: Any, *, element_id: str | None = None) -> NodeHandle:
-        from auditorium.slide import _jupyter_to_html
+        """Append content and return a handle you can animate.
 
-        node_id = element_id or self._next_id()
-        self._tl.nodes.append(
-            Node(id=node_id, layer="dom", html=f"<div>{_jupyter_to_html(content)}</div>")
-        )
-        self._tl.ops.append(Op(t=self._t, action="append", node=node_id))
+        Routes through the inherited vocabulary so region scoping
+        (``async with column:``) applies here exactly as it does on a slide;
+        the only difference is that a scene gets a handle back.
+        """
+        node_id = await super().show(content, element_id=element_id)
         return NodeHandle(id=node_id)
 
     async def play(
@@ -145,11 +160,21 @@ class SceneContext:
         """Advance the clock with nothing animating."""
         self._t += int(seconds * 1000)
 
-    async def _emit_op(self, mutation: dict) -> None:
-        """Bridge for the slide shim: turn a 3.x mutation dict into an Op.
+    async def clear(self) -> None:
+        """Remove everything currently on the slide root.
 
-        The shim's construction vocabulary was written against a mutation
-        protocol; rather than rewrite all of it, translate at this boundary.
+        Scene boundaries need this explicitly. Under the old protocol the
+        server sent a `clear` message per slide; a timeline has no such
+        implicit boundary, so without an op the whole deck accumulates into
+        one continuous DOM.
+        """
+        await self._emit_op({"action": "clear"})
+
+    async def _emit_op(self, mutation: dict) -> str | None:
+        """Turn a vocabulary mutation dict into an Op. Returns the node id, if any.
+
+        The construction vocabulary was written against a mutation protocol;
+        rather than rewrite all of it, translate at this one boundary.
         """
         action = mutation["action"]
         if action == "append":
@@ -159,8 +184,9 @@ class SceneContext:
                      parent=mutation.get("target", "root").lstrip("#"))
             )
             self._tl.ops.append(Op(t=self._t, action="append", node=node_id))
-        else:
-            self._tl.ops.append(
-                Op(t=self._t, action=action, selector=mutation.get("selector"),
-                   html=mutation.get("html"), cls=mutation.get("cls"))
-            )
+            return node_id
+        self._tl.ops.append(
+            Op(t=self._t, action=action, selector=mutation.get("selector"),
+               html=mutation.get("html"), cls=mutation.get("cls"))
+        )
+        return None

@@ -72,3 +72,47 @@ async def test_python_computation_drives_the_timeline():
     tl = await compile_deck(deck)
     assert len(tl.tracks) > 0
     assert tl.duration_ms > 0
+
+
+async def test_a_scene_boundary_clears_the_stage():
+    """Without a clear op the whole deck accumulates into one continuous DOM.
+
+    The old protocol sent a `clear` message per slide; a timeline has no
+    implicit boundary, so the compiler has to emit one.
+    """
+    deck = Deck("Two")
+
+    @deck.scene
+    async def first(s):
+        await s.show("<p>a</p>")
+
+    @deck.scene
+    async def second(s):
+        await s.show("<p>b</p>")
+
+    tl = await compile_deck(deck)
+    clears = [o for o in tl.ops if o.action == "clear"]
+    assert len(clears) == 1
+
+
+async def test_the_clear_lands_after_the_beat_not_on_it():
+    """At the beat the outgoing scene must still be whole.
+
+    If the clear shared the beat's millisecond, the stage would wipe while
+    the presenter is still paused on it — the audience would watch the slide
+    vanish before the keypress that is meant to move on.
+    """
+    deck = Deck("Two")
+
+    @deck.scene
+    async def first(s):
+        await s.show("<p>a</p>")
+
+    @deck.scene
+    async def second(s):
+        await s.show("<p>b</p>")
+
+    tl = await compile_deck(deck)
+    beat_t = tl.beats[0].t
+    clear_t = next(o.t for o in tl.ops if o.action == "clear")
+    assert clear_t > beat_t

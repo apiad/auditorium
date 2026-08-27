@@ -48,7 +48,7 @@ def _jupyter_to_html(obj: Any) -> str:
     return str(obj)
 
 
-class SlideContext:
+class ConstructionVocabulary:
     """Restricted SceneContext preserving the 3.x slide vocabulary.
 
     Construction methods are timing-agnostic and carry over verbatim; only
@@ -56,13 +56,10 @@ class SlideContext:
     rather than blocking on a wall clock.
     """
 
-    def __init__(self, scene) -> None:
-        self._scene = scene
-        self._target_stack: list[str] = []
 
     # --- Content ---
 
-    async def show(self, content: Any, *, element_id: str | None = None) -> None:
+    async def show(self, content: Any, *, element_id: str | None = None) -> str | None:
         """Append content to the current insertion target.
 
         Accepts any object. Strings are appended as HTML directly. Objects
@@ -80,7 +77,7 @@ class SlideContext:
         }
         if self._target_stack:
             mutation["target"] = f"#{self._target_stack[-1]}"
-        await self._scene._emit_op(mutation)
+        return await self._scene._emit_op(mutation)
 
     async def hide(self, selector: str) -> None:
         """Remove an element from the DOM by CSS selector."""
@@ -271,3 +268,15 @@ class SlideContext:
         """Absolutely position an element at pixel coordinates."""
         from auditorium.layout import place
         await place(self, html, x, y, element_id=element_id)
+
+
+class SlideContext(ConstructionVocabulary):
+    """Restricted context preserving the 3.x slide vocabulary.
+
+    A slide is a scene whose timing vocabulary is limited to `step` and
+    `sleep`; everything else it can do, a scene can do too.
+    """
+
+    def __init__(self, scene) -> None:
+        self._scene = scene
+        self._target_stack: list[str] = []

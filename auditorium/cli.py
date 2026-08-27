@@ -17,7 +17,7 @@ app = typer.Typer(name="auditorium", help="Python-scripted live slide framework"
 
 def _version_callback(value: bool) -> None:
     if value:
-        console.print("auditorium [bold]1!3.6.0[/]")
+        console.print("auditorium [bold]1!4.0.0a1[/]")
         raise typer.Exit()
 
 
@@ -219,55 +219,41 @@ def export(
 
 
 def _start_live_status(application, deck) -> None:
-    """Start a background thread that displays live session status."""
+    """Start a background thread that displays live session status.
+
+    Reports connections only. Per-client position used to be here, but the
+    server no longer knows it: the browser holds the compiled timeline and
+    seeks locally, so asking clients to report back would reintroduce exactly
+    the chatter the timeline model removed.
+    """
     import threading
     from rich.live import Live
     from rich.table import Table
 
     def _render():
         table = Table(show_header=True, header_style="dim", box=None, padding=(0, 1))
+        table.add_column("Mode", style="dim", width=12)
+        table.add_column("Connections", width=16)
+        table.add_column("Scenes", width=8)
+        table.add_column("Presenter", width=14)
+
+        total = len(deck.slides) if deck else 0
 
         if application.state.presenter_mode:
-            # Shared mode: one row with audience count + presenter status
-            table.add_column("Audience", width=10)
-            table.add_column("Slide", width=24)
-            table.add_column("Status", width=10)
-            table.add_column("Presenter", width=14)
-
             pres = application.state.shared_pres
-            if not pres.has_clients:
-                table.add_row("", "[dim]No connections[/]", "", "")
-            else:
-                n_audience = len(pres.audience_clients)
-                slide_idx = pres.current_slide
-                total = len(deck.slides) if deck else 0
-                slide_name = deck.slides[slide_idx].name if deck and slide_idx < len(deck.slides) else ""
-                task_status = "[green]running[/]" if pres.slide_task and not pres.slide_task.done() else "[yellow]waiting[/]" if pres.step_event else "idle"
-                presenter_status = "[green]connected[/]" if pres.presenter_ws else "[dim]none[/]"
-                audience_label = f"{n_audience} tab{'s' if n_audience != 1 else ''}" if n_audience else "[dim]none[/]"
-                table.add_row(audience_label, f"{slide_idx + 1}/{total} [dim]{slide_name}[/]", task_status, presenter_status)
+            n = len(pres.audience_clients)
+            conns = f"{n} tab{'s' if n != 1 else ''}" if n else "[dim]none[/]"
+            presenter = "[green]connected[/]" if pres.presenter_ws else "[dim]none[/]"
+            table.add_row("shared", conns, str(total), presenter)
         else:
-            # Independent mode: one row per session
-            table.add_column("Session", style="dim", width=8)
-            table.add_column("Slide", width=24)
-            table.add_column("Status", width=10)
-
-            sessions = application.state.sessions
-            if not sessions:
-                table.add_row("", "[dim]No connections[/]", "")
-            else:
-                for i, pres in enumerate(sessions.values()):
-                    slide_idx = pres.current_slide
-                    total = len(deck.slides) if deck else 0
-                    slide_name = deck.slides[slide_idx].name if deck and slide_idx < len(deck.slides) else ""
-                    task_status = "[green]running[/]" if pres.slide_task and not pres.slide_task.done() else "[yellow]waiting[/]" if pres.step_event else "idle"
-                    table.add_row(f"#{i + 1}", f"{slide_idx + 1}/{total} [dim]{slide_name}[/]", task_status)
+            n = len(application.state.sessions)
+            conns = f"{n} tab{'s' if n != 1 else ''}" if n else "[dim]none[/]"
+            table.add_row("independent", conns, str(total), "[dim]n/a[/]")
 
         return table
 
     def _run():
         import time
-        # Wait for server to start
         time.sleep(1)
         with Live(_render(), console=console, refresh_per_second=2, transient=True) as live:
             while True:

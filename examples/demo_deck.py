@@ -2,7 +2,7 @@
 
 Organised by section dividers so the tour is easy to follow:
 
-    Intro → Layouts → Animations → Blocks → Typography → Themes
+    Intro → Layouts → Animations → Blocks → Typography → Themes → Scenes
 
 Use as living documentation: every primitive should appear at least once,
 and every change to behaviour should be reflected here.
@@ -10,15 +10,15 @@ and every change to behaviour should be reflected here.
 
 from auditorium import Deck
 
-deck = Deck(title="Auditorium 3.5 Tour", theme=["simple", "light"])
+deck = Deck(title="Auditorium 4.0 Tour", theme=["simple", "light"])
 
 
 # --- Intro -------------------------------------------------------------
 
 @deck.slide
 async def title_slide(ctx):
-    """Welcome the audience. The headline tour of Auditorium 3.5."""
-    await ctx.title("Auditorium 3.5")
+    """Welcome the audience. The headline tour of Auditorium 4.0."""
+    await ctx.title("Auditorium 4.0")
     await ctx.subtitle("Python-scripted live presentations")
     await ctx.step()
     await ctx.md("*A tour of every primitive — in one deck.*")
@@ -360,11 +360,59 @@ async def transitions_demo(ctx):
     await ctx.md("Override per deck with `Deck(transition=...)` or per run with `--transition`.")
 
 
+# --- Scenes (4.0) ------------------------------------------------------
+
+@deck.scene(title="Scenes")
+async def scenes_intro(s):
+    """Scenes are the 4.0 authoring surface: a timeline, not a slide."""
+    await s.section("Scenes", number="06")
+
+
+@deck.scene(title="Animation")
+async def animation(s):
+    """`play` records an animation; `beat` is where a keypress lands.
+
+    Nothing here runs in real time -- the deck compiles to a timeline, so
+    this same code drives interactive playback and a deterministic render.
+    """
+    await s.title("Animation")
+    box = await s.show(
+        "<div class='aud-block aud-block-info'>"
+        "<div class='aud-block-title'>I move</div></div>"
+    )
+    await s.play(box.animate.fade_in(), run_time=0.4)
+    await s.beat()
+    await s.play(box.animate.move_to(280, 0), run_time=0.8, ease="out-cubic")
+    await s.beat()
+    await s.play(box.animate.scale_to(1.4), run_time=0.4, ease="out-back")
+
+
+@deck.scene(title="Overlap")
+async def overlap(s):
+    """Several animations in one `play` overlap; `lag` staggers them.
+
+    This is what a timeline buys that step-by-step reveals cannot express.
+    """
+    await s.title("Overlap and stagger")
+    bars = [
+        await s.show(f"<div class='aud-block aud-block-note'>bar {i}</div>")
+        for i in range(4)
+    ]
+    await s.play(*[b.animate.fade_in() for b in bars], run_time=0.5, lag=0.15)
+    await s.beat()
+    await s.play(
+        *[b.animate.move_to(60 * i, 0) for i, b in enumerate(bars)],
+        run_time=0.7,
+        ease="out-cubic",
+        lag=0.08,
+    )
+
+
 # --- Outro -------------------------------------------------------------
 
 @deck.slide
 async def fin(ctx):
     """Thank the audience. Mention the GitHub repo."""
     await ctx.title("Thank You")
-    await ctx.subtitle("Built with Auditorium 3.5")
+    await ctx.subtitle("Built with Auditorium 4.0")
     await ctx.md("*github.com/apiad/auditorium*")

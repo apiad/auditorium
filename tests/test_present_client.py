@@ -25,15 +25,31 @@ def _deck():
 
 @pytest_asyncio.fixture
 async def live_server():
+    """A uvicorn server on an EPHEMERAL port, with a bounded startup wait.
+
+    Both details are load-bearing. A fixed port makes the second test in the
+    file hang forever on `while not server.started`, because the first test's
+    socket has not been released yet; and an unbounded wait turns any startup
+    failure into a hang rather than a failure, which is strictly harder to
+    diagnose than a red test.
+    """
     config = uvicorn.Config(
-        create_app(_deck()), host="127.0.0.1", port=8765, log_level="warning"
+        create_app(_deck()), host="127.0.0.1", port=0, log_level="warning"
     )
     server = uvicorn.Server(config)
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
+
+    deadline = 10.0
     while not server.started:
         await asyncio.sleep(0.05)
-    yield "http://127.0.0.1:8765"
+        deadline -= 0.05
+        if deadline <= 0:
+            server.should_exit = True
+            raise RuntimeError("uvicorn did not start within 10s")
+
+    port = server.servers[0].sockets[0].getsockname()[1]
+    yield f"http://127.0.0.1:{port}"
     server.should_exit = True
     thread.join(timeout=5)
 

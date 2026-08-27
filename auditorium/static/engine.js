@@ -27,6 +27,11 @@ const PROP_SETTERS = {
   ],
 };
 
+// The slide root's baseline class. reset() must restore it: the old client
+// re-set it on every slide, and without that the base layout class is absent
+// and aud-layout-mode leaks from the first slide that uses columns onward.
+const ROOT_BASE_CLASS = "aud-slide-root";
+
 export const AuditoriumEngine = {
   _tl: null,
   _applied: 0,
@@ -49,7 +54,10 @@ export const AuditoriumEngine = {
 
   reset() {
     const root = document.getElementById("slide-root");
-    if (root) root.innerHTML = "";
+    if (root) {
+      root.innerHTML = "";
+      root.className = ROOT_BASE_CLASS;
+    }
     this._applied = 0;
     this._t = 0;
     this._anchored = [];
@@ -86,7 +94,10 @@ export const AuditoriumEngine = {
   _applyOp(op) {
     const root = document.getElementById("slide-root");
     if (!root) return;
-    if (op.action === "append") {
+    if (op.action === "clear") {
+      root.innerHTML = "";
+      root.className = ROOT_BASE_CLASS;
+    } else if (op.action === "append") {
       const node = this._tl.nodes.find((n) => n.id === op.node);
       if (!node) return;
       const el = document.createElement("div");
