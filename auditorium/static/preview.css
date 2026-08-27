@@ -1,0 +1,106 @@
+/* The preview client's own chrome. Kept out of theme.css because it belongs
+   to the authoring surface, not to any deck's appearance -- a theme must
+   never be able to restyle the scrubber. */
+
+body.aud-preview {
+    display: block;
+    background: #1f2937;
+    overflow: hidden;
+}
+
+#preview-viewport {
+    position: relative;
+    width: 100vw;
+    overflow: hidden;
+}
+
+/* Fixed logical size; JS sets the scale to fit. Sized in px rather than vw/vh
+   so the stage is the render target, not the window. */
+#preview-stage {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    transform-origin: top left;
+    background: var(--aud-slide-bg, #fff);
+}
+
+/* Inside the preview the stage is the viewport, so the slide fills it rather
+   than letterboxing against the window. */
+#preview-stage #slide-root {
+    width: 1920px;
+    height: 1080px;
+}
+
+#preview-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 0.75rem;
+    background: #111827;
+    color: #d1d5db;
+    font-family: monospace;
+    font-size: 0.8rem;
+    z-index: 100;
+}
+
+#preview-bar button {
+    background: #374151;
+    color: #f9fafb;
+    border: none;
+    border-radius: 0.25rem;
+    width: 2rem;
+    height: 1.75rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+#preview-bar button:hover { background: #4b5563; }
+
+#scrub-wrap {
+    position: relative;
+    flex: 1;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+}
+
+#scrub {
+    width: 100%;
+    margin: 0;
+    position: relative;
+    z-index: 2;
+    accent-color: #f59e0b;
+}
+
+#beat-ticks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.beat-tick {
+    position: absolute;
+    top: 0.25rem;
+    bottom: 0.25rem;
+    width: 1px;
+    background: #6b7280;
+}
+
+#loop-band {
+    position: absolute;
+    top: 0.25rem;
+    bottom: 0.25rem;
+    background: rgba(245, 158, 11, 0.25);
+    pointer-events: none;
+    z-index: 0;
+    display: none;
+}
+
+.readout { white-space: nowrap; }
+.readout-dim { color: #6b7280; }

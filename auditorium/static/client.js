@@ -42,6 +42,7 @@ export function createPlayer({ engine, onFrame }) {
   const player = {
     engine,
     beats: [],
+    beatHolds: [],
     markers: [],
     duration: 0,
     fps: 30,
@@ -53,6 +54,7 @@ export function createPlayer({ engine, onFrame }) {
 
     load(tl) {
       this.beats = (tl.beats || []).map((b) => b.t);
+      this.beatHolds = (tl.beats || []).filter((b) => b.hold_ms > 0);
       this.markers = tl.markers || [];
       this.duration = (tl.meta && tl.meta.duration_ms) || 0;
       this.fps = (tl.meta && tl.meta.fps) || 30;
@@ -126,6 +128,50 @@ export function createPlayer({ engine, onFrame }) {
       // itself.
       for (const b of this.beats) if (b < from - 1) target = b;
       return target;
+    },
+
+    /** The output frame index a render would give timeline position `t`.
+     *
+     * Not simply `t * fps`: beats have no length in the timeline, but a
+     * render dwells on each one for its hold_ms (see render_schedule in
+     * render.py). Reporting bare timeline frames would tell an author
+     * "frame 137 / 302" for a deck that renders to 2821 frames — a readout
+     * that disagrees with both the file they get and the --from/--to range
+     * they would pass to address it.
+     *
+     * The integer truncation mirrors render_schedule exactly, and
+     * tests/test_preview_frames.py asserts the two agree; they are two
+     * implementations of one rule, so drift has to be caught mechanically.
+     */
+    renderFrameOf(t) {
+      // Rounded, not truncated. Frame i sits at trunc(i * 1000 / fps), which
+      // is BELOW the exact time, so truncating back gives i-1: at 30fps frame
+      // 1 is 33ms and trunc(33 * 30 / 1000) is 0. Truncation is not its own
+      // inverse, and the whole readout was off by one frame because of it.
+      const i = Math.round(t * this.fps / 1000);
+      // A beat's dwell is emitted AFTER the frame that first reaches it, so
+      // the frame at a beat does not yet carry its own hold -- only beats the
+      // PREVIOUS frame had already reached shift this one.
+      const prev = i > 0 ? Math.trunc((i - 1) * 1000 / this.fps) : -1;
+      let frame = i;
+      for (const b of this.beatHolds) {
+        if (b.t <= prev) frame += Math.trunc(b.hold_ms * this.fps / 1000);
+      }
+      return frame;
+    },
+
+    /** How many frames a render of this timeline would produce. */
+    renderFrameCount() {
+      const n = Math.trunc(this.duration * this.fps / 1000);
+      // A beat past the last frame time never gets dwelt on, so it must not
+      // be counted. duration_ms includes a trailing beat's hold, which is
+      // exactly when that case arises.
+      const last = n > 0 ? Math.trunc((n - 1) * 1000 / this.fps) : -1;
+      let total = n;
+      for (const b of this.beatHolds) {
+        if (b.t <= last) total += Math.trunc(b.hold_ms * this.fps / 1000);
+      }
+      return total;
     },
 
     /** The scene in progress at `t` — the last marker at or before it. */

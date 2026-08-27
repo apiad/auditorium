@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditorium – Preview</title>
+
+    <!-- All assets are local — no outbound requests -->
+    <link rel="stylesheet" href="/static/theme.css">
+    <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="/static/vendor/hljs/styles/github.min.css">
+    <script src="/static/vendor/katex/katex.min.js"></script>
+    <script src="/static/vendor/katex/contrib/auto-render.min.js"></script>
+    <script src="/static/vendor/hljs/highlight.min.js"></script>
+    <!--AUDITORIUM_THEME_OVERRIDES-->
+    <link rel="stylesheet" href="/static/preview.css">
+</head>
+<body class="aud-preview">
+    <div id="preview-viewport">
+        <!-- Fixed logical size, scaled by transform. Resizing the box instead
+             would reflow rem-sized type and show the author a layout the
+             renderer never produces. A transform scales pixels, which is what
+             a preview is for.
+
+             The transform also gives the chrome its containing block: a
+             transformed element contains its position:fixed descendants, so
+             the slots and the indicator stay inside the stage for free. -->
+        <div id="preview-stage">
+            <div id="slide-root" class="aud-slide-root"></div>
+            <div class="aud-chrome aud-chrome-header"></div>
+            <div class="aud-chrome aud-chrome-footer"></div>
+            <div class="aud-chrome aud-chrome-left"></div>
+            <div class="aud-chrome aud-chrome-right"></div>
+            <div id="slide-indicator"></div>
+        </div>
+    </div>
+
+    <div id="preview-bar">
+        <button id="playpause" title="Play / pause (space)">▶</button>
+        <div id="scrub-wrap">
+            <input type="range" id="scrub" min="0" max="0" step="1" value="0">
+            <div id="beat-ticks"></div>
+            <div id="loop-band"></div>
+        </div>
+        <span id="time-readout" class="readout">00:00.000 / 00:00.000</span>
+        <span id="frame-readout" class="readout">frame 0 / 0</span>
+        <span id="loop-readout" class="readout readout-dim">loop off</span>
+        <span id="connection-status"></span>
+    </div>
+
+    <script type="module">
+    import { AuditoriumEngine } from "/static/engine.js";
+    import { connect, createPlayer, formatTime, installDecoration } from "/static/client.js";
+    window.AuditoriumEngine = AuditoriumEngine;
+
+    const stage = document.getElementById('preview-stage');
+    const viewport = document.getElementById('preview-viewport');
+    const scrub = document.getElementById('scrub');
+    const ticks = document.getElementById('beat-ticks');
+    const band = document.getElementById('loop-band');
+    const timeReadout = document.getElementById('time-readout');
+    const frameReadout = document.getElementById('frame-readout');
+    const loopReadout = document.getElementById('loop-readout');
+    const playpause = document.getElementById('playpause');
+    const statusEl = document.getElementById('connection-status');
+
+    const loop = { in: 0, out: 0, enabled: false };
+    let loops = 0;      // completed wraps, for tests and for the readout
+    let reloads = 0;
+
+    installDecoration(AuditoriumEngine);
+
+    // Stepping works in TIMELINE frames: they are what seek(t) addresses, and
+    // the index is authoritative with time derived from it, so stepping
+    // forward N times lands exactly where seeking to frame N does.
+    //
+    // The readout instead reports RENDER frames, which additionally count the
+    // dwell a render spends on each beat. The two differ for slide decks (the
+    // shim holds 1.5s per beat) and coincide for scenes. Reporting timeline
+    // frames there would have told an author "frame 137 / 302" about a deck
+    // that renders to 2821 -- and 302 is not a number any --from/--to can use.
+    const frameOf = (t) => Math.round(t * player.fps / 1000);
+    const timeOf = (frame) => Math.round(frame * 1000 / player.fps);
+
+    const player = createPlayer({
+        engine: AuditoriumEngine,
+        onFrame(p) {
+            const t = p.t;
+            const n = p.beatIndex(t) + 1;
+            const total = p.beats.length + 1;
+            const indicator = document.getElementById('slide-indicator');
+            if (indicator) indicator.textContent = n + ' / ' + total;
+            const style = document.documentElement.style;
+            style.setProperty('--aud-slide-number', n);
+            style.setProperty('--aud-slide-total', total);
+
+            scrub.value = Math.round(t);
+            timeReadout.textContent = formatTime(t) + ' / ' + formatTime(p.duration);
+            frameReadout.textContent =
+                'frame ' + p.renderFrameOf(t) + ' / ' + p.renderFrameCount();
+            playpause.textContent = p.playing ? '❚❚' : '▶';
+        },
+    });
+
+    function fitStage() {
+        const bar = document.getElementById('preview-bar').offsetHeight;
+        const availW = window.innerWidth;
+        const availH = window.innerHeight - bar;
+        const scale = Math.min(availW / 1920, availH / 1080);
+        stage.style.transform = 'scale(' + scale + ')';
+        viewport.style.height = availH + 'px';
+    }
+
+    function drawTicks() {
+        ticks.innerHTML = '';
+        if (!player.duration) return;
+        for (const b of player.beats) {
+            const tick = document.createElement('div');
+            tick.className = 'beat-tick';
+            tick.style.left = (b / player.duration * 100) + '%';
+            ticks.appendChild(tick);
+        }
+    }
+
+    function drawLoopBand() {
+        if (!loop.enabled || !player.duration) {
+            band.style.display = 'none';
+            loopReadout.textContent = 'loop off';
+            loopReadout.classList.add('readout-dim');
+            return;
+        }
+        band.style.display = 'block';
+        band.style.left = (loop.in / player.duration * 100) + '%';
+        band.style.width = ((loop.out - loop.in) / player.duration * 100) + '%';
+        loopReadout.textContent =
+            'loop ' + formatTime(loop.in) + '–' + formatTime(loop.out);
+        loopReadout.classList.remove('readout-dim');
+    }
+
+    /** Play to the loop's out point and wrap, or to the end and stop.
+     *
+     * The wrap seeks backward, so the engine resets and replays (D5). That
+     * is not a cost to work around -- it is why a loop shows exactly what a
+     * renderer would produce for the range.
+     */
+    function play() {
+        if (loop.enabled && loop.out > loop.in) {
+            if (player.t < loop.in || player.t >= loop.out) player.seekTo(loop.in);
+            player.playTo(loop.out, () => { loops += 1; player.seekTo(loop.in); play(); });
+        } else {
+            player.playTo(player.duration);
+        }
+    }
+
+    function playPause() {
+        if (player.playing) player.pause();
+        else play();
+        playpause.textContent = player.playing ? '❚❚' : '▶';
+    }
+
+    function stepFrames(delta) {
+        player.pause();
+        const frame = Math.max(0, Math.min(frameOf(player.duration), frameOf(player.t) + delta));
+        player.seekTo(timeOf(frame));
+    }
+
+    async function reload() {
+        const held = player.t;
+        player.pause();
+        await player.fetchAndLoad();
+        drawTicks();
+        scrub.max = player.duration;
+        // Hold t, not node identity. If the edit changed what exists at that
+        // instant the author sees the new scene at the old time, which is the
+        // useful behaviour and the only one a pure timeline can offer.
+        player.seekTo(Math.min(held, player.duration));
+        reloads += 1;
+    }
+
+    scrub.addEventListener('input', () => {
+        player.pause();
+        player.seekTo(Number(scrub.value));
+    });
+    playpause.addEventListener('click', playPause);
+    window.addEventListener('resize', fitStage);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' && e.key !== ' ') return;
+        switch (e.key) {
+            case ' ': e.preventDefault(); playPause(); break;
+            case '.': e.preventDefault(); stepFrames(1); break;
+            case ',': e.preventDefault(); stepFrames(-1); break;
+            case 'ArrowRight': e.preventDefault(); player.seekTo(player.nextBeat(player.t)); break;
+            case 'ArrowLeft': e.preventDefault(); player.seekTo(player.prevBeat(player.t)); break;
+            case 'i': e.preventDefault(); loop.in = player.t; drawLoopBand(); break;
+            case 'o': e.preventDefault(); loop.out = player.t; drawLoopBand(); break;
+            case 'l': e.preventDefault(); loop.enabled = !loop.enabled; drawLoopBand(); break;
+            case 'x': e.preventDefault(); loop.enabled = false; loop.in = loop.out = 0; drawLoopBand(); break;
+            case 'Home': e.preventDefault(); player.seekTo(0); break;
+            case 'End': e.preventDefault(); player.seekTo(player.duration); break;
+        }
+    });
+
+    window.__auditorium_preview = {
+        state: () => ({
+            t: player.t,
+            frame: frameOf(player.t),
+            renderFrame: player.renderFrameOf(player.t),
+            renderFrameCount: player.renderFrameCount(),
+            playing: player.playing,
+            loop: { in: loop.in, out: loop.out, enabled: loop.enabled },
+            loops,
+            reloads,
+        }),
+        setLoop(inMs, outMs) { loop.in = inMs; loop.out = outMs; drawLoopBand(); },
+        toggleLoop() { loop.enabled = !loop.enabled; drawLoopBand(); },
+        playPause,
+        stepFrames,
+        reload,
+    };
+
+    connect({
+        role: 'audience',
+        onStatus(state) {
+            statusEl.innerHTML = '<span class="aud-dot aud-dot-' + state + '"></span>';
+        },
+        onReload: reload,
+    });
+
+    (async function () {
+        await player.fetchAndLoad();
+        scrub.max = player.duration;
+        drawTicks();
+        drawLoopBand();
+        fitStage();
+        // Opens paused at zero. An authoring surface that starts playing
+        // fights the author.
+        player.seekTo(0);
+    })();
+    </script>
+</body>
+</html>

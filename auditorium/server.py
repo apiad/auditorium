@@ -82,6 +82,15 @@ def create_app(deck: Deck | None = None, presenter_mode: bool = False) -> FastAP
         html = html.replace("<!--AUDITORIUM_THEME_OVERRIDES-->", overrides)
         return HTMLResponse(html)
 
+    @app.get("/preview")
+    async def preview_page() -> HTMLResponse:
+        """The authoring surface. Needs no mode flag, unlike /presenter:
+        previewing is never shared, so there is no session it can be wrong for.
+        """
+        html = (STATIC_DIR / "preview.html").read_text()
+        overrides = deck.theme_style_block() if deck else ""
+        return HTMLResponse(html.replace("<!--AUDITORIUM_THEME_OVERRIDES-->", overrides))
+
     @app.get("/presenter")
     async def presenter_page() -> HTMLResponse:
         if not app.state.presenter_mode:

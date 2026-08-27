@@ -158,3 +158,8 @@ dmypy.json
 demo_deck.html
 demo_deck.pdf
 *.webm
+
+# The client shells are shipped source, not build output. The blanket *.html
+# rule above would drop them from the wheel -- and a missing preview.html is a
+# 500 on /preview that nothing in the test suite would notice.
+!auditorium/static/*.html

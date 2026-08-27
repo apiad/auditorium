@@ -75,7 +75,9 @@ def _load_deck(deck_path: Path):
     raise typer.Exit(1)
 
 
-def _print_banner(deck, host: str, port: int, presenter: bool = False) -> None:
+def _print_banner(
+    deck, host: str, port: int, presenter: bool = False, landing: str = "/"
+) -> None:
     """Print a startup banner with deck info."""
     from rich.panel import Panel
     from rich.text import Text
@@ -88,7 +90,7 @@ def _print_banner(deck, host: str, port: int, presenter: bool = False) -> None:
     body.append(str(len(deck.slides)))
     body.append("\n")
     body.append("URL:    ", style="dim")
-    body.append(f"http://{host}:{port}", style="bold cyan")
+    body.append(f"http://{host}:{port}{landing}", style="bold cyan")
     body.append("\n")
     body.append("Mode:   ", style="dim")
     if presenter:
@@ -119,12 +121,40 @@ def run(
         console.print(f"[red]Error:[/] {deck_path} not found")
         raise typer.Exit(1)
 
+    _serve(
+        deck_path, host, port, open_browser, watch, theme, transition,
+        presenter=presenter, public=public, relay_host=relay_host,
+        public_name=public_name,
+    )
+
+
+def _serve(
+    deck_path: Path,
+    host: str,
+    port: int,
+    open_browser: bool,
+    watch: bool,
+    theme: list[str] | None,
+    transition: str | None,
+    *,
+    presenter: bool = False,
+    public: bool = False,
+    relay_host: str = "",
+    public_name: str | None = None,
+    landing: str = "/",
+) -> None:
+    """Compile, serve, and optionally open a deck.
+
+    Shared by ``run`` and ``preview``: the two differ only in which surface
+    they open and whether shared navigation is enabled, so the lifecycle is
+    written once rather than kept in step by hand.
+    """
     deck = _load_deck(deck_path)
     _apply_theme_override(deck, theme, transition)
     from auditorium.server import create_app
 
     application = create_app(deck, presenter_mode=presenter)
-    _print_banner(deck, host, port, presenter)
+    _print_banner(deck, host, port, presenter, landing)
 
     if watch:
         _setup_watcher(application, deck_path, theme, transition)
@@ -139,7 +169,7 @@ def run(
         def _open():
             import time
             time.sleep(0.5)
-            webbrowser.open(f"http://{host}:{port}")
+            webbrowser.open(f"http://{host}:{port}{landing}")
             if presenter:
                 time.sleep(0.3)
                 webbrowser.open(f"http://{host}:{port}/presenter")
@@ -150,6 +180,28 @@ def run(
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     uvicorn.run(application, host=host, port=port, log_level="warning")
+
+
+@app.command()
+def preview(
+    deck_path: Path = typer.Argument(..., help="Path to the deck.py file"),
+    host: str = typer.Option("127.0.0.1", help="Host to bind to"),
+    port: int = typer.Option(8000, help="Port to bind to"),
+    open_browser: bool = typer.Option(True, "--open/--no-open", help="Open browser automatically"),
+    watch: bool = typer.Option(True, "--watch/--no-watch", help="Watch for file changes and hot-reload"),
+    theme: list[str] = typer.Option(None, "--theme", help="Override the deck theme. Pass multiple times to stack."),
+    transition: str = typer.Option(None, "--transition", help="Override the slide transition."),
+) -> None:
+    """Open the authoring preview: scrubber, frame stepping, loop-a-range."""
+    deck_path = deck_path.resolve()
+    if not deck_path.exists():
+        console.print(f"[red]Error:[/] {deck_path} not found")
+        raise typer.Exit(1)
+
+    _serve(
+        deck_path, host, port, open_browser, watch, theme, transition,
+        landing="/preview",
+    )
 
 
 @app.command()
