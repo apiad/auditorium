@@ -66,3 +66,30 @@ async def test_audio_is_truncated_to_the_video_length(tmp_path, tone):
 async def test_a_deck_without_audio_still_renders(tmp_path):
     out = await render_video(_deck(), tmp_path / "o.mp4", fps=10, size=(320, 240))
     assert out.exists()
+
+
+async def test_audio_at_offset_delays_the_tone(tmp_path, tone):
+    """`at=` is part of the declared contract, so it needs a test.
+
+    It was implemented via ffmpeg's -itsoffset but nothing exercised a
+    non-zero value -- a parameter that is accepted and silently discarded is
+    worse than one that does not exist, because callers trust it.
+    """
+    deck = Deck("Offset")
+    deck.audio(tone, at=1.0)
+
+    @deck.scene
+    async def one(s):
+        h = await s.show("<p>x</p>")
+        await s.play(h.animate.fade_in(), run_time=2.0)
+
+    out = await render_video(deck, tmp_path / "o.mp4", fps=10, size=(320, 240))
+    start = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "a:0",
+         "-show_entries", "stream=start_time", "-of", "csv=p=0", str(out)],
+        capture_output=True, text=True,
+    ).stdout.strip()
+    assert start, "no audio stream in the output"
+    assert float(start) == pytest.approx(1.0, abs=0.15), (
+        f"audio starts at {start}s, expected ~1.0s -- at= was discarded"
+    )
