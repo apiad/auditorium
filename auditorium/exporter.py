@@ -81,6 +81,9 @@ async def export_deck(
                     transition-duration: 0s !important;
                     transition-delay: 0s !important;
                 }
+                /* The connection dot reports a live WebSocket. In a still it
+                   is a green speck of nothing, so it does not belong there. */
+                #connection-status { display: none !important; }
             """
 
             # The deck is a timeline now, not a sequence of slide URLs: load the
@@ -120,7 +123,14 @@ async def export_deck(
             ) as progress:
                 task = progress.add_task(f"Exporting {fmt.upper()}", total=len(stops))
                 for i, t in enumerate(stops):
-                    await page.evaluate("(t) => window.AuditoriumEngine.seek(t)", t)
+                    # Drive through the client's seek wrapper, not the engine
+                    # directly: the wrapper also updates chrome, and skipping
+                    # it freezes the slide indicator at its load-time value on
+                    # every captured frame.
+                    await page.evaluate(
+                        "(t) => (window.__auditoriumShow || window.AuditoriumEngine.seek)(t)",
+                        t,
+                    )
                     await _capture(page, fmt, output, slide_doms, i, None)
                     progress.update(task, advance=1)
 

@@ -120,6 +120,11 @@
         AuditoriumEngine.seek(0);
         updateChrome();
         window.__auditorium_duration = duration;
+        // Exported stills and rendered frames must drive chrome the same way
+        // interactive playback does. Calling AuditoriumEngine.seek() directly
+        // skips updateChrome(), which freezes the slide indicator at whatever
+        // it read on load -- burning one wrong page number into every frame.
+        window.__auditoriumShow = seekTo;
         window.__auditorium_ready = true;
         playTo(nextBeat(0));
     }
