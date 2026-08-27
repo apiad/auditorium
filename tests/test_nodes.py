@@ -83,3 +83,37 @@ def test_a_dom_node_carries_no_svg_payload():
     tl.nodes.append(Node(id="n1", layer="dom", html="<p>x</p>"))
     back = Timeline.from_dict(json.loads(json.dumps(tl.to_dict())))
     assert back.nodes[0].svg is None
+
+
+def test_a_node_defaults_to_the_first_series():
+    """Not currentColor: that made every shape on every theme the same colour."""
+    assert Line(from_=(0, 0), to=(1, 1)).to_svg_dict()["stroke"] == "var(--aud-geom-1)"
+
+
+def test_a_series_names_a_role_not_a_colour():
+    assert Path("M0,0", series=3).to_svg_dict()["stroke"] == "var(--aud-geom-3)"
+
+
+def test_muted_geometry_gets_the_reference_colour():
+    d = Line(from_=(0, 0), to=(1, 1), muted=True).to_svg_dict()
+    assert d["stroke"] == "var(--aud-geom-muted)"
+
+
+def test_an_explicit_stroke_still_wins():
+    d = Circle(at=(0, 0), r=5, stroke="#f00", series=2).to_svg_dict()
+    assert d["stroke"] == "#f00"
+
+
+def test_width_defaults_to_the_theme_variable():
+    assert Line(from_=(0, 0), to=(1, 1)).to_svg_dict()["width"] == "var(--aud-geom-width)"
+
+
+def test_an_explicit_width_still_wins():
+    assert Line(from_=(0, 0), to=(1, 1), width=8).to_svg_dict()["width"] == 8
+
+
+def test_a_series_outside_the_palette_is_rejected():
+    """Four is the cap; a fifth would resolve to an undefined variable and
+    render black on every theme with no error."""
+    with pytest.raises(ValueError, match="series"):
+        Line(from_=(0, 0), to=(1, 1), series=5)

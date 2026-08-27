@@ -37,3 +37,15 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
 }
 #slide-root .aud-slide-title { text-shadow: none; }
 :root { --aud-transition: none; }
+
+/* ---- Geometry palette ----
+ * Chosen to survive a monochrome laser printer, where anything
+ * lighter than mid-grey disappears into the paper. */
+:root {
+    --aud-geom-1: #000000;
+    --aud-geom-2: #4a4a4a;
+    --aud-geom-3: #7a7a7a;
+    --aud-geom-4: #2a2a2a;
+    --aud-geom-muted: #b0b0b0;
+    --aud-geom-width: 2.5;
+}

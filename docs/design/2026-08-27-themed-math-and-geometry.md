@@ -2,7 +2,7 @@
 type: design_doc
 date: 2026-08-27
 title: "Themed maths and geometry"
-status: draft
+status: implemented
 tags: [auditorium, themes, katex, svg, geometry, palette]
 ---
 
@@ -68,13 +68,18 @@ computation — D6 forbids Python resolving *anchors*, not composing a colour.
 
 ### Applying stroke in the engine
 
-Stroke and stroke-width must be set as **CSS properties**, not as SVG
-presentation attributes. `var()` does not resolve inside a presentation
-attribute — `stroke="var(--aud-geom-1)"` as an attribute renders black, silently.
-`el.style.stroke = "var(--aud-geom-1)"` resolves correctly.
+No change. An earlier draft of this document claimed `var()` cannot resolve
+inside an SVG presentation attribute and that the engine would have to switch to
+`el.style`. **That is wrong, and the test written to catch it disproved it
+instead**: SVG2 defines presentation attributes as CSS declarations at the
+lowest specificity, so `stroke="var(--aud-geom-2)"` resolves exactly like a
+style property. Verified in Chromium against a variable set to `rgb(1, 2, 3)`,
+and confirmed non-vacuous by removing the engine's stroke assignment and
+watching the test fail.
 
-`pathLength` and `stroke-dasharray` stay attributes: both are plain numbers and
-`pathLength` has no CSS property form.
+The engine keeps setting attributes. The browser test stays regardless, because
+it is the only check that distinguishes "the attribute was set" from "the shape
+is the colour the theme asked for".
 
 ### KaTeX
 
@@ -128,9 +133,11 @@ wrong against its background rather than invisible. Mitigation: a test asserting
 every colour-axis theme defines every palette variable — mechanical, and it
 fails the day a new theme is added without them.
 
-**`var()` in a presentation attribute.** Renders black on every theme with no
-error. Mitigation: a browser test asserting a themed node's *computed* stroke
-equals the theme's variable value, not merely that the attribute was set.
+**Asserting on the attribute rather than the computed style.** A test reading
+`getAttribute("stroke")` passes whenever the engine wrote *something*, including
+a variable name that failed to resolve. Mitigation: the browser test asserts the
+*computed* stroke against a known colour. This is what caught the false claim
+above.
 
 **Series drift.** An author renumbers a figure's series and the colours shuffle.
 Accepted: that is the cost of explicitness, and it is visible immediately.
@@ -144,9 +151,8 @@ defines all six variables. Parses the existing `(color axis)` marker.
 and an explicit `stroke=` still wins.
 
 **Computed stroke in a browser** — a node with `series=2` under a theme whose
-`--aud-geom-2` is a known colour computes to that colour. This is the test that
-would catch the presentation-attribute trap; asserting on the attribute would
-pass while the shape rendered black.
+`--aud-geom-2` is a known colour computes to that colour. Asserting on the
+attribute instead would pass whenever the engine wrote anything at all.
 
 **KaTeX spacing** — display maths has a margin distinct from a paragraph's.
 
@@ -154,5 +160,5 @@ pass while the shape rendered black.
 
 1. Palette defaults and KaTeX rules in `static/theme.css`; palette in each
    colour theme; the lint.
-2. `series`/`muted` in `nodes.py`; engine applies stroke as a CSS property.
+2. `series`/`muted` in `nodes.py`. The engine needed no change.
 3. `examples/demo.py` rebuilt on top: Fourier partial sums and Newton's method.

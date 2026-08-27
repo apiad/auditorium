@@ -34,3 +34,15 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     border-color: var(--aud-rule);
 }
 :root { --aud-transition: aud-fade; }
+
+/* ---- Geometry palette ----
+ * Amber lead matching the accent; cool secondaries so a pair of
+ * curves separates by hue rather than by brightness alone. */
+:root {
+    --aud-geom-1: #f7c873;
+    --aud-geom-2: #7dd3fc;
+    --aud-geom-3: #f9a8d4;
+    --aud-geom-4: #86efac;
+    --aud-geom-muted: #3f4650;
+    --aud-geom-width: 3;
+}

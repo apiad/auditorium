@@ -66,3 +66,14 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     50% { opacity: 0; }
 }
 :root { --aud-transition: aud-fade; --aud-transition-duration: 0.55s; }
+
+/* ---- Geometry palette ----
+ * The theme's own three accents, in order, plus amber. */
+:root {
+    --aud-geom-1: #00e5ff;
+    --aud-geom-2: #ff2bd6;
+    --aud-geom-3: #b4ff39;
+    --aud-geom-4: #ffd166;
+    --aud-geom-muted: #243049;
+    --aud-geom-width: 3.5;
+}

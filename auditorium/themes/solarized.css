@@ -40,3 +40,14 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     border-color: var(--aud-rule);
 }
 :root { --aud-transition: aud-fade; }
+
+/* ---- Geometry palette ----
+ * Solarized's canonical accent ramp, unaltered. */
+:root {
+    --aud-geom-1: #268bd2;
+    --aud-geom-2: #d33682;
+    --aud-geom-3: #2aa198;
+    --aud-geom-4: #b58900;
+    --aud-geom-muted: #a7b3b3;
+    --aud-geom-width: 3;
+}

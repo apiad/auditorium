@@ -42,3 +42,15 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     border-radius: 0.6em;
 }
 :root { --aud-transition: aud-zoom; }
+
+/* ---- Geometry palette ----
+ * Pastel's accents deepened: the wall colours are too light to
+ * read as a 3px stroke against an almost-white ground. */
+:root {
+    --aud-geom-1: #a855f7;
+    --aud-geom-2: #10b981;
+    --aud-geom-3: #f43f5e;
+    --aud-geom-4: #3b82f6;
+    --aud-geom-muted: #e0d3e8;
+    --aud-geom-width: 3.5;
+}

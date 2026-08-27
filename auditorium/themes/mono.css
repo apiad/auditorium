@@ -43,3 +43,15 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
 }
 #slide-root .aud-slide-title { text-shadow: none; }
 :root { --aud-transition: aud-fade; }
+
+/* ---- Geometry palette ----
+ * Four greys with real luminance gaps. A monochrome figure
+ * separates by value, so the steps have to be wide. */
+:root {
+    --aud-geom-1: #1a1a1a;
+    --aud-geom-2: #767676;
+    --aud-geom-3: #a8a8a8;
+    --aud-geom-4: #4a4a4a;
+    --aud-geom-muted: #d4d4d4;
+    --aud-geom-width: 3;
+}

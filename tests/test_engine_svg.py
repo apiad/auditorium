@@ -329,3 +329,40 @@ async def test_clear_empties_the_overlay_too(browser_page):
     assert await browser_page.evaluate(
         "() => !!document.querySelector('#svg-layer defs #aud-arrowhead')"
     )
+
+
+async def test_a_series_resolves_to_the_theme_colour(browser_page):
+    """The trap this test exists for: var() does NOT resolve inside an SVG
+    presentation attribute. `stroke="var(--aud-geom-2)"` set as an attribute
+    renders black on every theme, silently. Asserting on the attribute would
+    pass while the shape was wrong; only the computed style catches it.
+    """
+    tl = Timeline()
+    tl.nodes.append(Node(id="s1", layer="svg", parent="svg-layer",
+                         svg=Line(from_=(0, 0), to=(100, 100), series=2).to_svg_dict()))
+    tl.ops.append(Op(t=0, action="append", node="s1"))
+    await serve(browser_page, tl.to_dict())
+    await browser_page.evaluate(
+        "() => document.documentElement.style.setProperty('--aud-geom-2', 'rgb(1, 2, 3)')"
+    )
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+    stroke = await browser_page.evaluate(
+        "() => getComputedStyle(document.getElementById('s1')).stroke"
+    )
+    assert stroke == "rgb(1, 2, 3)", f"series did not resolve to the theme colour: {stroke}"
+
+
+async def test_stroke_width_also_resolves_from_the_theme(browser_page):
+    tl = Timeline()
+    tl.nodes.append(Node(id="s1", layer="svg", parent="svg-layer",
+                         svg=Line(from_=(0, 0), to=(100, 100)).to_svg_dict()))
+    tl.ops.append(Op(t=0, action="append", node="s1"))
+    await serve(browser_page, tl.to_dict())
+    await browser_page.evaluate(
+        "() => document.documentElement.style.setProperty('--aud-geom-width', '7')"
+    )
+    await browser_page.evaluate("() => window.AuditoriumEngine.seek(0)")
+    width = await browser_page.evaluate(
+        "() => getComputedStyle(document.getElementById('s1')).strokeWidth"
+    )
+    assert width == "7px", f"width did not resolve from the theme: {width}"

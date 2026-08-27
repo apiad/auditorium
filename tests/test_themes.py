@@ -1,6 +1,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 THEMES = Path(__file__).parent.parent / "auditorium" / "themes"
 STATIC = Path(__file__).parent.parent / "auditorium" / "static"
 
@@ -56,3 +58,38 @@ def test_comments_are_not_scanned_but_real_rules_still_are():
     assert BARE_TRANSITION.search(stripped.splitlines()[0]) is None
     assert BARE_TRANSITION.search(stripped.splitlines()[1]) is not None
     assert len(stripped.splitlines()) == len(css.splitlines())
+
+
+GEOM_VARS = (
+    "--aud-geom-1", "--aud-geom-2", "--aud-geom-3", "--aud-geom-4",
+    "--aud-geom-muted", "--aud-geom-width",
+)
+
+# The axis a theme declares in its own header comment, e.g. "(color axis)".
+COLOR_AXIS = re.compile(r"\(color axis\)")
+
+
+def color_axis_themes():
+    return [p for p in sorted(THEMES.glob("*.css")) if COLOR_AXIS.search(p.read_text())]
+
+
+def test_there_are_color_axis_themes_to_check():
+    """Guard the guard: a broken regex here would make the lint below vacuous."""
+    names = {p.stem for p in color_axis_themes()}
+    assert {"light", "dark", "neon"} <= names
+
+
+@pytest.mark.parametrize("path", color_axis_themes(), ids=lambda p: p.stem)
+def test_every_color_theme_defines_the_geometry_palette(path):
+    """A theme without the palette renders figures in defaults tuned for
+    another background -- wrong rather than invisible, which is worse."""
+    body = strip_comments(path.read_text())
+    missing = [v for v in GEOM_VARS if f"{v}:" not in body]
+    assert not missing, f"{path.name} is missing {missing}"
+
+
+def test_the_base_stylesheet_defines_palette_defaults():
+    """A layout-only theme stack still has to draw something sensible."""
+    body = strip_comments((STATIC / "theme.css").read_text())
+    missing = [v for v in GEOM_VARS if f"{v}:" not in body]
+    assert not missing, f"theme.css is missing {missing}"

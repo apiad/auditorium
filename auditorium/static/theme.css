@@ -27,10 +27,11 @@
     --aud-block-gap: 1.1em;
     --aud-line-height: 1.7;
     --aud-aspect-ratio: 16 / 9;
-    /* Font size scales with the slide's actual rendered size (which is bounded
-       by aspect-ratio inside the viewport), so text stays proportional whether
-       the window is wide or narrow. The multiplier is tuned for a 16:9 slide. */
+    /* Base font size scales with the slide's actual rendered size (bounded by
+       the 16:9 aspect ratio inside the viewport). The live --aud-font-scale
+       multiplier is driven by Ctrl+A / Ctrl+D / Ctrl+0 in the client. */
     --aud-font-size: calc(min(100vw, 100vh * 16 / 9) * 0.022);
+    --aud-font-scale: 1;
     --aud-letterbox-bg: #f4f4f3;
     --aud-slide-bg: #ffffff;
 }
@@ -549,4 +550,47 @@ body {
     font-family: monospace;
     font-size: 0.875rem;
     color: #9ca3af;
+}
+
+/* ---- Geometry palette ----
+ * Defaults for the SVG layer, tuned for a light ground. Colour-axis themes
+ * override every one of these; tests/test_themes.py asserts they do, because a
+ * theme that forgets them draws figures in colours chosen for someone else's
+ * background -- wrong rather than invisible, which is harder to notice.
+ *
+ * Four series is a deliberate cap. A figure needing a fifth simultaneous
+ * colour has passed the point where colour is doing the explaining.
+ */
+
+:root {
+    --aud-geom-1: #2563eb;
+    --aud-geom-2: #dc2626;
+    --aud-geom-3: #059669;
+    --aud-geom-4: #d97706;
+    --aud-geom-muted: #9ca3af;
+    --aud-geom-width: 3;
+}
+
+/* ---- Mathematics ----
+ * Structural only: colour is inherited and needs no rule (measured across
+ * dark, neon and solarized -- KaTeX is legible on all of them). What it does
+ * need is room. Display maths inherits the body's line-height and crowds its
+ * neighbours, and it is usually the single most important thing on the slide.
+ */
+
+#slide-root .katex-display {
+    margin: 0.9em 0;
+    /* Display maths sets its own generous leading; inheriting the body's makes
+       fractions and sums collide with the lines above and below. */
+    line-height: 1.2;
+}
+
+#slide-root .katex {
+    /* Slightly larger than surrounding prose: KaTeX's default optical size is
+       tuned for web body text, which reads small against slide typography. */
+    font-size: 1.08em;
+}
+
+#slide-root .katex-display > .katex {
+    font-size: 1.35em;
 }

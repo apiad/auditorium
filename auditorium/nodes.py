@@ -49,8 +49,20 @@ def _endpoint(value) -> dict:
     return {"point": [x, y]}
 
 
+SERIES_MAX = 4
+
+
 class _Stroked:
     """Shared stroke styling.
+
+    A node names a *role*, never a colour: ``series=2`` means "the second thing
+    in this figure" and the theme decides what that looks like. That is what
+    keeps a figure legible when the theme changes, which is the whole premise
+    of a composable theme system -- a deck authored on ``light`` and presented
+    on ``dark`` keeps its meaning. ``stroke=`` still accepts a literal for
+    anyone who wants one, and ``currentColor`` still works; it is simply no
+    longer the default, because as the default it made every shape on every
+    theme the same undifferentiated foreground colour.
 
     ``dash`` is expressed in NORMALIZED units -- fractions of the shape's own
     length -- because every stroked node is created with ``pathLength="1"`` so
@@ -65,16 +77,41 @@ class _Stroked:
     its own fields first and the styling after.
     """
 
+    def __post_init__(self) -> None:
+        """Validate at construction, not at serialization.
+
+        Defined on the mixin so every node dataclass inherits it -- dataclasses
+        call __post_init__ wherever it is found. A bad series caught here names
+        the offending call; caught at render time it is a black line three
+        layers away from the mistake.
+        """
+        if not 1 <= self.series <= SERIES_MAX:
+            raise ValueError(
+                f"series must be 1..{SERIES_MAX}, got {self.series}. A fifth "
+                "simultaneous colour is past the point where colour explains "
+                "anything, and would resolve to an undefined variable -- which "
+                "renders black on every theme with no error."
+            )
+
     def _stroke_dict(self) -> dict:
-        return {"stroke": self.stroke, "width": self.width, "dash": self.dash}
+        if self.stroke is not None:
+            stroke = self.stroke
+        elif self.muted:
+            stroke = "var(--aud-geom-muted)"
+        else:
+            stroke = f"var(--aud-geom-{self.series})"
+        width = self.width if self.width is not None else "var(--aud-geom-width)"
+        return {"stroke": stroke, "width": width, "dash": self.dash}
 
 
 @dataclass
 class Line(_Stroked):
     from_: object
     to: object
-    stroke: str = "currentColor"
-    width: float = 2
+    series: int = 1
+    muted: bool = False
+    stroke: str | None = None
+    width: float | None = None
     dash: str | None = None
 
     def to_svg_dict(self) -> dict:
@@ -87,8 +124,10 @@ class Arrow(_Stroked):
     """A line that ends in a head. The head is an SVG marker, not a second node."""
     from_: object
     to: object
-    stroke: str = "currentColor"
-    width: float = 2
+    series: int = 1
+    muted: bool = False
+    stroke: str | None = None
+    width: float | None = None
     dash: str | None = None
 
     def to_svg_dict(self) -> dict:
@@ -101,8 +140,10 @@ class Circle(_Stroked):
     at: object
     r: float = 10
     fill: str = "none"
-    stroke: str = "currentColor"
-    width: float = 2
+    series: int = 1
+    muted: bool = False
+    stroke: str | None = None
+    width: float | None = None
     dash: str | None = None
 
     def to_svg_dict(self) -> dict:
@@ -115,8 +156,10 @@ class Circle(_Stroked):
 class Path(_Stroked):
     d: str
     fill: str = "none"
-    stroke: str = "currentColor"
-    width: float = 2
+    series: int = 1
+    muted: bool = False
+    stroke: str | None = None
+    width: float | None = None
     dash: str | None = None
 
     def to_svg_dict(self) -> dict:

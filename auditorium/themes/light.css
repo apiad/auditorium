@@ -31,3 +31,14 @@ body { background: var(--aud-letterbox-bg); color: var(--aud-fg); }
     border-color: var(--aud-rule);
 }
 :root { --aud-transition: aud-fade; }
+
+/* ---- Geometry palette ----
+ * Indigo lead against white, rose as the natural contrast. */
+:root {
+    --aud-geom-1: #4f46e5;
+    --aud-geom-2: #e11d48;
+    --aud-geom-3: #0891b2;
+    --aud-geom-4: #ca8a04;
+    --aud-geom-muted: #9ca3af;
+    --aud-geom-width: 3;
+}
