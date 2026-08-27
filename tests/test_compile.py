@@ -116,3 +116,70 @@ async def test_the_clear_lands_after_the_beat_not_on_it():
     beat_t = tl.beats[0].t
     clear_t = next(o.t for o in tl.ops if o.action == "clear")
     assert clear_t > beat_t
+
+
+async def test_each_slide_contributes_one_marker_at_its_start():
+    deck = Deck("D")
+
+    @deck.slide
+    async def first(ctx):
+        """Opening remarks."""
+        await ctx.title("One")
+        await ctx.step()
+
+    @deck.slide(title="Second slide")
+    async def second(ctx):
+        await ctx.title("Two")
+
+    tl = await compile_deck(deck)
+    assert [m.title for m in tl.markers] == ["first", "Second slide"]
+    assert tl.markers[0].t == 0
+    # The second marker sits at the boundary clear, not before it: at the beat
+    # the outgoing scene is still whole, and the incoming one has not begun.
+    clear_t = next(o.t for o in tl.ops if o.action == "clear")
+    assert tl.markers[1].t == clear_t
+
+
+async def test_the_docstring_becomes_rendered_notes():
+    deck = Deck("D")
+
+    @deck.slide
+    async def only(ctx):
+        """Remember the **punchline**."""
+        await ctx.title("x")
+
+    tl = await compile_deck(deck)
+    assert "<strong>punchline</strong>" in tl.markers[0].notes_html
+
+
+async def test_a_slide_without_a_docstring_has_empty_notes():
+    deck = Deck("D")
+
+    @deck.slide
+    async def only(ctx):
+        await ctx.title("x")
+
+    tl = await compile_deck(deck)
+    assert tl.markers[0].notes_html == ""
+
+
+async def test_an_indented_docstring_is_not_read_as_a_code_block():
+    """Markdown reads four leading spaces as a code block, so notes must dedent.
+
+    The docstring is assigned rather than written inline on purpose. CPython
+    3.13 strips docstring indentation at compile time, so a literal docstring
+    arrives here already flat and this test could not fail on 3.13 — but the
+    project supports 3.12, where it does not. Setting ``__doc__`` directly
+    reproduces the 3.12 shape on any interpreter.
+    """
+    deck = Deck("D")
+
+    @deck.slide
+    async def only(ctx):
+        await ctx.title("x")
+
+    only.__doc__ = "First line.\n\n        Second paragraph.\n        "
+
+    tl = await compile_deck(deck)
+    assert "<code>" not in tl.markers[0].notes_html
+    assert "<p>Second paragraph.</p>" in tl.markers[0].notes_html

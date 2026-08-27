@@ -1,4 +1,6 @@
-from auditorium.timeline import Beat, Node, Op, Timeline, Track
+import json
+
+from auditorium.timeline import Beat, Marker, Node, Op, Timeline, Track
 
 
 def test_empty_timeline_has_zero_duration():
@@ -44,3 +46,22 @@ def test_is_json_serializable():
     tl = Timeline(meta={"title": "T"})
     tl.ops.append(Op(t=0, action="append", node="n1"))
     assert json.loads(json.dumps(tl.to_dict()))["ops"][0]["t"] == 0
+
+
+def test_markers_round_trip_through_json():
+    tl = Timeline(meta={"title": "T"})
+    tl.markers.append(Marker(t=0, title="Intro", notes_html="<p>hi</p>"))
+    tl.markers.append(Marker(t=2500, title="Body"))
+    back = Timeline.from_dict(json.loads(json.dumps(tl.to_dict())))
+    assert [(m.t, m.title, m.notes_html) for m in back.markers] == [
+        (0, "Intro", "<p>hi</p>"),
+        (2500, "Body", ""),
+    ]
+
+
+def test_markers_do_not_extend_the_duration():
+    """A marker labels time; it does not occupy any."""
+    tl = Timeline()
+    tl.ops.append(Op(t=100, action="clear"))
+    tl.markers.append(Marker(t=9999, title="stray"))
+    assert tl.duration_ms == 100

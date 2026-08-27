@@ -90,12 +90,34 @@ class Beat:
 
 
 @dataclass
+class Marker:
+    """A named point on the timeline: where a scene begins, and its notes.
+
+    Carries what the presenter view needs and nothing the engine does. ``seek``
+    ignores markers entirely, and they do not extend the duration — a marker
+    labels time rather than occupying any.
+    """
+    t: int
+    title: str
+    notes_html: str = ""
+
+    def to_dict(self) -> dict:
+        return {"t": self.t, "title": self.title, "notes_html": self.notes_html}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> Marker:
+        return cls(t=d["t"], title=d.get("title", ""),
+                   notes_html=d.get("notes_html", ""))
+
+
+@dataclass
 class Timeline:
     meta: dict = field(default_factory=dict)
     nodes: list[Node] = field(default_factory=list)
     ops: list[Op] = field(default_factory=list)
     tracks: list[Track] = field(default_factory=list)
     beats: list[Beat] = field(default_factory=list)
+    markers: list[Marker] = field(default_factory=list)
     audio: list[dict] = field(default_factory=list)
 
     @property
@@ -114,6 +136,7 @@ class Timeline:
             "ops": [o.to_dict() for o in self.ops],
             "tracks": [t.to_dict() for t in self.tracks],
             "beats": [b.to_dict() for b in self.beats],
+            "markers": [m.to_dict() for m in self.markers],
             "audio": list(self.audio),
         }
 
@@ -127,5 +150,6 @@ class Timeline:
             ops=[Op.from_dict(x) for x in d.get("ops", [])],
             tracks=[Track.from_dict(x) for x in d.get("tracks", [])],
             beats=[Beat.from_dict(x) for x in d.get("beats", [])],
+            markers=[Marker.from_dict(x) for x in d.get("markers", [])],
             audio=list(d.get("audio", [])),
         )

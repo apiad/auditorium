@@ -1,11 +1,27 @@
 """Run a deck to produce a Timeline. Nothing is displayed and nothing sleeps."""
 from __future__ import annotations
 
+import inspect
+
+import markdown
+
 from auditorium.deck import Deck
 from auditorium.scene import SceneContext
-from auditorium.timeline import Timeline
+from auditorium.timeline import Marker, Timeline
 
 SHIM_BEAT_HOLD_MS = 1500
+
+
+def _notes_html(func) -> str:
+    """Render a scene function's docstring as speaker notes.
+
+    ``inspect.getdoc`` rather than ``__doc__`` because on Python 3.12 a
+    docstring's continuation lines carry the source indentation, and markdown
+    reads four leading spaces as a code block. CPython 3.13 strips it at
+    compile time, but the project floor is 3.12.
+    """
+    doc = inspect.getdoc(func)
+    return markdown.markdown(doc, extensions=["extra"]) if doc else ""
 
 
 async def compile_deck(deck: Deck) -> Timeline:
@@ -27,6 +43,10 @@ async def compile_deck(deck: Deck) -> Timeline:
             ctx._beat_hold_ms = hold
             await ctx.beat()
             await ctx.clear()
+
+        ctx._tl.markers.append(
+            Marker(t=ctx.t_ms, title=info.name, notes_html=_notes_html(info.func))
+        )
 
         if is_scene:
             await info.func(ctx)
