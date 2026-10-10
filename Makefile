@@ -1,4 +1,23 @@
-.PHONY: relay relay-install relay-update relay-uninstall relay-status relay-logs
+.PHONY: test lint docs know-how relay relay-install relay-update relay-uninstall relay-status relay-logs
+
+# The gates. CI runs all three on every PR (.github/workflows/tests.yml).
+# Browser tests need `uv run playwright install chromium`; the encode tests
+# skip without ffmpeg on PATH, so a green local run without it proves less.
+test:
+	uv run pytest -q
+
+lint:
+	uv run ruff check auditorium/
+
+# rift lints the agent docs (.rift.yaml). The PyPI package named rift is an
+# unrelated project, so the default installs it from GitHub at a pinned tag;
+# set RIFT=rift to use a local install.
+RIFT ?= uvx -q --from git+https://github.com/apiad/rift@v0.8.1 rift
+docs:
+	$(RIFT) check
+
+know-how:
+	@grep -m1 -H '^when:' know-how/*.md
 
 RELAY_SERVICE = auditorium-relay
 SERVICE_FILE = /etc/systemd/system/$(RELAY_SERVICE).service

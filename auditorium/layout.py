@@ -1,3 +1,10 @@
+"""Flex layout regions: ``columns``, ``rows`` and ``place``.
+
+A ``Region`` is an async context manager; content shown inside its ``with`` block
+lands in that region. A top-level layout adds ``aud-layout-mode`` to
+``#slide-root``, which takes the root out of centred mode so regions can fill the
+stage. Scenes that use one must give their content an explicit height.
+"""
 from __future__ import annotations
 
 import uuid

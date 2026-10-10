@@ -1,3 +1,4 @@
+import re
 import shutil
 
 import pytest
@@ -11,8 +12,11 @@ runner = CliRunner()
 def test_render_command_exists_and_documents_itself():
     result = runner.invoke(app, ["render", "--help"])
     assert result.exit_code == 0
+    # Rich colours the help when it detects CI (GITHUB_ACTIONS is enough), and
+    # the escape codes split "--fps" into "-" and "-fps". Match the plain text.
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.stdout)
     for flag in ["--fps", "--size", "--format", "--audio"]:
-        assert flag in result.stdout
+        assert flag in plain
 
 
 def test_record_is_gone():

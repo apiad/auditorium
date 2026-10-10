@@ -1,0 +1,32 @@
+name: tests
+on:
+  push:
+    branches: [main]
+  # No branches: filter here. It would filter on the PR's target branch, and a
+  # PR aimed anywhere else would run nothing.
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # The suite takes about a minute and a half. A hang should fail the run, not
+    # hold a runner for GitHub's six-hour default.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: { enable-cache: true }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      # The examples extra brings tesserax, which one example deck imports.
+      - run: uv sync --locked --extra examples
+      - run: uv run playwright install --with-deps chromium
+      # The encode, audio and tesserax tests skip rather than fail when these are
+      # missing, so a run without them would be green and prove less. Fail here
+      # instead.
+      - name: Preconditions for the skippable tests
+        run: |
+          ffmpeg -version | head -1
+          ffprobe -version | head -1
+          uv run python -c "import tesserax"
+      - run: make lint
+      - run: make docs
+      - run: make test

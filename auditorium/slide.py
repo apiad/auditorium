@@ -1,3 +1,11 @@
+"""The construction vocabulary, and ``SlideContext``, the 3.x compatibility shim.
+
+``SlideContext`` wraps a ``SceneContext`` (D7). The construction calls (``show``,
+``md``, ``title``, ``columns`` ...) carry no timing and pass through unchanged;
+the two timing calls map onto the timeline: ``step()`` becomes ``beat()`` and
+``sleep(x)`` becomes ``wait(x)``. ``_target_stack`` scopes emitted content to the
+innermost layout region.
+"""
 from __future__ import annotations
 
 import base64

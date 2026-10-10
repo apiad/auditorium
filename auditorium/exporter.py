@@ -22,7 +22,10 @@ async def export_deck(
     theme: list[str] | None = None,
     transition: str | None = None,
 ) -> None:
-    """Export a presentation to PDF, HTML, or PNG.
+    """Export a deck to a self-contained HTML bundle or to PNG stills.
+
+    Drives the deck by seeking to each beat. There is no PDF: a timeline has no
+    canonical instant to print, so 4.0 removed the format rather than guess one.
 
     The *step_by_step* parameter is accepted for forward compatibility but is
     not yet implemented -- the current version always captures the final DOM
