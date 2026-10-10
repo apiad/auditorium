@@ -1,0 +1,43 @@
+# Mechanical checks over the agent docs. Each rule's reason is in the comment
+# above it. Rules start at warning and move to error once their list is empty
+# for reasons we agree with. Run with `make docs`.
+rules:
+  # A path named in a doc that no longer exists sends the reader nowhere, and
+  # nothing else notices when a file moves.
+  - name: "every file path named in the agent docs exists"
+    severity: warning
+    extract:
+      file: ["AGENTS.md", "DESIGN.md", "know-how/*.md"]
+      regex: '`((?!repos/|vault/|bin/|https?:)[A-Za-z0-9_-]+/[A-Za-z0-9_./-]+\.(?:md|ya?ml|py|toml|json|sh|js|css|html))`'
+    require:
+      exists: true
+
+  # The know-how menu is built from this line, so a doc without it is invisible.
+  - name: "every know-how doc carries a single-line when: in its frontmatter"
+    severity: warning
+    contain:
+      in: "know-how/*.md"
+      zone: { before: '^# ' }
+      matches: '\A---\n(?:.*\n)*?when: \S.*\n(?:.*\n)*?---\n'
+
+  # A hand-kept list of know-how docs goes stale; the menu command is the index.
+  # forbid masks inline code; extracting from the raw file and requiring a file
+  # that never exists reports every name, which is the ban.
+  - name: "AGENTS.md names no individual know-how doc"
+    severity: warning
+    extract:
+      file: "AGENTS.md"
+      regex: '(know-how/[A-Za-z0-9_-]+\.md)'
+    require:
+      in: "this-file-never-exists.md"
+
+  # Status lines are false one commit later; they belong in git and CHANGELOG.md.
+  - name: "AGENTS.md carries no status log"
+    severity: warning
+    extract:
+      list: ['Task \d+ done', '\d+ tests\b', '\d+ passing\b', 'shipped \(20\d\d-', 'as of 20\d\d-', 'current status']
+    forbid:
+      in: "AGENTS.md"
+      as: regex
+      case_insensitive: true
+

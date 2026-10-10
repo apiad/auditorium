@@ -1,3 +1,9 @@
+"""The ``auditorium`` command: ``run``, ``preview``, ``render``, ``export``, ``relay``.
+
+``run`` and ``preview`` share ``_serve()`` and differ only in which surface they
+open and whether shared navigation is on. SIGINT is reset to ``SIG_DFL`` before
+uvicorn starts, for a clean shutdown.
+"""
 from __future__ import annotations
 
 import asyncio

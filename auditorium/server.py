@@ -1,3 +1,13 @@
+"""The FastAPI app: compiles the deck and serves it. Playback happens in the browser.
+
+The server serves the three shells and ``/timeline.json``, watches the source
+file, and relays presenter commands. It keeps no playback position, because every
+client holds the timeline and seeks itself (D2). The WebSocket carries only a
+``hello``/``hello_ack`` handshake, a ``reload`` push when the source changes, and,
+in presenter mode, ``cmd`` messages relaying the presenter's intent to audience
+sockets. The 3.x per-mutation ack protocol is gone, and ``tests/test_server.py``
+keeps it from coming back.
+"""
 from __future__ import annotations
 
 import asyncio

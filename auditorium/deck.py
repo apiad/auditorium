@@ -1,3 +1,8 @@
+"""``Deck``: the scenes of one presentation, their order, and its theme.
+
+``Deck`` has no ``run()``. The CLI owns the server and render lifecycles, so a
+deck file only declares content and stays importable by every command.
+"""
 from __future__ import annotations
 
 import json
